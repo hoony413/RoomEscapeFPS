@@ -70,16 +70,8 @@ ARoomEscapeFPSCharacter::ARoomEscapeFPSCharacter()
 
 	InteractSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractSphere"));
 	InteractSphere->SetupAttachment(FirstPersonCameraComponent);
-	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
-	// are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
-
-	// Create VR Controllers.
-	R_MotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("R_MotionController"));
-	R_MotionController->MotionSource = FXRMotionControllerBase::RightHandSourceId;
-	R_MotionController->SetupAttachment(RootComponent);
-	L_MotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("L_MotionController"));
-	L_MotionController->SetupAttachment(RootComponent);
 }
+
 void ARoomEscapeFPSCharacter::BeginPlay()
 {
 	// Call the base class  
@@ -107,36 +99,6 @@ void ARoomEscapeFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(ARoomEscapeFPSCharacter, IsFlash);
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
-void ARoomEscapeFPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
-{
-	// set up gameplay key bindings
-	check(PlayerInputComponent);
-
-	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	// Bind Flash event
-	PlayerInputComponent->BindAction("Flash", IE_Pressed, this, &ARoomEscapeFPSCharacter::OnFlash);
-
-	// Bind Use event
-	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &ARoomEscapeFPSCharacter::OnUse);
-
-	// Bind movement events
-	PlayerInputComponent->BindAxis("MoveForward", this, &ARoomEscapeFPSCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &ARoomEscapeFPSCharacter::MoveRight);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &ARoomEscapeFPSCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &ARoomEscapeFPSCharacter::LookUpAtRate);
-}
 #if WITH_EDITOR
 void ARoomEscapeFPSCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -243,12 +205,15 @@ void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 	if (HasAuthority())
 	{
 		IsFlash = !IsFlash;
-		NetMulticast_ToggleFlash();
+		OnRep_IsFlash();
 	}
 }
-void ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation()
+void ARoomEscapeFPSCharacter::OnRep_IsFlash()
 {
 	FlashToggleAnimation();
+}
+void ARoomEscapeFPSCharacter::ToggleFlash()
+{
 	if (SpotLight)
 	{
 		SpotLight->ToggleVisibility();
@@ -264,44 +229,17 @@ void ARoomEscapeFPSCharacter::FlashToggleAnimation()
 			if (IsFlash == false)
 			{
 				AnimInstance->Montage_JumpToSection("End");
-				//GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
-				//GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
-				//	&ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation, 0.2f, false, 0.2f);
+				GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
+				GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
+					&ARoomEscapeFPSCharacter::ToggleFlash, 0.2f, false, 0.2f);
 			}
 			else
 			{
 				AnimInstance->Montage_Play(FlashAnimation, 1.f);
-				//GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
-				//GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
-				//	&ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation, 0.2f, false, 0.2f);
+				GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
+				GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
+					&ARoomEscapeFPSCharacter::ToggleFlash, 0.2f, false, 0.2f);
 			}
 		}
 	}
-}
-
-void ARoomEscapeFPSCharacter::MoveForward(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorForwardVector(), Value);
-	}
-}
-void ARoomEscapeFPSCharacter::MoveRight(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorRightVector(), Value);
-	}
-}
-void ARoomEscapeFPSCharacter::TurnAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-}
-void ARoomEscapeFPSCharacter::LookUpAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }

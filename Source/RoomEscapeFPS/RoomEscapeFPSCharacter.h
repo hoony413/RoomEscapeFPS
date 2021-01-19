@@ -37,14 +37,6 @@ class ARoomEscapeFPSCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* InteractSphere;
 	
-	/** Motion controller (right hand) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UMotionControllerComponent* R_MotionController;
-
-	/** Motion controller (left hand) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UMotionControllerComponent* L_MotionController;
-	
 public:
 	ARoomEscapeFPSCharacter();
 
@@ -90,70 +82,38 @@ public:
 
 	FTimerHandle FlashTimer;
 
-protected:
 	UFUNCTION()
-	void OnUse();
-	UFUNCTION(Reliable, Server, WithValidation)
-		void ServerOnUse();
-
+		void OnUse();
 	UFUNCTION()
-	void OnFlash();
-	UFUNCTION(Reliable, Server, WithValidation)
-		void ServerOnFlash();
-	UFUNCTION(NetMulticast, Unreliable)
-		void NetMulticast_ToggleFlash();
+		void OnFlash();
 
-	UFUNCTION()
-	void FlashToggleAnimation();
-
-	//UFUNCTION()
-	//void FlashOnOff();
-
-	/** Handles moving forward/backward */
-	void MoveForward(float Val);
-
-	/** Handles stafing movement, left and right */
-	void MoveRight(float Val);
-
-	/**
-	 * Called via input to turn at a given rate.
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void TurnAtRate(float Rate);
-
-	/**
-	 * Called via input to turn look up/down at a given rate.
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void LookUpAtRate(float Rate);
-
-private:
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", Meta = (AllowPrivateAccess = "true"))
-		float SphereRadius;
-	
-	UPROPERTY(Replicated)
-	bool IsFlash = false;
-
-	bool IsLooking = false;
-
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	// End of APawn interface
-
-	/* 
-	 * Configures input for touchscreen devices if there is a valid touch interface for doing so 
-	 *
-	 * @param	InputComponent	The input component pointer to bind controls to
-	 * @returns true if touch controls were enabled.
-	 */
-
-public:
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 	FORCEINLINE class USphereComponent* GetInteractSphere() const { return InteractSphere; }
+
+
+protected:
+	UFUNCTION(Reliable, Server, WithValidation)
+		void ServerOnUse();
+	UFUNCTION(Reliable, Server, WithValidation)
+		void ServerOnFlash();
+	UFUNCTION()
+		void OnRep_IsFlash();
+
+	void ToggleFlash();
+	UFUNCTION()
+	void FlashToggleAnimation();
+
+private:
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", Meta = (AllowPrivateAccess = "true"))
+		float SphereRadius;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_IsFlash)
+	bool IsFlash = false;
+	bool IsLooking = false;
+
 };
 
