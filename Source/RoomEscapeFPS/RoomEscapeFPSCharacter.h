@@ -20,6 +20,8 @@ class ARoomEscapeFPSCharacter : public ACharacter
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 		class USkeletalMeshComponent* Mesh1P;
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+		class USkeletalMeshComponent* CharacterMesh;
 
 	/** Gun mesh: 1st person view (seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -43,7 +45,6 @@ class ARoomEscapeFPSCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMotionControllerComponent* L_MotionController;
 	
-
 public:
 	ARoomEscapeFPSCharacter();
 
@@ -99,9 +100,14 @@ protected:
 	void OnFlash();
 	UFUNCTION(Reliable, Server, WithValidation)
 		void ServerOnFlash();
-
+	UFUNCTION(NetMulticast, Unreliable)
+		void NetMulticast_ToggleFlash();
+	
 	UFUNCTION()
-	void FlashOnOff();
+	void FlashToggleAnimation();
+
+	//UFUNCTION()
+	//void FlashOnOff();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

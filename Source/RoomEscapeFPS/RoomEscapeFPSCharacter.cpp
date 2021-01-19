@@ -30,7 +30,7 @@ ARoomEscapeFPSCharacter::ARoomEscapeFPSCharacter()
 {
 	bReplicates = true;
 	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
+	GetCapsuleComponent()->InitCapsuleSize(55.f, 100.0f);
 
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
@@ -51,6 +51,12 @@ ARoomEscapeFPSCharacter::ARoomEscapeFPSCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
+	CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
+	CharacterMesh->SetOwnerNoSee(true);
+	CharacterMesh->SetupAttachment(GetCapsuleComponent());
+	CharacterMesh->SetRelativeLocation(FVector(0.f, 0.f, -100.f));
+	CharacterMesh->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+	
 	// Create a gun mesh component
 	Flash = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Flash"));
 	Flash->SetOnlyOwnerSee(false);			// otherwise won't be visible in the multiplayer
@@ -79,23 +85,19 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	Flash->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
-	
-	SpotLight->AttachToComponent(Flash, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
-	SpotLight->ToggleVisibility();
-	
 	InteractSphere->SetSphereRadius(350.f);
-	
-	// Show or hide the two versions of the gun based on whether or not we're using motion controllers.
-	if (bUsingMotionControllers)
+	Mesh1P->SetHiddenInGame(bUsingMotionControllers, true);
+	SpotLight->SetVisibility(false);
+
+	if (IsLocallyControlled())
 	{
-		Mesh1P->SetHiddenInGame(true, true);
+		Flash->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
 	else
 	{
-		Mesh1P->SetHiddenInGame(false, true);
+		Flash->AttachToComponent(CharacterMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
+	SpotLight->AttachToComponent(Flash, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
 }
 
 void ARoomEscapeFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -239,39 +241,40 @@ void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 {
 	if (HasAuthority())
 	{
-		if (FlashAnimation != nullptr)
+		NetMulticast_ToggleFlash();
+	}
+}
+void ARoomEscapeFPSCharacter::FlashToggleAnimation()
+{
+	if (FlashAnimation != nullptr)
+	{
+		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+		if (AnimInstance != nullptr)
 		{
-			UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-			if (AnimInstance != nullptr)
+			if (IsFlash == false)
 			{
-				if (IsFlash == false)
-				{
-					AnimInstance->Montage_Play(FlashAnimation, 1.f);
-					if (SpotLight)
-					{
-						GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
-						GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
-							&ARoomEscapeFPSCharacter::FlashOnOff, 0.2f, false, 0.2f);
-					}
-				}
-				else
-				{
-					AnimInstance->Montage_JumpToSection("End");
-					GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
-					GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
-						&ARoomEscapeFPSCharacter::FlashOnOff, 0.2f, false, 0.2f);
-				}
-				IsFlash = !IsFlash;
+				AnimInstance->Montage_Play(FlashAnimation, 1.f);
+				//GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
+				//GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
+				//	&ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation, 0.2f, false, 0.2f);
+			}
+			else
+			{
+				AnimInstance->Montage_JumpToSection("End");
+				//GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
+				//GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
+				//	&ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation, 0.2f, false, 0.2f);
 			}
 		}
 	}
-	
 }
-void ARoomEscapeFPSCharacter::FlashOnOff()
+void ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation()
 {
+	FlashToggleAnimation();
 	if (SpotLight)
 	{
 		SpotLight->ToggleVisibility();
+		IsFlash = !IsFlash;
 	}
 }
 
