@@ -189,7 +189,7 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(bool bOnOff)
 
 	if (InteractWidget == nullptr)
 	{
-		InteractWidget = GetUIMgr()->ShowWidget<UInteractionPanel>(this);
+		InteractWidget = GetUIMgr()->OpenWidget<UInteractionPanel>(this);
 	}
 	if (InteractWidget)
 	{

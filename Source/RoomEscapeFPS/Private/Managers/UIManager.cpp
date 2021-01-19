@@ -42,6 +42,10 @@ void UUIManager::InitManager()
 }
 void UUIManager::ReleaseManager()
 {
+	for (const auto& elem : Widgets)
+	{
+		elem.Value->RemoveFromParent();
+	}
 	Widgets.Empty();
 	Super::ReleaseManager();
 }

@@ -62,7 +62,7 @@ public:
 	}
 
 	template<typename T>
-	T* ShowWidget(APawn* target = nullptr, bool bAllowReduplicate = false)
+	T* OpenWidget(APawn* target = nullptr, bool bAllowReduplicate = false)
 	{
 		T* t = GetWidget<T>(target, bAllowReduplicate);
 		if (t == nullptr)
@@ -80,7 +80,7 @@ public:
 	}
 
 	template<typename T>
-	void RemoveWidget()
+	void CloseWidget()
 	{
 		if (Widgets.Contains(T::StaticClass()->GetFName()) == false)
 			return;
