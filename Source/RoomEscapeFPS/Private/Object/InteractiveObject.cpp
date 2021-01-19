@@ -50,7 +50,7 @@ void AInteractiveObject::BeginPlay()
 		SetTimeline();
 	}
 
-	DEBUG_BOX_BLUE(LineTraceBox, GetActorLocation() + LineTraceBox->GetRelativeLocation());
+	//DEBUG_BOX_BLUE(LineTraceBox, GetActorLocation() + LineTraceBox->GetRelativeLocation());
 }
 
 void AInteractiveObject::SetTimeline()
@@ -132,6 +132,10 @@ void AInteractiveObject::ToggleState()
 		else if (CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
 		{
 			CurrentState = EInteractiveObjectState::EState_Open_Or_On;
+		}
+		else
+		{
+			CurrentState = EInteractiveObjectState::EState_Playing;
 		}
 	}
 }

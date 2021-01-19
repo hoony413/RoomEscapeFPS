@@ -22,8 +22,8 @@ void ARoomEscapeFPSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HUDClass)
-	{
-		HUDClass->AddToRoot();
-	}
+	//if (HUDClass)
+	//{
+	//	HUDClass->AddToRoot();
+	//}
 }

@@ -5,4 +5,13 @@
 
 namespace Helper
 {
+	ARoomEscapeFPSPlayerController* GetPlayerController(APawn* pawn)
+	{
+		ARoomEscapeFPSPlayerController* pc = nullptr;
+		if (pawn)
+		{
+			pc = Cast<ARoomEscapeFPSPlayerController>(pawn->Controller);
+		}
+		return pc;
+	}
 }

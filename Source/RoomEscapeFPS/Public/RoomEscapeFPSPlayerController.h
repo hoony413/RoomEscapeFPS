@@ -17,6 +17,9 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerController : public APlayerControlle
 public:
 	virtual void SetupInputComponent() override;
 
+	UFUNCTION()
+		void OnTestKey();
+
 protected:
 	UFUNCTION()
 	void Jump();
@@ -26,6 +29,7 @@ protected:
 	void OnFlash();
 	UFUNCTION()
 	void OnUse();
+
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

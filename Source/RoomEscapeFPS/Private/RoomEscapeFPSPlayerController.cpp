@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RoomEscapeFPSPlayerController.h"
+#include "Helper/Helper.h"
+#include "Managers/UIManager.h"
+#include "UI/BasePage.h"
 #include "RoomEscapeFPS/RoomEscapeFPSCharacter.h"
 
 void ARoomEscapeFPSPlayerController::SetupInputComponent()
@@ -19,6 +22,8 @@ void ARoomEscapeFPSPlayerController::SetupInputComponent()
 	// Bind Use event
 	InputComponent->BindAction("Use", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnUse);
 
+	InputComponent->BindAction("TestKey", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnTestKey);
+	
 	// Bind movement events
 	InputComponent->BindAxis("MoveForward", this, &ARoomEscapeFPSPlayerController::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ARoomEscapeFPSPlayerController::MoveRight);
@@ -63,6 +68,11 @@ void ARoomEscapeFPSPlayerController::OnUse()
 	{
 		character->OnUse();
 	}
+}
+void ARoomEscapeFPSPlayerController::OnTestKey()
+{
+	// 개인 UI 조작 시 이런식으로 호출하면 된다.
+	//GetUIMgr()->ShowWidget<UBasePage>(GetPawn());
 }
 void ARoomEscapeFPSPlayerController::AddControllerYawInput(float Value)
 {

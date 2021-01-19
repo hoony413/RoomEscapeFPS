@@ -19,7 +19,7 @@
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
 #include "Net/UnrealNetwork.h"
-#include "XRMotionControllerBase.h"
+
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -135,10 +135,8 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		{
 			cachedInteractObject = result.Actor.Get();
 		}
-		if (IsLocallyControlled())
-		{
-			TurnOnOffWidget(IsLooking);
-		}
+	
+		TurnOnOffWidget(IsLooking);
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
@@ -191,7 +189,7 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(bool bOnOff)
 
 	if (InteractWidget == nullptr)
 	{
-		InteractWidget = GetUIMgr()->ShowWidget<UInteractionPanel>();
+		InteractWidget = GetUIMgr()->ShowWidget<UInteractionPanel>(this);
 	}
 	if (InteractWidget)
 	{

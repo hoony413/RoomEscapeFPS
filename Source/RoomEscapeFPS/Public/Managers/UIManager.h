@@ -26,23 +26,30 @@ public:
 	virtual void ReleaseManager() override;
 	
 	template<typename T>
-	T* GetWidget(bool bAllowReduplicate = false)
+	T* GetWidget(APawn* target, bool bAllowReduplicate = false)
 	{
+		check(target);
+		if (target->IsLocallyControlled() == false)
+			return nullptr;
+
+		UWorld* world = GetWorld();
+		check(world);
+
 		if (Widgets.Contains(T::StaticClass()->GetFName()) == false)
 		{
 			// UI매니져가 관리가능한 클래스인지 확인(UBaseWidget의 자식인지)
 			check(T::StaticClass()->IsChildOf(UBaseWidget::StaticClass()));
 
 			// CDO로부터 BP경로 받기
-			FString path = Cast<UBaseWidget>(T::StaticClass()->ClassDefaultObject)->GetBPPath();
+			FString path = 
+				Cast<UBaseWidget>(T::StaticClass()->ClassDefaultObject)->GetBPPath();
 			
 			// 오브젝트 로드(위젯BP)
-			UClass* classObj = LoadObject<UClass>(GetWorld(), *path);
+			UClass* classObj = LoadObject<UClass>(world, *path);
 			check(classObj != nullptr);
 			
 			// 위젯 생성
-			T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*(GetWorld()), 
-				classObj, T::StaticClass()->GetFName()));
+			T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, T::StaticClass()->GetFName()));
 			if (!bAllowReduplicate)
 			{	// 중복 미허용인 경우에만 관리대상으로 추가한다.
 				// 중복 허용: 화면에 2개를 띄운다는 의미: 관리할 필요가 없음.
@@ -55,9 +62,12 @@ public:
 	}
 
 	template<typename T>
-	T* ShowWidget(bool bAllowReduplicate = false)
+	T* ShowWidget(APawn* target = nullptr, bool bAllowReduplicate = false)
 	{
-		T* t = GetWidget<T>(bAllowReduplicate);
+		T* t = GetWidget<T>(target, bAllowReduplicate);
+		if (t == nullptr)
+			return nullptr;
+
 		if (t->IsInViewport() == false)
 		{
 			t->AddToPlayerScreen();

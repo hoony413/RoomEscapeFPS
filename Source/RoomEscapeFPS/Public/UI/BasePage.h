@@ -13,5 +13,8 @@ UCLASS()
 class ROOMESCAPEFPS_API UBasePage : public UBaseWidget
 {
 	GENERATED_BODY()
+
+public:
+	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/BaseHUD_Widget.BaseHUD_Widget_C'"); }
 	
 };

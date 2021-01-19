@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Managers/UIManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "RoomEscapeFPSPlayerController.h"
 #include "Managers/RoomEscapeFPSGameInstance.h"
 /**
  * 유틸리티 함수 모음.
@@ -24,4 +26,7 @@ namespace Helper
 		URoomEscapeFPSGameInstance* gi = Cast<URoomEscapeFPSGameInstance>(world->GetGameInstance());
 		return gi != nullptr ? gi->GetManager<T>() : nullptr;
 	}
+
+	ARoomEscapeFPSPlayerController* GetPlayerController(APawn* pawn);
+	
 }
