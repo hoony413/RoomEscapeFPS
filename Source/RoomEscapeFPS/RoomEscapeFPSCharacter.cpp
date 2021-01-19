@@ -116,6 +116,7 @@ void ARoomEscapeFPSCharacter::PostEditChangeProperty(struct FPropertyChangedEven
 void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	FHitResult result;
 	FVector pos = FirstPersonCameraComponent->GetComponentLocation();
 	FVector dir = FirstPersonCameraComponent->GetForwardVector();
@@ -123,7 +124,7 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 
 	UWorld* world = GetWorld();
 	world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
-	
+
 	bool cachedLooking = IsLooking;
 	IsLooking = result.Component.IsValid() && result.Actor.IsValid() &&
 		result.Actor.Get()->IsA(InteractableObject) ? true : false;
@@ -134,11 +135,17 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		{
 			cachedInteractObject = result.Actor.Get();
 		}
-		TurnOnOffWidget(IsLooking);
+		if (IsLocallyControlled())
+		{
+			TurnOnOffWidget(IsLooking);
+		}
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
 {
+	if (!IsLooking)
+		return;
+
 	ServerOnUse();
 }
 bool ARoomEscapeFPSCharacter::ServerOnUse_Validate()

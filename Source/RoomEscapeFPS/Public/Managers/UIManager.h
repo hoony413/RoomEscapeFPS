@@ -60,7 +60,7 @@ public:
 		T* t = GetWidget<T>(bAllowReduplicate);
 		if (t->IsInViewport() == false)
 		{
-			t->AddToViewport();
+			t->AddToPlayerScreen();
 		}
 		else
 		{
