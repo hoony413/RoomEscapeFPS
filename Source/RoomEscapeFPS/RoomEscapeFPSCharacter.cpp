@@ -104,6 +104,7 @@ void ARoomEscapeFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ARoomEscapeFPSCharacter, SphereRadius);
+	DOREPLIFETIME(ARoomEscapeFPSCharacter, IsFlash);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -241,7 +242,16 @@ void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 {
 	if (HasAuthority())
 	{
+		IsFlash = !IsFlash;
 		NetMulticast_ToggleFlash();
+	}
+}
+void ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation()
+{
+	FlashToggleAnimation();
+	if (SpotLight)
+	{
+		SpotLight->ToggleVisibility();
 	}
 }
 void ARoomEscapeFPSCharacter::FlashToggleAnimation()
@@ -253,28 +263,19 @@ void ARoomEscapeFPSCharacter::FlashToggleAnimation()
 		{
 			if (IsFlash == false)
 			{
-				AnimInstance->Montage_Play(FlashAnimation, 1.f);
+				AnimInstance->Montage_JumpToSection("End");
 				//GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
 				//GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
 				//	&ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation, 0.2f, false, 0.2f);
 			}
 			else
 			{
-				AnimInstance->Montage_JumpToSection("End");
+				AnimInstance->Montage_Play(FlashAnimation, 1.f);
 				//GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
 				//GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
 				//	&ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation, 0.2f, false, 0.2f);
 			}
 		}
-	}
-}
-void ARoomEscapeFPSCharacter::NetMulticast_ToggleFlash_Implementation()
-{
-	FlashToggleAnimation();
-	if (SpotLight)
-	{
-		SpotLight->ToggleVisibility();
-		IsFlash = !IsFlash;
 	}
 }
 

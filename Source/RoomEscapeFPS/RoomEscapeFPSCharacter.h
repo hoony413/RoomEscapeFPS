@@ -102,7 +102,7 @@ protected:
 		void ServerOnFlash();
 	UFUNCTION(NetMulticast, Unreliable)
 		void NetMulticast_ToggleFlash();
-	
+
 	UFUNCTION()
 	void FlashToggleAnimation();
 
@@ -131,7 +131,9 @@ private:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", Meta = (AllowPrivateAccess = "true"))
 		float SphereRadius;
 	
+	UPROPERTY(Replicated)
 	bool IsFlash = false;
+
 	bool IsLooking = false;
 
 protected:
