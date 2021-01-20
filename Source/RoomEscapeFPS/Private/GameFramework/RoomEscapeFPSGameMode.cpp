@@ -128,6 +128,6 @@ void ARoomEscapeFPSGameMode::InitializePipeGame(int32 InPlayerID, uint8 GridSize
 			}
 		}
 
-		//elem.Value
+		elem.Value.SetPipeType();
 	}
 }
