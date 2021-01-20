@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Managers/UIManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "RoomEscapeFPSPlayerController.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Managers/RoomEscapeFPSGameInstance.h"
 /**
  * 유틸리티 함수 모음.
