@@ -2,16 +2,13 @@
 
 
 #include "Helper/Helper.h"
+#include "Runtime/Engine/Classes/Engine/AssetManager.h"
 
 namespace Helper
 {
-	ARoomEscapeFPSPlayerController* GetPlayerController(APawn* pawn)
+	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda)
 	{
-		ARoomEscapeFPSPlayerController* pc = nullptr;
-		if (pawn)
-		{
-			pc = Cast<ARoomEscapeFPSPlayerController>(pawn->Controller);
-		}
-		return pc;
+		FStreamableManager& assetLoader = UAssetManager::GetStreamableManager();
+		return assetLoader.RequestAsyncLoad(TArray<FSoftObjectPath>{ assetRef }, FStreamableDelegate::CreateLambda(MoveTemp(lambda)));
 	}
 }

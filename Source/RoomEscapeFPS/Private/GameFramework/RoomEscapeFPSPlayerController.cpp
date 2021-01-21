@@ -3,12 +3,14 @@
 #include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
-#include "UI/BasePage.h"
 #include "GameFramework/RoomEscapeFPSGameMode.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 //#include "RoomEscapeFPS/RoomEscapeFPSGameState.h"
 #include "Character/RoomEscapeFPSCharacter.h"
+
+#include "UI/PipeGame_Node.h"
+
 
 void ARoomEscapeFPSPlayerController::SetupInputComponent()
 {
@@ -79,11 +81,17 @@ void ARoomEscapeFPSPlayerController::OnTestKey()
 	//GetWorld()->GetAuthGameMode();
 	// 서버 RPC로 랩핑해서 해보자.
 	//GetUIMgr()->ShowWidget<UBasePage>(GetPawn());
-	ServerOnTestKey();
+	FPipeNode a;
+	a.AddDirection(EPipeDirection::EUp);
+	a.AddDirection(EPipeDirection::EDown);
+	UPipeGame_Node* node = GetUIMgr()->GetWidget<UPipeGame_Node>(GetPawn());
+	node->AddToViewport();
+	node->InitializePipeNode(&a);
+	//ServerOnTestKey();
 }
 void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 {
-	if (HasAuthority())
+	if (GetNetMode() == NM_DedicatedServer)
 	{
 		AGameModeBase* gMode = GetWorld()->GetAuthGameMode();
 		if (gMode)

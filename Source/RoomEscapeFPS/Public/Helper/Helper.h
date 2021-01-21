@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Managers/RoomEscapeFPSGameInstance.h"
+#include "Runtime/Engine/Classes/Engine/AssetManager.h"
+
 /**
  * 유틸리티 함수 모음.
  */
@@ -17,7 +19,6 @@
 
 #define GetUIMgr() Helper::GetManager<UUIManager>(GetWorld())
 
-
 namespace Helper
 {
 	template<typename T>
@@ -27,6 +28,12 @@ namespace Helper
 		return gi != nullptr ? gi->GetManager<T>() : nullptr;
 	}
 
-	ARoomEscapeFPSPlayerController* GetPlayerController(APawn* pawn);
+	template <typename T>
+	ROOMESCAPEFPS_API FORCEINLINE T* SyncLoadResourceByString(const FString& path)
+	{
+		check(path.IsEmpty());
+		return Cast<T>(StaticLoadObject(T::StaticClass(), NULL, *(path)));
+	}
 	
+	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda);
 }

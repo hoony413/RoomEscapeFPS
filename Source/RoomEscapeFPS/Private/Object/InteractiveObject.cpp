@@ -27,7 +27,7 @@ AInteractiveObject::AInteractiveObject()
 	LineTraceBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LineTraceBox"));
 	LineTraceBox->SetupAttachment(TimelineMesh);
 
-	if (HasAuthority())
+	if (GetNetMode() == NM_DedicatedServer)
 	{
 		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 	}
@@ -123,7 +123,7 @@ void AInteractiveObject::NetMulticast_Interaction_Implementation(EInteractiveObj
 }
 void AInteractiveObject::ToggleState()
 {
-	if (HasAuthority())
+	if (GetNetMode() == NM_DedicatedServer)
 	{
 		if (CurrentState == EInteractiveObjectState::EState_Open_Or_On)
 		{

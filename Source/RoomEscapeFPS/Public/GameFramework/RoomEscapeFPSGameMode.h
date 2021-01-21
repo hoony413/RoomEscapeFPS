@@ -141,7 +141,9 @@ public:
 	}
 
 private:
+	UPROPERTY()
 	TMap<FIntPoint, FPipeNode> PipeNodes;
+	UPROPERTY()
 	TQueue<FPipeNode> AnswerNodesInfo;
 };
 

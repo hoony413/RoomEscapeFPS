@@ -152,7 +152,7 @@ bool ARoomEscapeFPSCharacter::ServerOnUse_Validate()
 }
 void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 {
-	if (HasAuthority())
+	if (GetNetMode() == NM_DedicatedServer)
 	{
 		// TODO: 범위 안에 있는지 체크
 		TSet<AActor*> Actors;
@@ -207,7 +207,7 @@ bool ARoomEscapeFPSCharacter::ServerOnFlash_Validate()
 }
 void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 {
-	if (HasAuthority())
+	if (GetNetMode() == NM_DedicatedServer)
 	{
 		IsFlash = !IsFlash;
 		OnRep_IsFlash();

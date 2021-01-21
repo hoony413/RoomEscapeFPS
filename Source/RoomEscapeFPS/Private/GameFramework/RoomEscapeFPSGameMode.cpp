@@ -42,6 +42,7 @@ void ARoomEscapeFPSGameMode::BeginPlay()
 */
 void ARoomEscapeFPSGameMode::InitializePipeGame(int32 InPlayerID, uint8 GridSize)
 {
+	// TODO: 요청한 플레이어의 GameState에서 처리하도록 로직 변경(관련 함수도 모두 이관)
 	UPipeGameInfo* pipeInfo = nullptr;
 	if (pipeGameHandler.Contains(InPlayerID) == false)
 	{
