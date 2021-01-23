@@ -51,7 +51,8 @@ protected:
 	virtual void BeginPlay();
 
 	void ChangeInteractText(FName& text);
-	void TurnOnOffWidget(bool bOnOff);
+	UFUNCTION(Client, Unreliable)
+	void ClientTurnOnOffWidget(bool bOnOff);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

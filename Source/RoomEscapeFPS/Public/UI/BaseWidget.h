@@ -22,9 +22,15 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-	virtual FString GetBPPath() { return ""; }
+	virtual FString GetBPPath() { check(false) return ""; }
 
 protected:
+	virtual void SetWidgetAnimation();
+
+protected:
+	UPROPERTY()
+		TArray<class UWidgetAnimation*> AnimArray;
+
 	UPROPERTY(EditAnywhere, Category = "ZOrder")
 		uint32 ZOrder;
 

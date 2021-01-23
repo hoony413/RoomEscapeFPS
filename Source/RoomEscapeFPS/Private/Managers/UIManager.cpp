@@ -40,12 +40,30 @@ void UUIManager::InitManager()
 //		}
 //	}
 }
+
+//class UWidgetAnimation* UUIManager::GetWidgetAnimation(const FString& InAnimName)
+//{
+//	UProperty* prop = GetClass()->PropertyLink;
+//	while (prop != nullptr)
+//	{
+//		if (prop->GetClass() == UObjectProperty::StaticClass())
+//		{
+//			UObjectProperty* objectProp = Cast<UObjectProperty>(prop);
+//
+//			if (objectProp->PropertyClass == UWidgetAnimation::StaticClass())
+//			{
+//				UWidgetAnimation* widgetAnim = Cast<UWidgetAnimation>(objectProp->GetObjectPropertyValue_InContainer(this));
+//				if (widgetAnim != nullptr && widgetAnim->GetMovieScene()->GetName().Compare(InAnimName, ESearchCase::IgnoreCase) == 0)
+//				{
+//					return widgetAnim;
+//				}
+//			}
+//		}
+//		prop = prop->PropertyLinkNext;
+//	}
+//}
+
 void UUIManager::ReleaseManager()
 {
-	for (const auto& elem : Widgets)
-	{
-		elem.Value->RemoveFromParent();
-	}
-	Widgets.Empty();
 	Super::ReleaseManager();
 }

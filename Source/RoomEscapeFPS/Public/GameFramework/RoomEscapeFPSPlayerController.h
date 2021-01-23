@@ -9,6 +9,7 @@
 /**
  * 
  */
+
 UCLASS()
 class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerController : public APlayerController
 {
@@ -19,6 +20,8 @@ public:
 
 	UFUNCTION()
 		void OnTestKey();
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	UFUNCTION()
@@ -55,6 +58,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 		void ServerOnTestKey();
 
+	UFUNCTION(Client, Reliable)
+		void ClientOnTestKey();
+
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -63,4 +69,8 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseLookUpRate;
+
+//private:
+//	UPROPERTY(Replicated)
+//		FPipeGameInfo* PipeGameInfo;
 };

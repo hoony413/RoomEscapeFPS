@@ -26,45 +26,31 @@ public:
 	virtual void ReleaseManager() override;
 	
 	template<typename T>
-	T* GetWidget(APawn* target, bool bAllowReduplicate = false)
+	T* GetWidget()
 	{
-		check(target);
-		if (target->IsLocallyControlled() == false)
-			return nullptr;
-
 		UWorld* world = GetWorld();
 		check(world);
 
-		if (Widgets.Contains(T::StaticClass()->GetFName()) == false)
-		{
-			// UI매니져가 관리가능한 클래스인지 확인(UBaseWidget의 자식인지)
-			check(T::StaticClass()->IsChildOf(UBaseWidget::StaticClass()));
+		// UI매니져가 관리가능한 클래스인지 확인(UBaseWidget의 자식인지)
+		check(T::StaticClass()->IsChildOf(UBaseWidget::StaticClass()));
 
-			// CDO로부터 BP경로 받기
-			FString path = 
-				Cast<UBaseWidget>(T::StaticClass()->ClassDefaultObject)->GetBPPath();
-			
-			// 오브젝트 로드(위젯BP)
-			UClass* classObj = LoadObject<UClass>(world, *path);
-			check(classObj != nullptr);
-			
-			// 위젯 생성
-			T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, T::StaticClass()->GetFName()));
-			if (!bAllowReduplicate)
-			{	// 중복 미허용인 경우에만 관리대상으로 추가한다.
-				// 중복 허용: 화면에 2개를 띄운다는 의미: 관리할 필요가 없음.
-				Widgets.Add(T::StaticClass()->GetFName(), widget);
-			}
-			return widget;
-		}
-		// 이미 있는 경우(동일한 위젯BP를 사용한 적 있는 경우) 그것을 리턴해준다.
-		return Cast<T>(Widgets[T::StaticClass()->GetFName()]);
+		// CDO로부터 BP경로 받기
+		FString path = Cast<UBaseWidget>(T::StaticClass()->ClassDefaultObject)->GetBPPath();
+
+		// 오브젝트 로드(위젯BP)
+		UClass* classObj = LoadObject<UClass>(world, *path);
+		check(classObj != nullptr);
+
+		// 위젯 생성
+		T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, T::StaticClass()->GetFName()));
+		check(widget);
+		return widget;
 	}
 
 	template<typename T>
-	T* OpenWidget(APawn* target = nullptr, bool bAllowReduplicate = false)
+	T* OpenWidget()
 	{
-		T* t = GetWidget<T>(target, bAllowReduplicate);
+		T* t = GetWidget<T>();
 		if (t == nullptr)
 			return nullptr;
 
@@ -79,17 +65,5 @@ public:
 		return t;
 	}
 
-	template<typename T>
-	void CloseWidget()
-	{
-		if (Widgets.Contains(T::StaticClass()->GetFName()) == false)
-			return;
-
-		Widgets[T::StaticClass()->GetFName()]->RemoveFromParent();
-		Widgets.Remove(T::StaticClass()->GetFName());
-	}
-
-private:
-	UPROPERTY()
-	TMap<FName, class UBaseWidget*> Widgets;
+	//class UWidgetAnimation* GetWidgetAnimation(const FString& InAnimName);
 };

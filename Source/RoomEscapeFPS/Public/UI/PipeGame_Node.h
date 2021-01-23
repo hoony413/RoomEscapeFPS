@@ -4,13 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UI/BaseWidget.h"
+#include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "PipeGame_Node.generated.h"
 
 /**
  * 파이프 노드 UI 클래스
  */
-
-struct FPipeNode;
 
 UCLASS(Config=Game)
 class ROOMESCAPEFPS_API UPipeGame_Node : public UBaseWidget
@@ -18,30 +17,23 @@ class ROOMESCAPEFPS_API UPipeGame_Node : public UBaseWidget
 	GENERATED_BODY()
 	
 public:
-	void InitializePipeNode(FPipeNode* InNode);
+	void InitializePipeNode(FPipeNode& InNode);
 
 	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/PipeGame_Node_Widget.PipeGame_Node_Widget_C'"); }
+
 protected:
 	UFUNCTION()
 		void OnClickedPipeButton();
+
 private:
 	// 위젯 버튼
 	UPROPERTY(meta = (BindWidget))
 		class UButton* PipeButton;
 	UPROPERTY(meta = (BindWidget))
 		class UImage* PipeImage;
-	
-	// 위젯 애니메이션 4개
-	UPROPERTY(meta = (BindAnimation))
-		class UWidgetAnimation* RotationAnimation1;
-	UPROPERTY(meta = (BindAnimation))
-		class UWidgetAnimation* RotationAnimation2;
-	UPROPERTY(meta = (BindAnimation))
-		class UWidgetAnimation* RotationAnimation3;
-	UPROPERTY(meta = (BindAnimation))
-		class UWidgetAnimation* RotationAnimation4;
 
-	FPipeNode* PipeNodeRef;
+	UPROPERTY()
+	FPipeNode PipeNodeRef;
 
 	uint8 RotationInfo = 0u;
 

@@ -4,12 +4,13 @@
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
 #include "GameFramework/RoomEscapeFPSGameMode.h"
-#include "GameFramework/GameStateBase.h"
-#include "GameFramework/PlayerState.h"
-//#include "RoomEscapeFPS/RoomEscapeFPSGameState.h"
+#include "GameFramework/RoomEscapeFPSPlayerState.h"
+#include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Character/RoomEscapeFPSCharacter.h"
+#include "Net/UnrealNetwork.h"
 
-#include "UI/PipeGame_Node.h"
+#include "UI/PipeGameUI.h"
+#include "UI/InteractionPanel.h"
 
 
 void ARoomEscapeFPSPlayerController::SetupInputComponent()
@@ -42,6 +43,13 @@ void ARoomEscapeFPSPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("LookUp", this, &ARoomEscapeFPSPlayerController::AddControllerPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ARoomEscapeFPSPlayerController::LookUpAtRate);
 }
+
+void ARoomEscapeFPSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	//DOREPLIFETIME(ARoomEscapeFPSPlayerController, PipeGameInfo);
+}
+
 void ARoomEscapeFPSPlayerController::Jump()
 {
 	ACharacter* character = GetCharacter();
@@ -78,36 +86,36 @@ void ARoomEscapeFPSPlayerController::OnUse()
 void ARoomEscapeFPSPlayerController::OnTestKey()
 {
 	// 개인 UI 조작 시 이런식으로 호출하면 된다.
-	//GetWorld()->GetAuthGameMode();
-	// 서버 RPC로 랩핑해서 해보자.
-	//GetUIMgr()->ShowWidget<UBasePage>(GetPawn());
-	FPipeNode a;
-	a.AddDirection(EPipeDirection::EUp);
-	a.AddDirection(EPipeDirection::EDown);
-	UPipeGame_Node* node = GetUIMgr()->GetWidget<UPipeGame_Node>(GetPawn());
-	node->AddToViewport();
-	node->InitializePipeNode(&a);
-	//ServerOnTestKey();
+	ServerOnTestKey();
 }
 void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		AGameModeBase* gMode = GetWorld()->GetAuthGameMode();
-		if (gMode)
+		ARoomEscapeFPSGameMode* gm = GetWorld()->GetAuthGameMode<ARoomEscapeFPSGameMode>();
+		if (gm)
 		{
-			ARoomEscapeFPSGameMode* g = Cast<ARoomEscapeFPSGameMode>(gMode);
-			if (g)
+			ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
+			if (gs)
 			{
-				const TArray<APlayerState*>& arr = g->GameState->PlayerArray;
-				for (const auto& elem : arr)
+				ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>();
+				int32 id = GetPlayerState<ARoomEscapeFPSPlayerState>()->GetPlayerId();
+				for (auto& elem : gs->PlayerArray)
 				{
-					int32 id = elem->GetPlayerId();
-					g->InitializePipeGame(id, 2);
+					ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
+					if (gsps->GetPlayerId() == id)
+					{
+						gsps->InitializePipeGame(5);
+						//gsps->ClientOpenPipeWidget();
+					}
 				}
 			}
 		}
 	}
+}
+
+void ARoomEscapeFPSPlayerController::ClientOnTestKey_Implementation()
+{
 }
 void ARoomEscapeFPSPlayerController::AddControllerYawInput(float Value)
 {

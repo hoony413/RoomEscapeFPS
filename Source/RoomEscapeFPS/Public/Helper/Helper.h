@@ -29,10 +29,10 @@ namespace Helper
 	}
 
 	template <typename T>
-	ROOMESCAPEFPS_API FORCEINLINE T* SyncLoadResourceByString(const FString& path)
+	ROOMESCAPEFPS_API FORCEINLINE T* SyncLoadResource(const FString& path)
 	{
-		check(path.IsEmpty());
-		return Cast<T>(StaticLoadObject(T::StaticClass(), NULL, *(path)));
+		check(!path.IsEmpty());
+		return LoadObject<T>(NULL, *path);
 	}
 	
 	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda);

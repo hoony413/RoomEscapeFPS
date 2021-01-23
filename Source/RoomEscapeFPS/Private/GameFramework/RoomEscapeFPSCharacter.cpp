@@ -116,7 +116,6 @@ void ARoomEscapeFPSCharacter::PostEditChangeProperty(struct FPropertyChangedEven
 void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
 	FHitResult result;
 	FVector pos = FirstPersonCameraComponent->GetComponentLocation();
 	FVector dir = FirstPersonCameraComponent->GetForwardVector();
@@ -135,8 +134,8 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		{
 			cachedInteractObject = result.Actor.Get();
 		}
-	
-		TurnOnOffWidget(IsLooking);
+
+		ClientTurnOnOffWidget_Implementation(IsLooking);
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
@@ -182,14 +181,17 @@ void ARoomEscapeFPSCharacter::ChangeInteractText(FName& text)
 		InteractWidget->SetText(text);
 	}
 }
-void ARoomEscapeFPSCharacter::TurnOnOffWidget(bool bOnOff)
+void ARoomEscapeFPSCharacter::ClientTurnOnOffWidget_Implementation(bool bOnOff)
 {
+	if (!IsLocallyControlled() || GetNetMode() != NM_Client)
+		return;
+
 	if (bOnOff == false && InteractWidget == nullptr)
 		return;
 
 	if (InteractWidget == nullptr)
 	{
-		InteractWidget = GetUIMgr()->OpenWidget<UInteractionPanel>(this);
+		InteractWidget = GetUIMgr()->OpenWidget<UInteractionPanel>();
 	}
 	if (InteractWidget)
 	{

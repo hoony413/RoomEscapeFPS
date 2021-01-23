@@ -9,6 +9,16 @@ void UBaseWidget::NativeOnInitialized()
 	Super::NativeOnInitialized();
 }
 
+void UBaseWidget::SetWidgetAnimation()
+{
+	UWidgetBlueprintGeneratedClass* WidgetClass = GetWidgetTreeOwningClass();
+	for (int32 i = 0; i < WidgetClass->Animations.Num(); i++) {
+
+		FString Name = WidgetClass->Animations[i]->GetName();
+		AnimArray.Add(WidgetClass->Animations[i]);
+	}
+}
+
 #if WITH_EDITOR
 void UBaseWidget::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
