@@ -21,7 +21,7 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerState : public APlayerState
 	GENERATED_BODY()
 	
 public:
-	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
+	//virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// 파이프게임 생성
@@ -29,10 +29,14 @@ public:
 	
 	UFUNCTION()
 		void OnRep_PipeGameInfo();
-	UFUNCTION(Client, Reliable)
-		void ClientOpenPipeWidget();
+
+	UFUNCTION(Server, Reliable)
+		void ServerCheckCommittedAnswer();
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_PipeGameInfo)
 		struct FPipeGameInfo PipeGameInfo;
+
+	UFUNCTION()
+		bool CheckPipeAnswer();
 };

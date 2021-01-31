@@ -19,6 +19,8 @@ public:
 
 	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/PipeGame_Widget.PipeGame_Widget_C'"); }
 
+	void CheckCommittedAnswerAnimation(bool bSuccess);
+
 protected:
 	UFUNCTION()
 		void OnClickedCommitButton();

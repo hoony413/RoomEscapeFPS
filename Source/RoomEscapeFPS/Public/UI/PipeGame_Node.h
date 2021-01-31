@@ -11,7 +11,7 @@
  * 파이프 노드 UI 클래스
  */
 
-UCLASS(Config=Game)
+UCLASS()
 class ROOMESCAPEFPS_API UPipeGame_Node : public UBaseWidget
 {
 	GENERATED_BODY()
@@ -37,15 +37,12 @@ private:
 
 	uint8 RotationInfo = 0u;
 
-	UPROPERTY(Config)
-		TArray<FSoftObjectPath> UITextureAssets;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Texture Assets")
-		TSoftObjectPtr<UTexture2D> Straight_Two;
-	UPROPERTY(EditDefaultsOnly, Category = "Texture Assets")
-		TSoftObjectPtr<UTexture2D> Two;
-	UPROPERTY(EditDefaultsOnly, Category = "Texture Assets")
-		TSoftObjectPtr<UTexture2D> Three;
-	UPROPERTY(EditDefaultsOnly, Category = "Texture Assets")
-		TSoftObjectPtr<UTexture2D> Four;
+	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
+		TSoftObjectPtr<class UPaperSprite> Straight_Two;
+	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
+		TSoftObjectPtr<class UPaperSprite> Two;
+	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
+		TSoftObjectPtr<class UPaperSprite> Three;
+	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
+		TSoftObjectPtr<class UPaperSprite> Four;
 };

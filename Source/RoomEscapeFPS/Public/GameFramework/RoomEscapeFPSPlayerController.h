@@ -21,8 +21,6 @@ public:
 	UFUNCTION()
 		void OnTestKey();
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 protected:
 	UFUNCTION()
 	void Jump();
@@ -70,7 +68,4 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseLookUpRate;
 
-//private:
-//	UPROPERTY(Replicated)
-//		FPipeGameInfo* PipeGameInfo;
 };

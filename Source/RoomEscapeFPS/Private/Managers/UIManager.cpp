@@ -5,6 +5,8 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UI/BaseWidget.h"
 
+uint64 UUIManager::unique_num;
+
 void UUIManager::InitManager()
 {
 	Super::InitManager();

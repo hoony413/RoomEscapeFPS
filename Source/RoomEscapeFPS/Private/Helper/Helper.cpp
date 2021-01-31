@@ -3,6 +3,7 @@
 
 #include "Helper/Helper.h"
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
+#include "Paper2D/Classes/PaperSprite.h"
 
 namespace Helper
 {
@@ -11,4 +12,5 @@ namespace Helper
 		FStreamableManager& assetLoader = UAssetManager::GetStreamableManager();
 		return assetLoader.RequestAsyncLoad(TArray<FSoftObjectPath>{ assetRef }, FStreamableDelegate::CreateLambda(MoveTemp(lambda)));
 	}
+
 }

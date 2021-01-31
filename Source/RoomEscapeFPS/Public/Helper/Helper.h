@@ -8,6 +8,7 @@
 #include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Managers/RoomEscapeFPSGameInstance.h"
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
+#include "Paper2D/Classes/PaperSprite.h"
 
 /**
  * 유틸리티 함수 모음.
@@ -36,4 +37,10 @@ namespace Helper
 	}
 	
 	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda);
+
+	ROOMESCAPEFPS_API FORCEINLINE void SetSprite(UPaperSprite* InSprite, FSlateBrush& InBrush)
+	{
+		check(InSprite);
+		InBrush.SetResourceObject(InSprite);
+	}
 }

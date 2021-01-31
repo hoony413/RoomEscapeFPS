@@ -44,12 +44,6 @@ void ARoomEscapeFPSPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("LookUpRate", this, &ARoomEscapeFPSPlayerController::LookUpAtRate);
 }
 
-void ARoomEscapeFPSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	//DOREPLIFETIME(ARoomEscapeFPSPlayerController, PipeGameInfo);
-}
-
 void ARoomEscapeFPSPlayerController::Jump()
 {
 	ACharacter* character = GetCharacter();
@@ -106,7 +100,6 @@ void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 					if (gsps->GetPlayerId() == id)
 					{
 						gsps->InitializePipeGame(5);
-						//gsps->ClientOpenPipeWidget();
 					}
 				}
 			}
@@ -117,6 +110,7 @@ void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 void ARoomEscapeFPSPlayerController::ClientOnTestKey_Implementation()
 {
 }
+
 void ARoomEscapeFPSPlayerController::AddControllerYawInput(float Value)
 {
 	APawn* character = GetPawn();

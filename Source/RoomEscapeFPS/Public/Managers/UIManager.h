@@ -42,8 +42,13 @@ public:
 		check(classObj != nullptr);
 
 		// À§Á¬ »ý¼º
-		T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, T::StaticClass()->GetFName()));
+		FString str = T::StaticClass()->GetFName().ToString();
+		str.Append(FString::FromInt(unique_num));
+		FName name(*str);
+		T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, name));
 		check(widget);
+
+		++unique_num;
 		return widget;
 	}
 
@@ -65,5 +70,12 @@ public:
 		return t;
 	}
 
-	//class UWidgetAnimation* GetWidgetAnimation(const FString& InAnimName);
+	FORCEINLINE class UPipeGameUI* GetPipeGameUI() { return cachedPipeGameUI; }
+	FORCEINLINE void CachPipeGameUI(class UPipeGameUI* InUI) { cachedPipeGameUI = InUI; }
+
+private:
+	static uint64 unique_num;
+
+	UPROPERTY()
+	class UPipeGameUI* cachedPipeGameUI;
 };

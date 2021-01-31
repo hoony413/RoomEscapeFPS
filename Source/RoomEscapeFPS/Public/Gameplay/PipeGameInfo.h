@@ -31,6 +31,7 @@ enum class EPipeType : uint8
 	ETwo = 1u,
 	EThree = 2u,
 	EFour = 3u,
+	EMAX = 4u,
 };
 
 // 파이프 노드 정보
@@ -42,7 +43,7 @@ struct ROOMESCAPEFPS_API FPipeNode
 public:
 	FPipeNode() {}
 
-	FORCEINLINE bool IsContainDirection(EPipeDirection InDir)
+	FORCEINLINE bool IsContainDirection(EPipeDirection InDir) const
 	{
 		return (uint8)InDir == ((uint8)InDir & (uint8)DirectionInfo);
 	}
@@ -55,10 +56,18 @@ public:
 	{
 		DirectionInfo += (uint8)InDir;
 	}
+	FORCEINLINE void SetPipeLocation(const FIntPoint& InLocation)
+	{
+		PipeLocation = InLocation;
+	}
+	FORCEINLINE const FIntPoint& GetPipeLocation() const
+	{
+		return PipeLocation;
+	}
 	FORCEINLINE uint8 GetDirectionInfo() { return DirectionInfo; }
 	FORCEINLINE bool IsAnswerNode() const { return bAnswerNode; }
-	FORCEINLINE void SetAnswerNode(bool bAnswer) { bAnswerNode = bAnswer; }
-	void SetRandomDir(int32 max)
+	FORCEINLINE void SetAnswerNode(const bool bAnswer) { bAnswerNode = bAnswer; }
+	void SetRandomDir(const int32 max)
 	{
 		int32 curCount = 0;
 		while (true)
@@ -110,6 +119,8 @@ public:
 	}
 
 private:
+	UPROPERTY()
+	FIntPoint PipeLocation;
 	UPROPERTY()
 	uint8 DirectionInfo = 0u;
 	UPROPERTY()

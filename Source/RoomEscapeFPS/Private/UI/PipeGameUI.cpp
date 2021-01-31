@@ -12,7 +12,7 @@
 
 void UPipeGameUI::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGridSize)
 {
-	UWidgetBlueprintLibrary::SetInputMode_UIOnly(GetOwningPlayer(), this);
+	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(GetOwningPlayer(), this);
 	GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(true);
 	CommitButton->OnClicked.AddDynamic(this, &UPipeGameUI::OnClickedCommitButton);
 	CloseButton->OnClicked.AddDynamic(this, &UPipeGameUI::OnClickedCloseButton);
@@ -22,6 +22,7 @@ void UPipeGameUI::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGridS
 	for (auto& elem : PipeNodesInfo)
 	{
 		UPipeGame_Node* nodeWidget = GetUIMgr()->GetWidget<UPipeGame_Node>();
+		
 		if (nodeWidget)
 		{
 			PipeGrid->AddChildToUniformGrid(nodeWidget, rowCol / InGridSize, rowCol % InGridSize);
@@ -30,12 +31,24 @@ void UPipeGameUI::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGridS
 		}
 	}
 }
+void UPipeGameUI::CheckCommittedAnswerAnimation(bool bSuccess)
+{
+	// TODO: 결과 연출 시작(성공/실패).
+
+}
 void UPipeGameUI::OnClickedCommitButton()
 {
-	// TODO: 시뮬레이션 분기. 정답이 아닐 시 별도의 효과로 실패 표시.
-	// TODO: 정답일 경우 서버로 정답 제출.
+	// TODO: 데디케이트에 반복해서 요청을 보낼 수 있다. 막을 수 있는 방법 고민.
 	UWidgetBlueprintLibrary::SetInputMode_GameOnly(GetOwningPlayer());
 	GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
+	
+	// 결과를 받으면 연출을 시작해야하므로 현재 팝업을 캐싱한다.
+	GetUIMgr()->CachPipeGameUI(this);
+	ARoomEscapeFPSPlayerState* ps = GetOwningPlayerState<ARoomEscapeFPSPlayerState>(true);
+	if (ps)
+	{
+		ps->ServerCheckCommittedAnswer();
+	}
 }
 void UPipeGameUI::OnClickedCloseButton()
 {
