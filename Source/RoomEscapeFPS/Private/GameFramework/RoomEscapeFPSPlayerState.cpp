@@ -25,6 +25,7 @@ void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameInfo);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, bPipeGameOpened);
 }
 
 /*
@@ -54,7 +55,7 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 
 	for (int32 i = 0;;)
 	{
-		PipeGameInfo.AddAnswerNodeInfo(nodeInfo[i]);
+		nodeInfo[i].SetAnswerNode(true);
 		if (currentPos.X >= InGridSize - 1 && currentPos.Y >= InGridSize - 1)
 		{	// Goal노드에 도착했는지 체크
 			break;
@@ -99,7 +100,10 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 		if (elem.IsAnswerNode())
 		{
 			// 0 ~ 2개의 방향을 추가
-			elem.SetRandomDir(FMath::RandRange((int32)0, (int32)2));
+			if (FMath::RandBool())
+			{
+				elem.SetRandomDir(FMath::RandRange((int32)0, (int32)2));
+			}
 			
 			// 파이프 회전
 			int32 count = FMath::RandRange((int32)1, (int32)3);
@@ -126,21 +130,40 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 			}
 		}
 
+		// 정답 플래그 초기화
+		elem.SetAnswerNode(false);
 		elem.SetPipeType();
 		++nodePos;
 	}
 }
 void ARoomEscapeFPSPlayerState::OnRep_PipeGameInfo()
 {
-	APawn* pawn = GetPawn();
-	if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+	if (!bPipeGameOpened)
 	{
-		UPipeGameUI* pipe = GetUIMgr()->GetWidget<UPipeGameUI>();
-		if (pipe)
+		if (GetNetMode() == NM_Client)
 		{
-			pipe->InitializeGrid(PipeGameInfo.GetPipeNodes(), PipeGameInfo.GetGridSize());
-			pipe->AddToViewport();
+			APawn* pawn = GetPawn();
+			if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+			{
+				UPipeGameUI* pipe = GetUIMgr()->GetWidget<UPipeGameUI>();
+				if (pipe)
+				{
+					pipe->InitializeGrid(PipeGameInfo.GetPipeNodes(), PipeGameInfo.GetGridSize());
+					pipe->AddToPlayerScreen();
+				}
+			}
 		}
+
+		bPipeGameOpened = true;
+	}
+}
+void ARoomEscapeFPSPlayerState::ServerRotatePipe_Implementation(int32 Index)
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		TArray<FPipeNode>& nodeInfo = PipeGameInfo.GetPipeNodes();
+		check(nodeInfo.Num() > Index);
+		nodeInfo[Index].RotatePipe();
 	}
 }
 void ARoomEscapeFPSPlayerState::ServerCheckCommittedAnswer_Implementation()
@@ -148,34 +171,84 @@ void ARoomEscapeFPSPlayerState::ServerCheckCommittedAnswer_Implementation()
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		bool bSuccess = CheckPipeAnswer();
+
+		FTimerHandle ResponseAnswerTimer;
+		FTimerDelegate ResponseAnswerDele;
+		ResponseAnswerDele.BindUObject(this, &ARoomEscapeFPSPlayerState::ClientResponseOnResult, bSuccess);
 		// TODO: Client RPC로 해당 유저의 UI에서 연출 시작.
+		GetWorld()->GetTimerManager().SetTimer(ResponseAnswerTimer, ResponseAnswerDele, 0.2f, false, 0.2f);
+	}
+}
+void ARoomEscapeFPSPlayerState::ClientResponseOnResult_Implementation(bool bSuccess)
+{
+	if (GetNetMode() == NM_Client)
+	{
+		// TODO: Client RPC로 해당 유저의 UI에서 연출 시작.
+		UPipeGameUI* gameUI = GetUIMgr()->GetPipeGameUI();
+		if (gameUI)
+		{
+			gameUI->CheckCommittedAnswerAnimation(bSuccess);
+		}
 	}
 }
 
 bool ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 {
-	TArray<FPipeNode>& nodes = PipeGameInfo.GetPipeNodes();
-	int32 currentPosIndex = 0;
+	// 너비 우선 탐색.
+	const TArray<FPipeNode>& nodes = PipeGameInfo.GetPipeNodes();
 	int32 endPosIndex = (PipeGameInfo.GetGridSize() * PipeGameInfo.GetGridSize()) - 1;
 
-	TArray<FPipeNode*> answerNodes;
-	answerNodes.Push(&nodes[currentPosIndex]);
-	while (currentPosIndex < endPosIndex)
+	TQueue<FPipeNode*> answerNodes;
+	TSet<FIntPoint> closeNodes;
+	answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[0]));
+	while (!answerNodes.IsEmpty())
 	{
-		if (nodes[currentPosIndex].IsContainDirection(EPipeDirection::ERight))
+		FPipeNode* targetNode = nullptr;
+		answerNodes.Dequeue(targetNode);
+		targetNode->SetAnswerNode(true);
+
+		check(targetNode);
+		if (targetNode->GetPipeLocation() == nodes[nodes.Num() - 1].GetPipeLocation())
+			return true;
+
+		// 무한루프 방지를 위해서 탐색이 끝난 파이프 노드를 따로 저장/체크한다.
+		if (closeNodes.Contains(targetNode->GetPipeLocation()))
+			continue;
+		closeNodes.Add(targetNode->GetPipeLocation());
+
+		if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight) &&
+			PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
 		{
-			currentPosIndex += 1;
-			answerNodes.Push(&nodes[currentPosIndex]);
+			int32 index = targetNode->GetPipeLocation().X + 
+				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
+			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
+			
+			index = targetNode->GetPipeLocation().X +
+				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
+			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 		}
-		if (nodes[currentPosIndex].IsContainDirection(EPipeDirection::EDown))
+		else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight))
 		{
-			currentPosIndex += PipeGameInfo.GetGridSize();
-			answerNodes.Push(&nodes[currentPosIndex]);
+			int32 index = targetNode->GetPipeLocation().X +
+				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
+			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
+		}
+		else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
+		{
+			int32 index = targetNode->GetPipeLocation().X +
+				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
+			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 		}
 	}
 
-	if (answerNodes.Top()->GetPipeLocation() == nodes[endPosIndex].GetPipeLocation())
-		return true;
-	
 	return false;
+}
+
+void ARoomEscapeFPSPlayerState::ServerClearPipeGame_Implementation()
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		bPipeGameOpened = false;
+		GetUIMgr()->CachPipeGameUI(nullptr);
+	}
 }

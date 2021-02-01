@@ -42,13 +42,9 @@ public:
 		check(classObj != nullptr);
 
 		// À§Á¬ »ý¼º
-		FString str = T::StaticClass()->GetFName().ToString();
-		str.Append(FString::FromInt(unique_num));
-		FName name(*str);
-		T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, name));
+		T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, NAME_None));
 		check(widget);
 
-		++unique_num;
 		return widget;
 	}
 
@@ -74,8 +70,7 @@ public:
 	FORCEINLINE void CachPipeGameUI(class UPipeGameUI* InUI) { cachedPipeGameUI = InUI; }
 
 private:
-	static uint64 unique_num;
-
+	
 	UPROPERTY()
 	class UPipeGameUI* cachedPipeGameUI;
 };

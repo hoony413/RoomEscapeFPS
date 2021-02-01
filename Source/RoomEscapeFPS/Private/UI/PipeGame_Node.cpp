@@ -6,11 +6,55 @@
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Paper2D/Classes/PaperSprite.h"
+#include "UI/PipeGameUI.h"
 #include "Helper/Helper.h"
 
-void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode)
+void UPipeGame_Node::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
+{
+	Super::OnAnimationFinished_Implementation(Animation);
+	if (Animation == AnimArray[(int32)EAnimNum::EUtoC])
+	{
+		if (cachedAnimType == EResultAnimType::EUpToDown)
+		{
+			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoD]);
+		}
+		else if (cachedAnimType == EResultAnimType::EUpToRight)
+		{
+			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoR]);
+		}
+	}
+	else if (Animation == AnimArray[(int32)EAnimNum::ELtoC])
+	{
+		if (cachedAnimType == EResultAnimType::ELeftToDown)
+		{
+			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoD]);
+		}
+		else if (cachedAnimType == EResultAnimType::ELeftToRight)
+		{
+			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoR]);
+		}
+	}
+	else if(Animation == AnimArray[(int32)EAnimNum::ECtoR] || Animation == AnimArray[(int32)EAnimNum::ECtoD])
+	{
+		int32 nextIndex = PipeNodeRef.GetPipeLocation().Y * GridSize + PipeNodeRef.GetPipeLocation().X;
+		if (Animation == AnimArray[(int32)EAnimNum::ECtoR])
+		{
+			nextIndex += 1;
+		}
+		else if(Animation == AnimArray[(int32)EAnimNum::ECtoD])
+		{
+			nextIndex += GridSize;
+		}
+		
+		// 델리게이트로 다음 노드의 애니메이션 재생.
+		AnimDelegate.ExecuteIfBound(nextIndex);
+	}
+}
+
+void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize, FAnswerNodeAnimNotiDelegate InDelegate)
 {
 	PipeNodeRef = InNode;
+	GridSize = InGridSize;
 	SetWidgetAnimation();
 	// 회전 버튼 바인딩
 	PipeButton->OnClicked.AddDynamic(this, &UPipeGame_Node::OnClickedPipeButton);
@@ -38,7 +82,12 @@ void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode)
 		{
 			uint8 a = 1 << i;
 			uint8 b = 1 << (i + 1);
-			if (PipeNodeRef.IsCorrectDirection(a + b))
+			if (i + 1 >= (uint8)EPipeType::EMAX)
+			{
+				b = 1 << 0;
+			}
+			if (PipeNodeRef.IsContainDirection((EPipeDirection)a) &&
+				PipeNodeRef.IsContainDirection((EPipeDirection)b))
 			{
 				RotationInfo = i % (uint8)EPipeType::EMAX;
 				PipeButton->SetRenderTransformAngle(90u * i);
@@ -84,10 +133,34 @@ void UPipeGame_Node::OnClickedPipeButton()
 	if (IsPlayingAnimation())
 		return;
 
+	ARoomEscapeFPSPlayerState* ps = GetOwningPlayerState<ARoomEscapeFPSPlayerState>(true);
+	if (ps)
+	{	// 회전(서버)
+		int32 index = (PipeNodeRef.GetPipeLocation().Y * GridSize) + PipeNodeRef.GetPipeLocation().X;
+		ps->ServerRotatePipe(index);
+	}
+
 	PlayAnimation(AnimArray[RotationInfo]);
-	// 원본 데이터 회전.
+
+	// 회전(클라)
 	PipeNodeRef.RotatePipe();
-	// 회전값 증가
 	RotationInfo++;
 	RotationInfo %= (uint8)EPipeType::EMAX;
+}
+void UPipeGame_Node::PlayResultAnimation(EResultAnimType InAnimType)
+{
+	cachedAnimType = InAnimType;
+
+	switch (InAnimType)
+	{
+	case EResultAnimType::EUpToRight:
+	case EResultAnimType::EUpToDown:
+		PlayAnimation(AnimArray[(int32)EAnimNum::EUtoC]);
+		break;
+	case EResultAnimType::ELeftToRight:
+	case EResultAnimType::ELeftToDown:
+		PlayAnimation(AnimArray[(int32)EAnimNum::ELtoC]);
+		break;
+	default: break;
+	}
 }

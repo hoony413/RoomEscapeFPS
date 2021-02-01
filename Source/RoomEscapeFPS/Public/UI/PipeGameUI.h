@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+DECLARE_DELEGATE_OneParam(FAnswerNodeAnimNotiDelegate, int32);
+
 UCLASS()
 class ROOMESCAPEFPS_API UPipeGameUI : public UBaseWidget
 {
@@ -22,10 +25,13 @@ public:
 	void CheckCommittedAnswerAnimation(bool bSuccess);
 
 protected:
+
 	UFUNCTION()
 		void OnClickedCommitButton();
 	UFUNCTION()
 		void OnClickedCloseButton();
+	UFUNCTION()
+		void LaunchNextAnim(int32 Index);
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -34,6 +40,11 @@ private:
 		class UButton* CloseButton;
 	UPROPERTY(meta = (BindWidget))
 		class UButton* CommitButton;
+
+	bool bRequested = false;
+	int32 GridSize;
+
+	FAnswerNodeAnimNotiDelegate AnimDelegate;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PipeNode Widget")
 		TSoftClassPtr<class UPipeGame_Node> NodeWidget;

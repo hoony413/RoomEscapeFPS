@@ -31,12 +31,27 @@ public:
 		void OnRep_PipeGameInfo();
 
 	UFUNCTION(Server, Reliable)
+		void ServerRotatePipe(int32 Index);
+
+	UFUNCTION(Server, Reliable)
 		void ServerCheckCommittedAnswer();
+	UFUNCTION(Client, Reliable)
+		void ClientResponseOnResult(bool bSuccess);
+
+	UFUNCTION(Server, Reliable)
+		void ServerClearPipeGame();
+
+	FORCEINLINE struct FPipeGameInfo& GetPipeGameInfo() { return PipeGameInfo; }
 
 private:
+	UFUNCTION()
+		bool CheckPipeAnswer();
+
+private:
+		
 	UPROPERTY(ReplicatedUsing = OnRep_PipeGameInfo)
 		struct FPipeGameInfo PipeGameInfo;
 
-	UFUNCTION()
-		bool CheckPipeAnswer();
+	UPROPERTY(Replicated)
+		bool bPipeGameOpened = false;
 };

@@ -47,11 +47,6 @@ public:
 	{
 		return (uint8)InDir == ((uint8)InDir & (uint8)DirectionInfo);
 	}
-	FORCEINLINE bool IsCorrectDirection(uint8 InDir)
-	{
-		return (uint8)InDir == ((uint8)InDir & (uint8)DirectionInfo);
-	}
-
 	FORCEINLINE void AddDirection(EPipeDirection InDir)
 	{
 		DirectionInfo += (uint8)InDir;
@@ -83,7 +78,7 @@ public:
 		}
 	}
 
-	FORCEINLINE void RotatePipe()
+	uint8 RotatePipe()
 	{
 		// 비트 회전 연산
 		DirectionInfo = _rotl(DirectionInfo, 1);
@@ -92,6 +87,8 @@ public:
 			DirectionInfo -= (uint8)EPipeDirection::EMAX;
 			DirectionInfo |= (uint8)EPipeDirection::EUp;
 		}
+
+		return DirectionInfo;
 	}
 
 	FORCEINLINE EPipeType GetPipeType() const { return PipeType; }
@@ -153,14 +150,72 @@ public:
 		return PipeNodes;
 	}
 
-	void AddAnswerNodeInfo(FPipeNode& InNode)
-	{
-		InNode.SetAnswerNode(true);
-	}
-
 	TArray<FPipeNode>& GetPipeNodes() { return PipeNodes; }
 	FORCEINLINE uint8 GetGridSize() const { return GridSize; }
 	FORCEINLINE void SetGridSize(uint8 InGridSize) { GridSize = InGridSize; }
+
+	// 인자로 들어온 노드가 인자로 들어온 방향으로 연결되어 있는지?
+	bool IsConnected(FPipeNode& InNode, EPipeDirection InDir)
+	{
+		const FPipeNode& nearbyNode = GetNearbyNode(InNode, InDir);
+		// 인접 노드가 자기자신이다(그리드 범위를 벗어남)
+		if (nearbyNode.GetPipeLocation() == InNode.GetPipeLocation())
+			return false;
+		bool bConnect = false;
+		switch(InDir)
+		{
+		case EPipeDirection::EUp:
+			bConnect = InNode.IsContainDirection(EPipeDirection::EUp)
+				&& nearbyNode.IsContainDirection(EPipeDirection::EDown);
+			break;
+		case EPipeDirection::ERight:
+			bConnect = InNode.IsContainDirection(EPipeDirection::ERight)
+				&& nearbyNode.IsContainDirection(EPipeDirection::ELeft);
+			break;
+		case EPipeDirection::EDown:
+			bConnect = InNode.IsContainDirection(EPipeDirection::EDown)
+				&& nearbyNode.IsContainDirection(EPipeDirection::EUp);
+			break;
+		case EPipeDirection::ELeft:
+			bConnect = InNode.IsContainDirection(EPipeDirection::ELeft)
+				&& nearbyNode.IsContainDirection(EPipeDirection::ERight);
+			break;
+		default: 
+			break;
+		}
+
+		return bConnect;
+	}
+
+private:
+	// 인자로 들어온 노드의 인접 노드 구하기(노드 기준의 방향으로)
+	FPipeNode& GetNearbyNode(FPipeNode& curNode, EPipeDirection nearbyDir)
+	{
+		const FIntPoint& pos = curNode.GetPipeLocation();
+		int32 curIndex = (pos.Y * GridSize) + pos.X;
+		int32 nearbyIndex = curIndex;
+		switch (nearbyDir)
+		{
+		case EPipeDirection::EUp:
+			nearbyIndex = curIndex - GridSize;
+			break;
+		case EPipeDirection::ERight:
+			nearbyIndex = curIndex + 1;
+			break;
+		case EPipeDirection::EDown:
+			nearbyIndex = curIndex + GridSize;
+			break;
+		case EPipeDirection::ELeft:
+			nearbyIndex = curIndex - 1;
+			break;
+		default: break;
+		}
+
+		// 그리드 범위를 벗어난 경우 자기자신을 리턴.
+		if (nearbyIndex >= (GridSize * GridSize) || nearbyIndex < 0)
+			return curNode;
+		return PipeNodes[nearbyIndex];
+	}
 
 private:
 	UPROPERTY()
