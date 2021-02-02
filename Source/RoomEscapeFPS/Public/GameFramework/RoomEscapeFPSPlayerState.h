@@ -14,7 +14,13 @@
  참조 가능하며, 클라이언트는 자기자신의 PlayerState만 참조 가능하다.
  (그도 그럴 것이, 클라이언트는 GameMode 참조 불가능이므로)
  */
-
+UENUM()
+enum class EReplicateState : uint8
+{
+	EFalse = 0,
+	ETrue = 1,
+	EUnknown = 2,
+};
 UCLASS()
 class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerState : public APlayerState
 {
@@ -24,34 +30,40 @@ public:
 	//virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void BeginPlay() override;
 	// 파이프게임 생성
 	void InitializePipeGame(uint8 GridSize);
 	
 	UFUNCTION()
-		void OnRep_PipeGameInfo();
+		void OnRep_InitializePipeGame();
+	UFUNCTION()
+		void OnRep_PipeGameSuccessInfo();
 
 	UFUNCTION(Server, Reliable)
 		void ServerRotatePipe(int32 Index);
 
 	UFUNCTION(Server, Reliable)
 		void ServerCheckCommittedAnswer();
-	UFUNCTION(Client, Reliable)
-		void ClientResponseOnResult(bool bSuccess);
 
 	UFUNCTION(Server, Reliable)
 		void ServerClearPipeGame();
+	UFUNCTION(Client, Reliable)
+		void ClientClearPipeGame();
 
 	FORCEINLINE struct FPipeGameInfo& GetPipeGameInfo() { return PipeGameInfo; }
 
 private:
 	UFUNCTION()
-		bool CheckPipeAnswer();
+		EReplicateState CheckPipeAnswer();
 
 private:
 		
-	UPROPERTY(ReplicatedUsing = OnRep_PipeGameInfo)
+	UPROPERTY(Replicated)
 		struct FPipeGameInfo PipeGameInfo;
 
-	UPROPERTY(Replicated)
-		bool bPipeGameOpened = false;
+	UPROPERTY(ReplicatedUsing = OnRep_InitializePipeGame)
+		bool bInitializePipeGame = false;
+
+	UPROPERTY(ReplicatedUsing = OnRep_PipeGameSuccessInfo)
+		EReplicateState PipeGameSuccessInfo = EReplicateState::EUnknown;
 };

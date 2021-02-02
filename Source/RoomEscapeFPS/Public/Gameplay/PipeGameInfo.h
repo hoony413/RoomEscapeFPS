@@ -62,6 +62,9 @@ public:
 	FORCEINLINE uint8 GetDirectionInfo() { return DirectionInfo; }
 	FORCEINLINE bool IsAnswerNode() const { return bAnswerNode; }
 	FORCEINLINE void SetAnswerNode(const bool bAnswer) { bAnswerNode = bAnswer; }
+	FORCEINLINE bool IsLastAnswerNode() const { return bLastAnswerNode; }
+	FORCEINLINE void SetLastAnswerNode(const bool bAnswer) { bLastAnswerNode = bAnswer; }
+
 	void SetRandomDir(const int32 max)
 	{
 		int32 curCount = 0;
@@ -122,6 +125,9 @@ private:
 	uint8 DirectionInfo = 0u;
 	UPROPERTY()
 	bool bAnswerNode = false;
+	// 플레이어가 제출한 파이프라인에서, 물이 흐를 때 최종 도착지가 되는 노드인지?
+	UPROPERTY()
+	bool bLastAnswerNode = false;
 	UPROPERTY()
 	EPipeType PipeType;
 };
@@ -157,11 +163,28 @@ public:
 	// 인자로 들어온 노드가 인자로 들어온 방향으로 연결되어 있는지?
 	bool IsConnected(FPipeNode& InNode, EPipeDirection InDir)
 	{
+		bool bConnect = false;
+		uint8 reverseDir = _rotl((uint8)InDir, 2);
+		if (reverseDir >= (uint8)EPipeDirection::EMAX)
+		{
+			reverseDir /= (uint8)EPipeDirection::EMAX;
+		}
+
 		const FPipeNode& nearbyNode = GetNearbyNode(InNode, InDir);
+		if (IsStartNode(InNode))
+		{
+			return InNode.IsContainDirection(EPipeDirection::ELeft) && 
+				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection((EPipeDirection)reverseDir);
+		}
+		else if (IsGoalNode(InNode))
+		{
+			return InNode.IsContainDirection(EPipeDirection::ERight) &&
+				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection((EPipeDirection)reverseDir);
+		}
+
 		// 인접 노드가 자기자신이다(그리드 범위를 벗어남)
 		if (nearbyNode.GetPipeLocation() == InNode.GetPipeLocation())
 			return false;
-		bool bConnect = false;
 		switch(InDir)
 		{
 		case EPipeDirection::EUp:
@@ -170,7 +193,8 @@ public:
 			break;
 		case EPipeDirection::ERight:
 			bConnect = InNode.IsContainDirection(EPipeDirection::ERight)
-				&& nearbyNode.IsContainDirection(EPipeDirection::ELeft);
+				&& nearbyNode.IsContainDirection(EPipeDirection::ELeft)
+				&& !IsFarRightNode(InNode);
 			break;
 		case EPipeDirection::EDown:
 			bConnect = InNode.IsContainDirection(EPipeDirection::EDown)
@@ -178,13 +202,24 @@ public:
 			break;
 		case EPipeDirection::ELeft:
 			bConnect = InNode.IsContainDirection(EPipeDirection::ELeft)
-				&& nearbyNode.IsContainDirection(EPipeDirection::ERight);
+				&& nearbyNode.IsContainDirection(EPipeDirection::ERight)
+				&& !IsFarLeftNode(InNode);
 			break;
 		default: 
 			break;
 		}
 
 		return bConnect;
+	}
+
+	bool IsStartNode(FPipeNode& InNode)
+	{
+		return InNode.GetPipeLocation().X == 0 && InNode.GetPipeLocation().Y == 0;
+	}
+	bool IsGoalNode(FPipeNode& InNode)
+	{
+		return InNode.GetPipeLocation().X == GridSize - 1 &&
+			InNode.GetPipeLocation().Y == GridSize - 1;
 	}
 
 private:
@@ -217,6 +252,18 @@ private:
 		return PipeNodes[nearbyIndex];
 	}
 
+	// 그리드 상에서 가장 왼쪽 노드와 오른쪽 노드는 별도 확인이 필요하다.
+	// 인덱스 기준으로는 -1, +1을 하면 되지만, 위치상으로는 다음 라인에 그려지기 때문.
+	bool IsFarLeftNode(FPipeNode& InNode)
+	{
+		int32 index = InNode.GetPipeLocation().X + (InNode.GetPipeLocation().Y * GridSize);
+		return index % GridSize == 0;
+	}
+	bool IsFarRightNode(FPipeNode& InNode)
+	{
+		int32 index = InNode.GetPipeLocation().X + (InNode.GetPipeLocation().Y * GridSize);
+		return index % GridSize == (GridSize - 1);
+	}
 private:
 	UPROPERTY()
 		TArray<FPipeNode> PipeNodes;

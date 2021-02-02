@@ -12,50 +12,15 @@
 void UPipeGame_Node::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
 {
 	Super::OnAnimationFinished_Implementation(Animation);
-	if (Animation == AnimArray[(int32)EAnimNum::EUtoC])
-	{
-		if (cachedAnimType == EResultAnimType::EUpToDown)
-		{
-			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoD]);
-		}
-		else if (cachedAnimType == EResultAnimType::EUpToRight)
-		{
-			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoR]);
-		}
-	}
-	else if (Animation == AnimArray[(int32)EAnimNum::ELtoC])
-	{
-		if (cachedAnimType == EResultAnimType::ELeftToDown)
-		{
-			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoD]);
-		}
-		else if (cachedAnimType == EResultAnimType::ELeftToRight)
-		{
-			PlayAnimation(AnimArray[(int32)EAnimNum::ECtoR]);
-		}
-	}
-	else if(Animation == AnimArray[(int32)EAnimNum::ECtoR] || Animation == AnimArray[(int32)EAnimNum::ECtoD])
-	{
-		int32 nextIndex = PipeNodeRef.GetPipeLocation().Y * GridSize + PipeNodeRef.GetPipeLocation().X;
-		if (Animation == AnimArray[(int32)EAnimNum::ECtoR])
-		{
-			nextIndex += 1;
-		}
-		else if(Animation == AnimArray[(int32)EAnimNum::ECtoD])
-		{
-			nextIndex += GridSize;
-		}
-		
-		// 델리게이트로 다음 노드의 애니메이션 재생.
-		AnimDelegate.ExecuteIfBound(nextIndex);
-	}
 }
 
-void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize, FAnswerNodeAnimNotiDelegate InDelegate)
+void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize)
 {
 	PipeNodeRef = InNode;
 	GridSize = InGridSize;
+
 	SetWidgetAnimation();
+	
 	// 회전 버튼 바인딩
 	PipeButton->OnClicked.AddDynamic(this, &UPipeGame_Node::OnClickedPipeButton);
 
@@ -147,20 +112,7 @@ void UPipeGame_Node::OnClickedPipeButton()
 	RotationInfo++;
 	RotationInfo %= (uint8)EPipeType::EMAX;
 }
-void UPipeGame_Node::PlayResultAnimation(EResultAnimType InAnimType)
+void UPipeGame_Node::PlayResultAnimation()
 {
-	cachedAnimType = InAnimType;
-
-	switch (InAnimType)
-	{
-	case EResultAnimType::EUpToRight:
-	case EResultAnimType::EUpToDown:
-		PlayAnimation(AnimArray[(int32)EAnimNum::EUtoC]);
-		break;
-	case EResultAnimType::ELeftToRight:
-	case EResultAnimType::ELeftToDown:
-		PlayAnimation(AnimArray[(int32)EAnimNum::ELtoC]);
-		break;
-	default: break;
-	}
+	PlayAnimation(AnimArray[(int32)EAnimationIndex::EResult]);
 }

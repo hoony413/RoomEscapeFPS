@@ -25,9 +25,15 @@ void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameInfo);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, bPipeGameOpened);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, bInitializePipeGame);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameSuccessInfo);
 }
-
+void ARoomEscapeFPSPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+	//bInitializePipeGame = EReplicateState::EUnknown;
+	//PipeGameSuccessInfo = EReplicateState::EUnknown;
+}
 /*
 파이프 게임:
 2x2 ~ 5x5까지 있는 큐브 형태의 퍼즐 게임으로,
@@ -37,125 +43,133 @@ void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 1. 정답 경로 랜덤 생성
 2. 정답 경로의 타일 랜덤 회전 + 방향 추가
 3. 3번에서 추출한 정답 노드들에 랜덤한 회전값 부여.
-4. 클라이언트로 데이터 전송.
+4. 클라이언트에서 처리
 */
 
 void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 {
-	// TODO: 요청한 플레이어의 GameState에서 처리하도록 로직 변경(관련 함수도 모두 이관)
-	PipeGameInfo.InitializeNodes(InGridSize);
-	PipeGameInfo.SetGridSize(InGridSize);
-
-	TArray<FPipeNode>& nodeInfo = PipeGameInfo.GetPipeNodes();
-	// 클라이언트의 어딘가에서 Server_Replicated로 호출되어 파이프게임 생성 시작.
-	// 행 + 열 - 1 개수의 정답 노드를 생성한다.
-	int32 NeedNodeCount = (InGridSize * 2) - 1;
-	int32 TotalNodeCount = InGridSize * InGridSize;
-	FIntPoint currentPos(0, 0);
-
-	for (int32 i = 0;;)
+	/* 가끔 팝업이 닫히기도 전에 게임 재생성을 요청할 경우 bool값이 꼬여버려 계속 true인 경우가
+	생겨 이러한 경우(이미 true인데 재생성 요청이 온 경우) 플래그를 직접 변경해준다. */
+	if (bInitializePipeGame == true)
 	{
-		nodeInfo[i].SetAnswerNode(true);
-		if (currentPos.X >= InGridSize - 1 && currentPos.Y >= InGridSize - 1)
-		{	// Goal노드에 도착했는지 체크
-			break;
-		}
-
-		bool IsRight = FMath::RandBool();
-		if ((currentPos.X >= InGridSize - 1 && IsRight) ||
-			(currentPos.Y >= InGridSize - 1 && !IsRight))
-		{
-			IsRight = !IsRight;
-		}
-
-		// Output 설정 후 그 다음노드의 Input으로 연결.
-		if (IsRight)
-		{
-			nodeInfo[i].AddDirection(EPipeDirection::ERight);
-			currentPos.X += 1;
-			i += 1;
-			nodeInfo[i].AddDirection(EPipeDirection::ELeft);
-		}
-		else
-		{
-			nodeInfo[i].AddDirection(EPipeDirection::EDown);
-			currentPos.Y += 1;
-			i += InGridSize;
-			nodeInfo[i].AddDirection(EPipeDirection::EUp);
-		}
+		bInitializePipeGame = false;
+		PipeGameSuccessInfo = EReplicateState::EUnknown;
 	}
-	// 시작 노드의 Input과 골 노드의 Output은 직접 추가한다.
-	nodeInfo[0].AddDirection(EPipeDirection::ELeft);
-	nodeInfo[TotalNodeCount - 1].AddDirection(EPipeDirection::ERight);
 
-	// 정답 생성이 완료되었으면 이들을 뒤섞고, 나머지 타일을 랜덤 생성한다.
-	int32 nodePos = 0;
-	for (auto& elem : nodeInfo)
+	// 파이프게임 생성(서버)
+	if (GetNetMode() == NM_DedicatedServer)
 	{
-		currentPos.X = nodePos % 5;
-		currentPos.Y = nodePos / 5;
-		elem.SetPipeLocation(currentPos);
+		PipeGameInfo.InitializeNodes(InGridSize);
+		PipeGameInfo.SetGridSize(InGridSize);
 
-		// 정답 노드 무작위 회전시키기 + 방향 추가하기(확률성)
-		if (elem.IsAnswerNode())
+		TArray<FPipeNode>& nodeInfo = PipeGameInfo.GetPipeNodes();
+		// 클라이언트의 어딘가에서 Server_Replicated로 호출되어 파이프게임 생성 시작.
+		// 행 + 열 - 1 개수의 정답 노드를 생성한다.
+		int32 NeedNodeCount = (InGridSize * 2) - 1;
+		int32 TotalNodeCount = InGridSize * InGridSize;
+		FIntPoint currentPos(0, 0);
+
+		for (int32 i = 0;;)
 		{
-			// 0 ~ 2개의 방향을 추가
-			if (FMath::RandBool())
-			{
-				elem.SetRandomDir(FMath::RandRange((int32)0, (int32)2));
+			nodeInfo[i].SetAnswerNode(true);
+			if (currentPos.X >= InGridSize - 1 && currentPos.Y >= InGridSize - 1)
+			{	// Goal노드에 도착했는지 체크
+				break;
 			}
-			
-			// 파이프 회전
-			int32 count = FMath::RandRange((int32)1, (int32)3);
-			for (int32 i = 0; i < count; ++i)
+
+			bool IsRight = FMath::RandBool();
+			if ((currentPos.X >= InGridSize - 1 && IsRight) ||
+				(currentPos.Y >= InGridSize - 1 && !IsRight))
 			{
-				elem.RotatePipe();
+				IsRight = !IsRight;
 			}
-		}
-		else
-		{
-			// 2방향(직선 포함) 90% / 3방향 9% / 4방향 1%
-			float f = FMath::RandRange(0.f, 1.f);
-			if (f < 0.9f)
+
+			// Output 설정 후 그 다음노드의 Input으로 연결.
+			if (IsRight)
 			{
-				elem.SetRandomDir(2);
-			}
-			else if (f < 0.99f)
-			{
-				elem.SetRandomDir(3);
+				nodeInfo[i].AddDirection(EPipeDirection::ERight);
+				currentPos.X += 1;
+				i += 1;
+				nodeInfo[i].AddDirection(EPipeDirection::ELeft);
 			}
 			else
 			{
-				elem.SetRandomDir(4);
+				nodeInfo[i].AddDirection(EPipeDirection::EDown);
+				currentPos.Y += 1;
+				i += InGridSize;
+				nodeInfo[i].AddDirection(EPipeDirection::EUp);
 			}
 		}
+		// 시작 노드의 Input과 골 노드의 Output은 직접 추가한다.
+		nodeInfo[0].AddDirection(EPipeDirection::ELeft);
+		nodeInfo[TotalNodeCount - 1].AddDirection(EPipeDirection::ERight);
 
-		// 정답 플래그 초기화
-		elem.SetAnswerNode(false);
-		elem.SetPipeType();
-		++nodePos;
-	}
-}
-void ARoomEscapeFPSPlayerState::OnRep_PipeGameInfo()
-{
-	if (!bPipeGameOpened)
-	{
-		if (GetNetMode() == NM_Client)
+		// 정답 생성이 완료되었으면 이들을 뒤섞고, 나머지 타일을 랜덤 생성한다.
+		int32 nodePos = 0;
+		for (auto& elem : nodeInfo)
 		{
-			APawn* pawn = GetPawn();
-			if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+			currentPos.X = nodePos % 5;
+			currentPos.Y = nodePos / 5;
+			elem.SetPipeLocation(currentPos);
+
+			// 정답 노드 무작위 회전시키기 + 방향 추가하기(확률성)
+			if (elem.IsAnswerNode())
 			{
-				UPipeGameUI* pipe = GetUIMgr()->GetWidget<UPipeGameUI>();
-				if (pipe)
+				// 0 ~ 2개의 방향을 추가
+				if (FMath::RandBool())
 				{
-					pipe->InitializeGrid(PipeGameInfo.GetPipeNodes(), PipeGameInfo.GetGridSize());
-					pipe->AddToPlayerScreen();
+					elem.SetRandomDir(FMath::RandRange((int32)0, (int32)2));
+				}
+				// 파이프 회전
+				int32 count = FMath::RandRange((int32)1, (int32)3);
+				for (int32 i = 0; i < count; ++i)
+				{
+					elem.RotatePipe();
 				}
 			}
+			else
+			{
+				// 2방향(직선 포함) 90% / 3방향 9% / 4방향 1%
+				float f = FMath::RandRange(0.f, 1.f);
+				if (f < 0.7f)
+				{
+					elem.SetRandomDir(2);
+				}
+				else if (f < 0.9f)
+				{
+					elem.SetRandomDir(3);
+				}
+				else
+				{
+					elem.SetRandomDir(4);
+				}
+			}
+
+			// 정답 플래그 초기화
+			elem.SetAnswerNode(false);
+			elem.SetPipeType();
+			++nodePos;
 		}
 
-		bPipeGameOpened = true;
+		bInitializePipeGame = true;
 	}
+}
+void ARoomEscapeFPSPlayerState::OnRep_InitializePipeGame()
+{
+	if (bInitializePipeGame == true)
+	{
+		APawn* pawn = GetPawn();
+		if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+		{
+			UPipeGameUI* pipe = GetUIMgr()->GetWidget<UPipeGameUI>();
+			if (pipe)
+			{
+				pipe->InitializeGrid(PipeGameInfo.GetPipeNodes(), PipeGameInfo.GetGridSize());
+				pipe->AddToPlayerScreen();
+			}
+		}
+	}
+	
 }
 void ARoomEscapeFPSPlayerState::ServerRotatePipe_Implementation(int32 Index)
 {
@@ -170,29 +184,22 @@ void ARoomEscapeFPSPlayerState::ServerCheckCommittedAnswer_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		bool bSuccess = CheckPipeAnswer();
-
-		FTimerHandle ResponseAnswerTimer;
-		FTimerDelegate ResponseAnswerDele;
-		ResponseAnswerDele.BindUObject(this, &ARoomEscapeFPSPlayerState::ClientResponseOnResult, bSuccess);
-		// TODO: Client RPC로 해당 유저의 UI에서 연출 시작.
-		GetWorld()->GetTimerManager().SetTimer(ResponseAnswerTimer, ResponseAnswerDele, 0.2f, false, 0.2f);
+		PipeGameSuccessInfo = CheckPipeAnswer();
 	}
 }
-void ARoomEscapeFPSPlayerState::ClientResponseOnResult_Implementation(bool bSuccess)
+void ARoomEscapeFPSPlayerState::OnRep_PipeGameSuccessInfo()
 {
-	if (GetNetMode() == NM_Client)
+	if (PipeGameSuccessInfo == EReplicateState::EUnknown)
+		return;
+
+	UPipeGameUI* gameUI = GetUIMgr()->GetPipeGameUI();
+	if (gameUI)
 	{
-		// TODO: Client RPC로 해당 유저의 UI에서 연출 시작.
-		UPipeGameUI* gameUI = GetUIMgr()->GetPipeGameUI();
-		if (gameUI)
-		{
-			gameUI->CheckCommittedAnswerAnimation(bSuccess);
-		}
+		gameUI->CheckCommittedAnswerAnimation(PipeGameSuccessInfo == EReplicateState::ETrue ? true : false);
 	}
 }
 
-bool ARoomEscapeFPSPlayerState::CheckPipeAnswer()
+EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 {
 	// 너비 우선 탐색.
 	const TArray<FPipeNode>& nodes = PipeGameInfo.GetPipeNodes();
@@ -201,15 +208,18 @@ bool ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 	TQueue<FPipeNode*> answerNodes;
 	TSet<FIntPoint> closeNodes;
 	answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[0]));
+	FPipeNode* targetNode = nullptr;
 	while (!answerNodes.IsEmpty())
 	{
-		FPipeNode* targetNode = nullptr;
 		answerNodes.Dequeue(targetNode);
 		targetNode->SetAnswerNode(true);
 
 		check(targetNode);
 		if (targetNode->GetPipeLocation() == nodes[nodes.Num() - 1].GetPipeLocation())
-			return true;
+		{
+			targetNode->SetLastAnswerNode(true);
+			return EReplicateState::ETrue;
+		}
 
 		// 무한루프 방지를 위해서 탐색이 끝난 파이프 노드를 따로 저장/체크한다.
 		if (closeNodes.Contains(targetNode->GetPipeLocation()))
@@ -239,16 +249,40 @@ bool ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
 			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 		}
+		else
+		{
+			if (PipeGameInfo.IsStartNode(*targetNode))
+			{
+				targetNode->SetAnswerNode(false);
+			}
+		}
 	}
 
-	return false;
+	if (targetNode)
+	{
+		targetNode->SetLastAnswerNode(true);
+	}
+	return EReplicateState::EFalse;
 }
 
 void ARoomEscapeFPSPlayerState::ServerClearPipeGame_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		bPipeGameOpened = false;
-		GetUIMgr()->CachPipeGameUI(nullptr);
+		bInitializePipeGame = false;
+		PipeGameSuccessInfo = EReplicateState::EUnknown;
+		//ClientClearPipeGame();
+	}
+}
+void ARoomEscapeFPSPlayerState::ClientClearPipeGame_Implementation()
+{
+	APawn* pawn = GetPawn();
+	if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+	{
+		UPipeGameUI* pipeUI = GetUIMgr()->GetPipeGameUI();
+		if (pipeUI)
+		{
+			pipeUI->CloseUI();
+		}
 	}
 }
