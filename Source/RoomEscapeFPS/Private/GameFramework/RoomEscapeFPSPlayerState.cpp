@@ -43,7 +43,7 @@ void ARoomEscapeFPSPlayerState::BeginPlay()
 1. 정답 경로 랜덤 생성
 2. 정답 경로의 타일 랜덤 회전 + 방향 추가
 3. 3번에서 추출한 정답 노드들에 랜덤한 회전값 부여.
-4. 클라이언트에서 처리
+4. 클라이언트에서 UI에 표시 처리
 */
 
 void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
@@ -191,77 +191,84 @@ void ARoomEscapeFPSPlayerState::OnRep_PipeGameSuccessInfo()
 {
 	if (PipeGameSuccessInfo == EReplicateState::EUnknown)
 		return;
-
-	UPipeGameUI* gameUI = GetUIMgr()->GetPipeGameUI();
-	if (gameUI)
+	
+	if (GetNetMode() == NM_Client)
 	{
-		gameUI->CheckCommittedAnswerAnimation(PipeGameSuccessInfo == EReplicateState::ETrue ? true : false);
+		UPipeGameUI* gameUI = GetUIMgr()->GetPipeGameUI();
+		if (gameUI)
+		{
+			gameUI->CheckCommittedAnswerAnimation(PipeGameSuccessInfo == EReplicateState::ETrue ? true : false);
+		}
 	}
 }
 
 EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 {
 	// 너비 우선 탐색.
-	const TArray<FPipeNode>& nodes = PipeGameInfo.GetPipeNodes();
-	int32 endPosIndex = (PipeGameInfo.GetGridSize() * PipeGameInfo.GetGridSize()) - 1;
-
-	TQueue<FPipeNode*> answerNodes;
-	TSet<FIntPoint> closeNodes;
-	answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[0]));
-	FPipeNode* targetNode = nullptr;
-	while (!answerNodes.IsEmpty())
+	if (GetNetMode() == NM_DedicatedServer)
 	{
-		answerNodes.Dequeue(targetNode);
-		targetNode->SetAnswerNode(true);
+		const TArray<FPipeNode>& nodes = PipeGameInfo.GetPipeNodes();
+		int32 endPosIndex = (PipeGameInfo.GetGridSize() * PipeGameInfo.GetGridSize()) - 1;
 
-		check(targetNode);
-		if (targetNode->GetPipeLocation() == nodes[nodes.Num() - 1].GetPipeLocation())
+		TQueue<FPipeNode*> answerNodes;
+		TSet<FIntPoint> closeNodes;
+		answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[0]));
+		FPipeNode* targetNode = nullptr;
+		while (!answerNodes.IsEmpty())
 		{
-			targetNode->SetLastAnswerNode(true);
-			return EReplicateState::ETrue;
-		}
+			answerNodes.Dequeue(targetNode);
+			targetNode->SetAnswerNode(true);
 
-		// 무한루프 방지를 위해서 탐색이 끝난 파이프 노드를 따로 저장/체크한다.
-		if (closeNodes.Contains(targetNode->GetPipeLocation()))
-			continue;
-		closeNodes.Add(targetNode->GetPipeLocation());
-
-		if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight) &&
-			PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
-		{
-			int32 index = targetNode->GetPipeLocation().X + 
-				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
-			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
-			
-			index = targetNode->GetPipeLocation().X +
-				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
-			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
-		}
-		else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight))
-		{
-			int32 index = targetNode->GetPipeLocation().X +
-				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
-			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
-		}
-		else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
-		{
-			int32 index = targetNode->GetPipeLocation().X +
-				(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
-			answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
-		}
-		else
-		{
-			if (PipeGameInfo.IsStartNode(*targetNode))
+			check(targetNode);
+			if (targetNode->GetPipeLocation() == nodes[nodes.Num() - 1].GetPipeLocation())
 			{
-				targetNode->SetAnswerNode(false);
+				targetNode->SetLastAnswerNode(true);
+				return EReplicateState::ETrue;
+			}
+
+			// 무한루프 방지를 위해서 탐색이 끝난 파이프 노드를 따로 저장/체크한다.
+			if (closeNodes.Contains(targetNode->GetPipeLocation()))
+				continue;
+			closeNodes.Add(targetNode->GetPipeLocation());
+
+			if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight) &&
+				PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
+			{
+				int32 index = targetNode->GetPipeLocation().X +
+					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
+				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
+
+				index = targetNode->GetPipeLocation().X +
+					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
+				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
+			}
+			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight))
+			{
+				int32 index = targetNode->GetPipeLocation().X +
+					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
+				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
+			}
+			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
+			{
+				int32 index = targetNode->GetPipeLocation().X +
+					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
+				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
+			}
+			else
+			{
+				if (PipeGameInfo.IsStartNode(*targetNode))
+				{
+					targetNode->SetAnswerNode(false);
+				}
 			}
 		}
-	}
 
-	if (targetNode)
-	{
-		targetNode->SetLastAnswerNode(true);
+		if (targetNode)
+		{
+			targetNode->SetLastAnswerNode(true);
+		}
 	}
+	
 	return EReplicateState::EFalse;
 }
 
