@@ -3,33 +3,54 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "Object/FreelistActor.h"
+#include "Components/ActorComponent.h"
+#include "Helper/Helper.h"
 #include "Freelist.generated.h"
 
 /**
  * 
  */
+class AFreelistActor;
+
 UCLASS()
-class ROOMESCAPEFPS_API UFreelist : public UObject
+class ROOMESCAPEFPS_API UFreelist : public UActorComponent
 {
 	GENERATED_BODY()
 	
 public:
 
+	// Sets default values for this actor's properties
+	UFreelist();
+
 	template<typename T>
 	T* GetElement()
 	{
+		check(T::StaticClass()->IsChildOf(AFreelistActor::StaticClass()));
+
 		T* t = nullptr;
-		if (FreeList.Num() <= 0)
+
+		bool bFind = false;
+		int32 i = 0;
+		for (; i < FreeList.Num(); ++i)
 		{
-			t = NewObject<T>(this);
-		}
-		else
-		{
-			t = FreeList.GetHead()->GetValue();
+			if (FreeList[i] == nullptr)
+				break;
+
+			AFreelistActor* actor = Cast<AFreelistActor>(FreeList[i]);
+			if (actor->IsInFreeList())
+			{
+				t = Cast<T>(FreeList[i]);
+				bFind = true;
+				break;
+			}
 		}
 
+		if (bFind == false)
+		{
+			t = GetWorld()->SpawnActor<T>(TargetObjectToPooling.LoadSynchronous());
+			FreeList.Add(t);
+		}
+		check(t);
 		t->SetIsInFreeList(false);
 		return t;
 	}
@@ -38,26 +59,22 @@ public:
 	void ReturnElement(T* t)
 	{
 		t->SetIsInFreeList(true);
-		if (FreeList.Num() <= 0)
-		{
-			FreeList.AddHead(t);
-		}
-		else
-		{
-			FreeList.AddTail(t);
-		}
 	}
 
-	void ReleaseFreeList()
-	{
-		for (auto it = FreeList.GetHead(); it != nullptr; ++it)
-		{
-			AFreelistActor* actor = it->GetValue();
-			actor->Destroy();
-		}
-		FreeList.Empty();
-	}
+	void ReleaseFreeList();
+
+	UPROPERTY(EditAnywhere)
+		TSoftClassPtr<AFreelistActor> TargetObjectToPooling;
+
+public:
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
 
 private:
-	TDoubleLinkedList<AFreelistActor*> FreeList;
+	UPROPERTY()
+	TArray<AFreelistActor*> FreeList;
 };
