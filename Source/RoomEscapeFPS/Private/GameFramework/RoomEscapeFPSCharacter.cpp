@@ -135,7 +135,7 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 			cachedInteractObject = result.Actor.Get();
 		}
 
-		ClientTurnOnOffWidget_Implementation(IsLooking);
+		TurnOnOffWidget(IsLooking);
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
@@ -181,7 +181,7 @@ void ARoomEscapeFPSCharacter::ChangeInteractText(FName& text)
 		InteractWidget->SetText(text);
 	}
 }
-void ARoomEscapeFPSCharacter::ClientTurnOnOffWidget_Implementation(bool bOnOff)
+void ARoomEscapeFPSCharacter::TurnOnOffWidget(bool bOnOff)
 {
 	if (!IsLocallyControlled() || GetNetMode() != NM_Client)
 		return;
@@ -199,6 +199,7 @@ void ARoomEscapeFPSCharacter::ClientTurnOnOffWidget_Implementation(bool bOnOff)
 			ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	}
 }
+
 void ARoomEscapeFPSCharacter::OnFlash()
 {
 	ServerOnFlash();
@@ -212,7 +213,6 @@ void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		IsFlash = !IsFlash;
-		OnRep_IsFlash();
 	}
 }
 void ARoomEscapeFPSCharacter::OnRep_IsFlash()
@@ -226,6 +226,23 @@ void ARoomEscapeFPSCharacter::ToggleFlash()
 		SpotLight->ToggleVisibility();
 	}
 }
+
+void ARoomEscapeFPSCharacter::OnFire()
+{
+	ServerOnFire();
+}
+bool ARoomEscapeFPSCharacter::ServerOnFire_Validate()
+{
+	return true;
+}
+void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		// TODO: 부적 탄체 생성, 플레이어로부터 발사 처리.
+	}
+}
+
 void ARoomEscapeFPSCharacter::FlashToggleAnimation()
 {
 	if (FlashAnimation != nullptr)

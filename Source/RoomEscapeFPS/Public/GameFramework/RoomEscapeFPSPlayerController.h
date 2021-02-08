@@ -30,7 +30,8 @@ protected:
 	void OnFlash();
 	UFUNCTION()
 	void OnUse();
-
+	UFUNCTION()
+	void OnFire();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

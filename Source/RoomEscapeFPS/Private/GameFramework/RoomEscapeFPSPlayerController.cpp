@@ -77,6 +77,14 @@ void ARoomEscapeFPSPlayerController::OnUse()
 		character->OnUse();
 	}
 }
+void ARoomEscapeFPSPlayerController::OnFire()
+{
+	ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter());
+	if (character)
+	{
+		character->OnFire();
+	}
+}
 void ARoomEscapeFPSPlayerController::OnTestKey()
 {
 	// 개인 UI 조작 시 이런식으로 호출하면 된다.

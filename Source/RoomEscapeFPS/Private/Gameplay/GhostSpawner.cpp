@@ -5,6 +5,7 @@
 #include "Gameplay/Freelist.h"
 #include "Object/GhostSoul.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TimerManager.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
@@ -18,32 +19,52 @@ AGhostSpawner::AGhostSpawner()
 	SetRootComponent(SpawnVolume);
 
 	GhostActorFreelist = CreateDefaultSubobject<UFreelist>(TEXT("GhostFreelist"));
-	//GhostActorFreelist->SetNetAddressable();
-	//GhostActorFreelist->SetIsReplicated(true);
 }
 
 // Called when the game starts or when spawned
 void AGhostSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-	bActive = false;
+	// 임시 코드. 추후 트리거를 통해 true 로 설정해야 함.
+	SetActive(true);
 }
 
+void AGhostSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	//DOREPLIFETIME(AGhostSpawner, fSpawnTime);
+}
+
+void AGhostSpawner::SpawnGhost()
+{
+	if (GetNetMode() == NM_DedicatedServer && bActive)
+	{
+		AGhostSoul* ghost = GhostActorFreelist->GetElement<AGhostSoul>();
+
+		// TODO: actor의 위치 랜덤 설정 및 이동 처리.
+		ghost->SetActorLocation(UKismetMathLibrary::RandomPointInBoundingBox(
+			SpawnVolume->Bounds.Origin, SpawnVolume->Bounds.BoxExtent));
+
+		float fTime = FMath::RandRange(fSpawnTime - 1.f, fSpawnTime + 1.f);
+		GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
+			fTime, false);
+	}
+}
+void AGhostSpawner::DeactiveGhost(AGhostSoul* ghost)
+{
+	// TODO: Freelist에 오브젝트를 반납.
+}
+void AGhostSpawner::SetActive(bool bInActive)
+{
+	bActive = bInActive;
+	if (GetNetMode() == NM_DedicatedServer && bActive)
+	{
+		SpawnGhost();
+	}
+}
 // Called every frame
 void AGhostSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (GetNetMode() == NM_DedicatedServer && bActive)
-	{
-		fSumDelta += DeltaTime;
-		if (fSumDelta > fSpawnTime)
-		{
-			fSumDelta = 0.f;
-			AGhostSoul* ghost = GhostActorFreelist->GetElement<AGhostSoul>();
-
-			// TODO: actor의 위치 랜덤 설정 및 이동 처리.
-			ghost->SetActorLocation(UKismetMathLibrary::RandomPointInBoundingBox(SpawnVolume->Bounds.Origin, SpawnVolume->Bounds.BoxExtent));
-		}
-	}
 }
 

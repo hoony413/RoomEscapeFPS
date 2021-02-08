@@ -10,7 +10,8 @@
 /**
  * 
  */
-class AFreelistActor;
+class UFreelistObjectInterface;
+class IFreelistObjectInterface;
 
 UCLASS()
 class ROOMESCAPEFPS_API UFreelist : public UActorComponent
@@ -25,8 +26,7 @@ public:
 	template<typename T>
 	T* GetElement()
 	{
-		check(T::StaticClass()->IsChildOf(AFreelistActor::StaticClass()));
-
+		check(T::StaticClass()->IsChildOf(AActor::StaticClass()));
 		T* t = nullptr;
 
 		bool bFind = false;
@@ -35,9 +35,10 @@ public:
 		{
 			if (FreeList[i] == nullptr)
 				break;
-
-			AFreelistActor* actor = Cast<AFreelistActor>(FreeList[i]);
-			if (actor->IsInFreeList())
+	
+			IFreelistObjectInterface* freelistObj = Cast<IFreelistObjectInterface>(FreeList[i]);
+			check(freelistObj);
+			if (freelistObj->IsInFreeList())
 			{
 				t = Cast<T>(FreeList[i]);
 				bFind = true;
@@ -64,7 +65,7 @@ public:
 	void ReleaseFreeList();
 
 	UPROPERTY(EditAnywhere)
-		TSoftClassPtr<AFreelistActor> TargetObjectToPooling;
+		TSoftClassPtr<class AActor> TargetObjectToPooling;
 
 public:
 	// Called every frame
@@ -76,5 +77,6 @@ protected:
 
 private:
 	UPROPERTY()
-	TArray<AFreelistActor*> FreeList;
+	TArray<class AActor*> FreeList;
+
 };

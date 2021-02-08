@@ -15,13 +15,20 @@ public:
 	// Sets default values for this actor's properties
 	AGhostSpawner();
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void SpawnGhost();
+	void DeactiveGhost(class AGhostSoul* ghost);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void SetActive(bool bInActive);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -32,8 +39,8 @@ private:
 	UPROPERTY()
 		bool bActive;
 
-	UPROPERTY()
+	FTimerHandle SpawnTimer;
+
+	UPROPERTY(/*Replicated, */ EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		float fSpawnTime = 3.f;
-	UPROPERTY()
-		float fSumDelta = 0.f;
 };

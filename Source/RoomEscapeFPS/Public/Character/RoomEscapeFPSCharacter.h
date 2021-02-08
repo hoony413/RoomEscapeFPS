@@ -51,8 +51,9 @@ protected:
 	virtual void BeginPlay();
 
 	void ChangeInteractText(FName& text);
-	UFUNCTION(Client, Unreliable)
-	void ClientTurnOnOffWidget(bool bOnOff);
+
+	UFUNCTION()
+		void TurnOnOffWidget(bool bOnOff);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -87,6 +88,8 @@ public:
 		void OnUse();
 	UFUNCTION()
 		void OnFlash();
+	UFUNCTION()
+		void OnFire();
 
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
@@ -103,6 +106,9 @@ protected:
 		void ServerOnFlash();
 	UFUNCTION()
 		void OnRep_IsFlash();
+
+	UFUNCTION(Reliable, Server, WithValidation)
+		void ServerOnFire();
 
 	void ToggleFlash();
 	UFUNCTION()
