@@ -29,6 +29,9 @@ void ARoomEscapeFPSPlayerController::SetupInputComponent()
 	// Bind Use event
 	InputComponent->BindAction("Use", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnUse);
 
+	// Bind Fire event
+	InputComponent->BindAction("Fire", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnFire);
+
 	InputComponent->BindAction("TestKey", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnTestKey);
 	
 	// Bind movement events

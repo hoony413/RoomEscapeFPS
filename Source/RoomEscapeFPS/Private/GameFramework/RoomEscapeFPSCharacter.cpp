@@ -18,6 +18,9 @@
 #include "Object/InteractiveObject.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
+#include "Gameplay/ProjectileHandler.h"
+#include "Object/CharmProjectile.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -240,6 +243,29 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		// TODO: 부적 탄체 생성, 플레이어로부터 발사 처리.
+		if (!cachedProjectileHandlerPtr.IsValid())
+		{
+			cachedProjectileHandlerPtr = Helper::GetProjectileHandler(GetWorld());
+		}
+		
+		check(cachedProjectileHandlerPtr.IsValid());
+
+		ACharmProjectile* proj = cachedProjectileHandlerPtr.Get()->GetCharm();
+		if (proj)
+		{
+			// 탄체 시작위치: 보정된 캐릭터 발 위치(50) + 캐릭터 방향벡터 * 스칼라 값(20) 
+			FVector FirePosition = 
+				GetCharacterMovement()->GetActorFeetLocation() + 
+				(GetActorForwardVector() * 20);
+			FirePosition.Z += 100.f;
+
+			// 탄체 발사방향.
+			//FVector FireDir = FirstPersonCameraComponent->GetForwardVector();
+			// 탄체 주인 설정 후 격발은 Netmulticast로 해야하나?
+			
+			proj->SetInstigator(this);
+			proj->Fire(FirePosition, FirstPersonCameraComponent->GetComponentRotation().Vector());
+		}
 	}
 }
 

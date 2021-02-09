@@ -22,7 +22,7 @@ AGhostSoul::AGhostSoul()
 	MoveToLocationBoundingBox = CreateDefaultSubobject<UBoxComponent>(TEXT("MovableBoundingBox"));
 	MoveToLocationBoundingBox->SetupAttachment(RootComponent);
 
-	// Create a gun mesh component
+	// Create a mesh component
 	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
 	BodyMesh->bCastDynamicShadow = false;
 	BodyMesh->CastShadow = false;
@@ -31,7 +31,7 @@ AGhostSoul::AGhostSoul()
 	GhostMovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("GhostMovement"));
 	if (GhostMovementComponent)
 	{
-		GhostMovementComponent->UpdatedComponent = SphereCol;
+		GhostMovementComponent->SetUpdatedComponent(SphereCol);
 	}
 
 	AIControllerClass = AGhostAIController::StaticClass();

@@ -8,7 +8,9 @@
 #include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Managers/RoomEscapeFPSGameInstance.h"
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
-#include "Paper2D/Classes/PaperSprite.h"
+#include "Runtime/Engine/Public/EngineUtils.h"
+#include "Gameplay/ProjectileHandler.h"
+//#include "Paper2D/Classes/PaperSprite.h"
 
 /**
  * 유틸리티 함수 모음.
@@ -38,9 +40,31 @@ namespace Helper
 	
 	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda);
 
-	ROOMESCAPEFPS_API FORCEINLINE void SetSprite(UPaperSprite* InSprite, FSlateBrush& InBrush)
+	//ROOMESCAPEFPS_API FORCEINLINE void SetSprite(UPaperSprite* InSprite, FSlateBrush& InBrush)
+	//{
+	//	check(InSprite);
+	//	InBrush.SetResourceObject(InSprite);
+	//}
+
+	// world에서 pred 조건에 맞는 actor를 찾아준다.
+	// 1. pred는 아래와 같은 형식의 lambda 함수를 사용하고
+	//		auto functor = [&](T* e)->bool { return true/false; };
+	// 2. 호출은 아래와 같이
+	//		T* e = Helper::FindActor<T>(GetWorld(), functor);
+	template <typename T, typename Functor>
+	T* FindActor(UWorld* world, Functor functor)
 	{
-		check(InSprite);
-		InBrush.SetResourceObject(InSprite);
+		ensure(world);
+		for (TActorIterator<T> it(world); it; ++it)
+		{
+			if (functor(*it))
+			{
+				return *it;
+			}
+		}
+
+		return nullptr;
 	}
+
+	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world);
 }

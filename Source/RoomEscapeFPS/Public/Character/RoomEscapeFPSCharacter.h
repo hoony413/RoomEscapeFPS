@@ -122,5 +122,6 @@ private:
 	bool IsFlash = false;
 	bool IsLooking = false;
 
+	TWeakObjectPtr<class AProjectileHandler> cachedProjectileHandlerPtr;
 };
 
