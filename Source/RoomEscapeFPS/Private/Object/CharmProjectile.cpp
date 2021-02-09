@@ -24,11 +24,9 @@ ACharmProjectile::ACharmProjectile()
 	if (ProjMovement)
 	{
 		ProjMovement->SetUpdatedComponent(Billboard);
-		ProjMovement->InitialSpeed = 3000.0f;
-		ProjMovement->MaxSpeed = 3000.0f;
+		ProjMovement->InitialSpeed = 2400.0f;
+		ProjMovement->MaxSpeed = 2400.0f;
 		ProjMovement->bRotationFollowsVelocity = true;
-		ProjMovement->bShouldBounce = true;
-		ProjMovement->Bounciness = 0.3f;
 	}
 }
 
@@ -51,13 +49,17 @@ void ACharmProjectile::SetInstigator(class AActor* InInstigator)
 
 void ACharmProjectile::Fire(const FVector& pos, const FVector& dir)
 {
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		NetMulticastFire(pos, dir);
+	}
+}
+void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const FVector& dir)
+{
 	check(ProjMovement);
 	SetActorLocation(pos);
-	SetActorRotation(dir.Rotation());
-	ProjMovement->Velocity = (GetActorRotation().Vector() * ProjMovement->InitialSpeed);
-	//ProjMovement->SetVelocityInLocalSpace(dir * ProjMovement->InitialSpeed);
+	ProjMovement->Velocity = (dir * ProjMovement->InitialSpeed);
 }
-
 void ACharmProjectile::OnProjectileStop(const FHitResult& hitResult)
 {
 	// 고스트 삭제(서버)

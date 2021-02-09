@@ -32,6 +32,9 @@ protected:
 	UFUNCTION()
 		void OnProjectileStop(const FHitResult& hitResult);
 
+	UFUNCTION(NetMulticast, Reliable)
+		void NetMulticastFire(const FVector& pos, const FVector& dir);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
