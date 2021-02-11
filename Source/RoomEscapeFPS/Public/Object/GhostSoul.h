@@ -31,17 +31,16 @@ public:
 	virtual void SetIsInFreeList(bool bFreeList) override;
 
 	UFUNCTION()
-		void PlayDeadAnimation();
+		void SetAsDead();
 
 	virtual void Tick(float DeltaTime) override;
 
 protected:
-	UFUNCTION(Server, Reliable)
-		void ServerReturnGhostElement();
-
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+		void DelayActivateParticle();
 
 	UPROPERTY()
 		bool bIsInFreeList;
@@ -56,6 +55,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UBoxComponent* MoveToLocationBoundingBox;
 
+	UPROPERTY(EditAnywhere, Category = Particle, meta = (AllowPrivateAccess = "true"))
+		class UParticleSystemComponent* GhostParticle;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UFloatingPawnMovement* GhostMovementComponent;
 
@@ -65,15 +67,5 @@ private:
 	UPROPERTY(/*Replicated, */EditAnywhere, BlueprintReadOnly, Category = "Ghost Movement Target Pos", Meta = (AllowPrivateAccess = "true"))
 		FVector BonudingBoxSize;
 
-	UPROPERTY(EditAnywhere, Category = "Ghost Dead Mat", Meta = (AllowPrivateAccess = "true"))
-		class UMaterialInstance* DeadMaterialInstance;
-
-	UPROPERTY()
-		class UMaterialInstanceDynamic* mid;
-	UPROPERTY()
-		class UMaterialInstance* defaultMat;
-
-	float fDeadAnimStartTime = 0.f;
-
-	bool bMarkDead = false;
+	FTimerHandle EmitterDelayTimer;
 };

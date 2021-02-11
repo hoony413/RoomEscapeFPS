@@ -10,12 +10,13 @@
 #include "Kismet/KismetMaterialLibrary.h"
 #include "Helper/Helper.h"
 #include "Gameplay/GhostSpawner.h"
+#include "Engine/Classes/Particles/ParticleSystemComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AGhostSoul::AGhostSoul()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	bReplicates = true;
 
@@ -30,6 +31,15 @@ AGhostSoul::AGhostSoul()
 	BodyMesh->bCastDynamicShadow = false;
 	BodyMesh->CastShadow = false;
 	BodyMesh->SetupAttachment(RootComponent);
+
+	GhostParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GhostParticle"));
+	GhostParticle->SetupAttachment(RootComponent);
+	GhostParticle->bAutoActivate = true;
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleAsset(TEXT("ParticleSystem'/Game/Resources/Materials/GhostFlaming_Particle.GhostFlaming_Particle'"));
+	if (ParticleAsset.Succeeded())
+	{
+		GhostParticle->SetTemplate(ParticleAsset.Object);
+	}
 
 	GhostMovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("GhostMovement"));
 	if (GhostMovementComponent)
@@ -47,7 +57,6 @@ void AGhostSoul::BeginPlay()
 	Super::BeginPlay();
 
 	SetIsInFreeList(false);
-	bMarkDead = false;
 	SphereCol->SetSphereRadius(100.f);
 }
 UBoxComponent* AGhostSoul::GetBoundingBox()
@@ -56,58 +65,26 @@ UBoxComponent* AGhostSoul::GetBoundingBox()
 	return MoveToLocationBoundingBox;
 }
 
-void AGhostSoul::PlayDeadAnimation()
+void AGhostSoul::SetAsDead()
 {
-	fDeadAnimStartTime = GetWorld()->GetTimeSeconds();
-	bMarkDead = true;
-	mid = UKismetMaterialLibrary::CreateDynamicMaterialInstance(this, DeadMaterialInstance);
-	if (mid)
+	if (GetNetMode() == NM_DedicatedServer)
 	{
-		defaultMat = Cast<UMaterialInstance>(BodyMesh->GetMaterial(0));
-		BodyMesh->SetMaterial(0, mid);
+		auto GhostSpawnerFinder = [&](AGhostSpawner* e)->bool
+		{
+			return true;
+		};
+
+		AGhostSpawner* spawner = Helper::FindActor<AGhostSpawner>(GetWorld(), GhostSpawnerFinder);
+		if (spawner)
+		{
+			spawner->DeactiveGhost(this);
+		}
 	}
 }
 
 void AGhostSoul::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (bMarkDead && mid)
-	{
-		float CurrentValue = 1 - (GetWorld()->GetTimeSeconds() - fDeadAnimStartTime);
-		if (CurrentValue >= 0.f)
-		{
-			mid->SetVectorParameterValue(TEXT("BaseColor"), FLinearColor(CurrentValue, CurrentValue, CurrentValue));
-			mid->SetScalarParameterValue(TEXT("TransparencyAmount"), CurrentValue);
-		}
-		else
-		{
-			bMarkDead = false;
-			if (GetNetMode() == NM_DedicatedServer)
-			{
-				ServerReturnGhostElement();
-			}
-		}
-	}
-}
-void AGhostSoul::ServerReturnGhostElement_Implementation()
-{
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		int32 count = 0;
-		auto functor = [&](AGhostSpawner* e)->bool 
-		{
-			++count;
-			return true;
-		};
-
-		AGhostSpawner* spawner = Helper::FindActor<AGhostSpawner>(GetWorld(), functor);
-		if (spawner)
-		{
-			spawner->DeactiveGhost(this);
-		}
-
-		check(count == 1);
-	}
 }
 void AGhostSoul::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -131,10 +108,6 @@ void AGhostSoul::SetIsInFreeList(bool bFreeList)
 	// 리플리케이트 옵션 끄기
 	bReplicates = !bFreeList;
 
-	//if (bIsInFreeList)
-	//{
-	//	BodyMesh->SetMaterial(0, defaultMat);
-	//}
 	if(!bFreeList)
 	{
 		AGhostAIController* controller = Cast<AGhostAIController>(GetController());
@@ -142,7 +115,17 @@ void AGhostSoul::SetIsInFreeList(bool bFreeList)
 		{
 			controller->SetGhostState(EGhostStateMachine::EIdle);
 		}
+		// TODO: 풀에 있는 고스트 사용 시 파티클 잔상이 기존 위치에 남아서 보이는 문제가 있어 
+		// 고스트 리스폰 시 딜레이를 줘야 한다(아래 코드가 왜 의도대로 되지 않는지 확인 필요.
+		//GhostParticle->SetVisibility(false);
+		//GetWorld()->GetTimerManager().SetTimer(EmitterDelayTimer, this, &AGhostSoul::DelayActivateParticle,
+		//	1.0f, false);
 	}
+}
+
+void AGhostSoul::DelayActivateParticle()
+{
+	//GhostParticle->SetVisibility(true);
 }
 
 #if WITH_EDITOR

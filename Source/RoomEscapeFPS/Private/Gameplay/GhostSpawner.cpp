@@ -13,7 +13,7 @@
 AGhostSpawner::AGhostSpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
 	SpawnVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnVolume"));
@@ -47,16 +47,16 @@ void AGhostSpawner::SpawnGhost()
 			SpawnVolume->Bounds.Origin, SpawnVolume->Bounds.BoxExtent));
 
 		float fTime = FMath::RandRange(fSpawnTime - 1.f, fSpawnTime + 1.f);
-		//GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
-		//	fTime, false);
+		GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
+			fTime, false);
 	}
 }
 void AGhostSpawner::DeactiveGhost(AGhostSoul* ghost)
 {
 	// TODO: Freelist에 오브젝트를 반납.
 	GhostActorFreelist->ReturnElement(ghost);
-	GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
-		3.0f, false);
+	//GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
+	//	1.5f, false);
 }
 void AGhostSpawner::SetActive(bool bInActive)
 {
@@ -70,10 +70,4 @@ void AGhostSpawner::SetActive(bool bInActive)
 void AGhostSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-void AGhostSpawner::BeginDestroy()
-{
-	//GhostActorFreelist->ReleaseFreeList();
-	Super::BeginDestroy();
 }

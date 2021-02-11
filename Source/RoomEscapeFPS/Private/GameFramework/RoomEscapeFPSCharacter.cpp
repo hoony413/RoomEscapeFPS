@@ -264,7 +264,7 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 			// 탄체 시작위치: 보정된 캐릭터 발 위치(50) + 캐릭터 방향벡터 * 스칼라 값(20) 
 			FVector FirePosition = 
 				GetCharacterMovement()->GetActorFeetLocation() + 
-				(GetActorForwardVector() * 20);
+				(GetActorForwardVector() * 50);
 			FirePosition.Z += 120.f;
 
 			// 격발은 Netmulticast로.

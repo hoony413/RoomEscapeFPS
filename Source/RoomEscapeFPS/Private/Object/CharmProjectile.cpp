@@ -9,6 +9,10 @@
 #include "Gameplay/ProjectileHandler.h"
 #include "Object/GhostSoul.h"
 #include "GameFramework/GhostAIController.h"
+#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
+//#include "Object/ProjectileExplodeEffect.h"
+#include "Runtime/Engine/Classes/Particles/ParticleSystem.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ACharmProjectile::ACharmProjectile()
@@ -18,11 +22,12 @@ ACharmProjectile::ACharmProjectile()
 
 	bReplicates = true;
 	SphereCol = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCol"));
-	//SphereCol->SetupAttachment(RootComponent);
 	SetRootComponent(SphereCol);
 
+	SphereCol->SetWalkableSlopeOverride(FWalkableSlopeOverride(WalkableSlope_Unwalkable, 0.f));
+	SphereCol->CanCharacterStepUpOn = ECB_No;
+
 	CharmMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CharmPlaneMesh"));
-	//SetRootComponent(CharmMesh);
 	CharmMesh->SetupAttachment(RootComponent);
 
 	ProjMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("CharmMovement"));
@@ -42,9 +47,9 @@ void ACharmProjectile::BeginPlay()
 
 	AActor* owner = GetOwner();
 	SphereCol->IgnoreActorWhenMoving(owner, true);
-	if (SphereCol->OnComponentBeginOverlap.IsBound() == false)
+	if (SphereCol->OnComponentHit.IsBound() == false)
 	{
-		SphereCol->OnComponentBeginOverlap.AddDynamic(this, &ACharmProjectile::OnComponentBeginOverlap);
+		SphereCol->OnComponentHit.AddDynamic(this, &ACharmProjectile::OnComponentHit);
 	}
 
 	Instigator = owner;
@@ -55,6 +60,8 @@ void ACharmProjectile::Fire(const FVector& pos, const FVector& dir)
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		NetMulticastFire(pos, dir);
+		fLifeStartTime = GetWorld()->GetTimeSeconds();
+		fLifeTime = 1.f;
 	}
 }
 void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const FVector& dir)
@@ -65,21 +72,12 @@ void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const
 	ProjMovement->Velocity = (dir * ProjMovement->InitialSpeed);
 }
 
-void ACharmProjectile::OnComponentBeginOverlap
-(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACharmProjectile::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor == nullptr)
 		return;
-
 	if (Instigator.IsValid() && Instigator.Get() == OtherActor)
 		return;
-
-	AProjectileHandler* handler = Helper::GetProjectileHandler(GetWorld());
-	if (handler)
-	{
-		handler->ReturnCharm(this);
-	}
 
 	if (OtherActor->IsA<AGhostSoul>())
 	{
@@ -90,50 +88,53 @@ void ACharmProjectile::OnComponentBeginOverlap
 			if (ghostAI)
 			{
 				if (ghostAI->GetGhostState() != EGhostStateMachine::EDead)
-				{	// SetGhostState 안에서 사망 처리 Multicast가 서버로부터 호출된다.
+				{	
+					// 고스트를 맞춘 경우만 폭발 이펙트를 RPC한다.
+					NetMulticastProjectileExplode();
+
+					// SetGhostState 안에서 사망 처리 Multicast가 서버로부터 호출된다.
 					ghostAI->SetGhostState(EGhostStateMachine::EDead);
 				}
 			}
 		}
 	}
-}
-void ACharmProjectile::OnProjectileStop(const FHitResult& hitResult)
-{
-	// 서버: 탄체 삭제 / 고스트 피격 판정 시 고스트 사망 멀티캐스트
-	if (GetNetMode() == NM_DedicatedServer)
+	else
 	{
-		AProjectileHandler* handler = Helper::GetProjectileHandler(GetWorld());
-		if (handler)
+		if (GetNetMode() == NM_DedicatedServer)
 		{
-			handler->ReturnCharm(this);
-		}
-
-		if (hitResult.Actor.IsValid())
-		{
-			if (hitResult.Actor.Get()->IsA<AGhostSoul>())
-			{
-				AGhostSoul* ghost = Cast<AGhostSoul>(hitResult.Actor.Get());
-				if (ghost)
-				{
-					AGhostAIController* ghostAI = Cast<AGhostAIController>(ghost->GetController());
-					if (ghostAI)
-					{
-						if (ghostAI->GetGhostState() != EGhostStateMachine::EDead)
-						{	// SetGhostState 안에서 사망 처리 후 Multicast가 서버로부터 호출된다.
-							ghostAI->SetGhostState(EGhostStateMachine::EDead);
-						}
-					}
-				}
-			}
+			DeactiveCharm();
 		}
 	}
 }
 
+void ACharmProjectile::NetMulticastProjectileExplode_Implementation()
+{
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), 
+		ExplosionParticle.LoadSynchronous(), GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		DeactiveCharm();
+	}
+}
+void ACharmProjectile::DeactiveCharm()
+{
+	AProjectileHandler* handler = Helper::GetProjectileHandler(GetWorld());
+	if (handler)
+	{
+		handler->ReturnCharm(this);
+	}
+}
 // Called every frame
 void ACharmProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		if (fLifeStartTime + fLifeTime < GetWorld()->GetTimeSeconds())
+		{
+			DeactiveCharm();
+		}
+	}
 }
 
 bool ACharmProjectile::IsInFreeList()

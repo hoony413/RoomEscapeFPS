@@ -23,7 +23,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	virtual void BeginDestroy() override;
 
 public:	
 	// Called every frame
@@ -43,5 +42,5 @@ private:
 	FTimerHandle SpawnTimer;
 
 	UPROPERTY(/*Replicated, */ EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		float fSpawnTime = 3.f;
+		float fSpawnTime = 1.5f;
 };

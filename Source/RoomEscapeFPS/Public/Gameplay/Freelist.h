@@ -31,8 +31,7 @@ public:
 		T* t = nullptr;
 
 		bool bFind = false;
-		int32 i = 0;
-		for (; i < FreeList.Num(); ++i)
+		for (int32 i = 0; i < FreeList.Num(); ++i)
 		{
 			if (FreeList[i] == nullptr)
 				break;
@@ -57,6 +56,7 @@ public:
 			FreeList.Add(t);
 		}
 		check(t);
+
 		t->SetIsInFreeList(false);
 		return t;
 	}

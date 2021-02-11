@@ -47,7 +47,7 @@ void AGhostAIController::NetMulticastOnGhostDead_Implementation()
 		AGhostSoul* ghost = Cast<AGhostSoul>(pawn);
 		if (ghost)
 		{	// 사라짐 애니메이션.
-			ghost->PlayDeadAnimation();
+			ghost->SetAsDead();
 		}
 	}
 }

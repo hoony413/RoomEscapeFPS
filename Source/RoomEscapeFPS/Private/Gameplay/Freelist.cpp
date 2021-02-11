@@ -7,7 +7,7 @@
 UFreelist::UFreelist()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 }
 
@@ -33,7 +33,10 @@ void UFreelist::ReleaseFreeList()
 {
 	for (auto& elem : FreeList)
 	{
-		elem->Destroy();
+		if (elem != nullptr && !elem->IsPendingKillOrUnreachable())
+		{
+			elem->Destroy();
+		}
 	}
 	FreeList.Empty();
 }

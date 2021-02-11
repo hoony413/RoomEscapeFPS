@@ -30,7 +30,7 @@ namespace Helper
 		InActor->SetActorHiddenInGame(!bActive);
 		
 		// ¾×ÅÍÀÇ Ãæµ¹ °ËÃâ ²ô±â
-		InActor->SetActorEnableCollision(!bActive);
+		InActor->SetActorEnableCollision(bActive);
 		
 		// ¾×ÅÍ Æ½ ²ô±â
 		InActor->SetActorTickEnabled(bActive);

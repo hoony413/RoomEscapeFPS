@@ -9,7 +9,7 @@
 AProjectileHandler::AProjectileHandler()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
 	CharmFreelist = CreateDefaultSubobject<UFreelist>(TEXT("CharmFreelist"));
@@ -40,8 +40,3 @@ void AProjectileHandler::Tick(float DeltaTime)
 
 }
 
-void AProjectileHandler::BeginDestroy()
-{
-	//CharmFreelist->ReleaseFreeList();
-	Super::BeginDestroy();
-}

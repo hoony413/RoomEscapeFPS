@@ -27,21 +27,22 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//DELEGATE_OneParam( FOnProjectileStopDelegate, const FHitResult&, ImpactResult );
+	//DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams(FComponentHitSignature, UPrimitiveComponent, OnComponentHit, UPrimitiveComponent*, HitComponent, AActor*, OtherActor, UPrimitiveComponent*, OtherComp, FVector, NormalImpulse, const FHitResult&, Hit);
 	UFUNCTION()
-		void OnProjectileStop(const FHitResult& hitResult);
-
-	//DELEGATE_SixParams(FComponentBeginOverlapSignature, UPrimitiveComponent, OnComponentBeginOverlap, UPrimitiveComponent*, OverlappedComponent, AActor*, OtherActor, UPrimitiveComponent*, OtherComp, int32, OtherBodyIndex, bool, bFromSweep, const FHitResult &, SweepResult)
-	UFUNCTION()
-		void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		void OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	UFUNCTION(NetMulticast, Reliable)
 		void NetMulticastFire(const FVector& pos, const FVector& dir);
 
+	UFUNCTION(NetMulticast, Reliable)
+		void NetMulticastProjectileExplode();
+
+
+	void DeactiveCharm();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 
 protected:
 	UPROPERTY()
@@ -55,6 +56,9 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* SphereCol;
 
+	UPROPERTY(EditAnywhere, Category = Particle, meta = (AllowPrivateAccess = "true"))
+		TSoftObjectPtr<UParticleSystem> ExplosionParticle;
+
 	UPROPERTY(VisibleDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		class UProjectileMovementComponent* ProjMovement;
 
@@ -63,4 +67,7 @@ private:
 
 	TWeakObjectPtr<class AActor> Instigator;
 	TWeakObjectPtr<class AActor> Victim;
+
+	float fLifeTime = 0.5f;
+	float fLifeStartTime = 0.f;
 };
