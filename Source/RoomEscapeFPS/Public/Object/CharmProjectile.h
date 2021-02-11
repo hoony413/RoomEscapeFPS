@@ -21,16 +21,19 @@ public:
 
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	void SetInstigator(class AActor* InInstigator);
 	void Fire(const FVector& pos, const FVector& dir);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FOnProjectileStopDelegate, const FHitResult&, ImpactResult );
+	//DELEGATE_OneParam( FOnProjectileStopDelegate, const FHitResult&, ImpactResult );
 	UFUNCTION()
 		void OnProjectileStop(const FHitResult& hitResult);
+
+	//DELEGATE_SixParams(FComponentBeginOverlapSignature, UPrimitiveComponent, OnComponentBeginOverlap, UPrimitiveComponent*, OverlappedComponent, AActor*, OtherActor, UPrimitiveComponent*, OtherComp, int32, OtherBodyIndex, bool, bFromSweep, const FHitResult &, SweepResult)
+	UFUNCTION()
+		void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION(NetMulticast, Reliable)
 		void NetMulticastFire(const FVector& pos, const FVector& dir);
@@ -46,14 +49,14 @@ protected:
 
 private:
 
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+		class UStaticMeshComponent* CharmMesh;
+
 	UPROPERTY(VisibleDefaultsOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* SphereCol;
 
-	UPROPERTY(VisibleDefaultsOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		class UProjectileMovementComponent* ProjMovement;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
-		class UBillboardComponent* Billboard;
 
 	UPROPERTY(/*Replicated, */EditAnywhere, BlueprintReadOnly, Category = "Projectile Col Size", Meta = (AllowPrivateAccess = "true"))
 		float SphereRadius;

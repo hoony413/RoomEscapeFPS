@@ -28,12 +28,16 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	FORCEINLINE EGhostStateMachine GetGhostState() { return CurrentState; }
 	void SetGhostState(EGhostStateMachine InState);
 
 protected:
 	virtual void BeginPlay() override;
 		
 	void MoveToGhostInBoundingBoxRandomPos();
+
+	UFUNCTION(NetMulticast, Reliable)
+		void NetMulticastOnGhostDead();
 
 private:
 	FVector cachedMoveDirection;
@@ -43,7 +47,7 @@ private:
 	float fLimitDelta = 2.f;
 	float fDelta = 0.f;
 	bool bActive;
-
+	
 	UPROPERTY()
 	EGhostStateMachine CurrentState;
 };

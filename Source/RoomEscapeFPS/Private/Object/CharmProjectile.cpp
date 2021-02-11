@@ -4,7 +4,11 @@
 #include "Object/CharmProjectile.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "Components/BillboardComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Helper/Helper.h"
+#include "Gameplay/ProjectileHandler.h"
+#include "Object/GhostSoul.h"
+#include "GameFramework/GhostAIController.h"
 
 // Sets default values
 ACharmProjectile::ACharmProjectile()
@@ -13,17 +17,18 @@ ACharmProjectile::ACharmProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
-
-	Billboard = CreateDefaultSubobject<UBillboardComponent>(TEXT("CharmBillboard"));
-	SetRootComponent(Billboard);
-
 	SphereCol = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCol"));
-	SphereCol->SetupAttachment(RootComponent);
+	//SphereCol->SetupAttachment(RootComponent);
+	SetRootComponent(SphereCol);
+
+	CharmMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CharmPlaneMesh"));
+	//SetRootComponent(CharmMesh);
+	CharmMesh->SetupAttachment(RootComponent);
 
 	ProjMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("CharmMovement"));
 	if (ProjMovement)
 	{
-		ProjMovement->SetUpdatedComponent(Billboard);
+		ProjMovement->SetUpdatedComponent(SphereCol);
 		ProjMovement->InitialSpeed = 2400.0f;
 		ProjMovement->MaxSpeed = 2400.0f;
 		ProjMovement->bRotationFollowsVelocity = true;
@@ -35,16 +40,14 @@ void ACharmProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ProjMovement->OnProjectileStop.IsBound() == false)
+	AActor* owner = GetOwner();
+	SphereCol->IgnoreActorWhenMoving(owner, true);
+	if (SphereCol->OnComponentBeginOverlap.IsBound() == false)
 	{
-		ProjMovement->OnProjectileStop.AddDynamic(this, &ACharmProjectile::OnProjectileStop);
+		SphereCol->OnComponentBeginOverlap.AddDynamic(this, &ACharmProjectile::OnComponentBeginOverlap);
 	}
-}
 
-void ACharmProjectile::SetInstigator(class AActor* InInstigator)
-{
-	Instigator = InInstigator;
-	SphereCol->IgnoreActorWhenMoving(Instigator.Get(), true);
+	Instigator = owner;
 }
 
 void ACharmProjectile::Fire(const FVector& pos, const FVector& dir)
@@ -58,13 +61,72 @@ void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const
 {
 	check(ProjMovement);
 	SetActorLocation(pos);
+	SetActorRotation(dir.Rotation());
 	ProjMovement->Velocity = (dir * ProjMovement->InitialSpeed);
+}
+
+void ACharmProjectile::OnComponentBeginOverlap
+(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor == nullptr)
+		return;
+
+	if (Instigator.IsValid() && Instigator.Get() == OtherActor)
+		return;
+
+	AProjectileHandler* handler = Helper::GetProjectileHandler(GetWorld());
+	if (handler)
+	{
+		handler->ReturnCharm(this);
+	}
+
+	if (OtherActor->IsA<AGhostSoul>())
+	{
+		AGhostSoul* ghost = Cast<AGhostSoul>(OtherActor);
+		if (ghost)
+		{
+			AGhostAIController* ghostAI = Cast<AGhostAIController>(ghost->GetController());
+			if (ghostAI)
+			{
+				if (ghostAI->GetGhostState() != EGhostStateMachine::EDead)
+				{	// SetGhostState 안에서 사망 처리 Multicast가 서버로부터 호출된다.
+					ghostAI->SetGhostState(EGhostStateMachine::EDead);
+				}
+			}
+		}
+	}
 }
 void ACharmProjectile::OnProjectileStop(const FHitResult& hitResult)
 {
-	// 고스트 삭제(서버)
-	// 고스트 삭제 연출 멀티캐스트?
-	int32 a = 10;
+	// 서버: 탄체 삭제 / 고스트 피격 판정 시 고스트 사망 멀티캐스트
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		AProjectileHandler* handler = Helper::GetProjectileHandler(GetWorld());
+		if (handler)
+		{
+			handler->ReturnCharm(this);
+		}
+
+		if (hitResult.Actor.IsValid())
+		{
+			if (hitResult.Actor.Get()->IsA<AGhostSoul>())
+			{
+				AGhostSoul* ghost = Cast<AGhostSoul>(hitResult.Actor.Get());
+				if (ghost)
+				{
+					AGhostAIController* ghostAI = Cast<AGhostAIController>(ghost->GetController());
+					if (ghostAI)
+					{
+						if (ghostAI->GetGhostState() != EGhostStateMachine::EDead)
+						{	// SetGhostState 안에서 사망 처리 후 Multicast가 서버로부터 호출된다.
+							ghostAI->SetGhostState(EGhostStateMachine::EDead);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // Called every frame
@@ -81,16 +143,14 @@ bool ACharmProjectile::IsInFreeList()
 void ACharmProjectile::SetIsInFreeList(bool bFreeList)
 {
 	bIsInFreeList = bFreeList;
-	// 액터를 Hidden 처리
-	SetActorHiddenInGame(bIsInFreeList);
-	// 액터의 충돌 검출 끄기
-	SetActorEnableCollision(!bIsInFreeList);
-	// 액터 틱 끄기
-	SetActorTickEnabled(!bIsInFreeList);
+	Helper::SetActorActive(this, !bFreeList);
 
-	//ProjMovement->OnProjectileStop
+	// 오버랩 이벤트 끄기
+	SphereCol->SetGenerateOverlapEvents(!bFreeList);
+
+	// 리플리케이트 옵션 끄기
+	bReplicates = !bFreeList;
 }
-
 
 #if WITH_EDITOR
 void ACharmProjectile::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)

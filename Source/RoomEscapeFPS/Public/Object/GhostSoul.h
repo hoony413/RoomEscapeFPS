@@ -30,6 +30,15 @@ public:
 	virtual bool IsInFreeList() override;
 	virtual void SetIsInFreeList(bool bFreeList) override;
 
+	UFUNCTION()
+		void PlayDeadAnimation();
+
+	virtual void Tick(float DeltaTime) override;
+
+protected:
+	UFUNCTION(Server, Reliable)
+		void ServerReturnGhostElement();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -55,4 +64,16 @@ private:
 
 	UPROPERTY(/*Replicated, */EditAnywhere, BlueprintReadOnly, Category = "Ghost Movement Target Pos", Meta = (AllowPrivateAccess = "true"))
 		FVector BonudingBoxSize;
+
+	UPROPERTY(EditAnywhere, Category = "Ghost Dead Mat", Meta = (AllowPrivateAccess = "true"))
+		class UMaterialInstance* DeadMaterialInstance;
+
+	UPROPERTY()
+		class UMaterialInstanceDynamic* mid;
+	UPROPERTY()
+		class UMaterialInstance* defaultMat;
+
+	float fDeadAnimStartTime = 0.f;
+
+	bool bMarkDead = false;
 };

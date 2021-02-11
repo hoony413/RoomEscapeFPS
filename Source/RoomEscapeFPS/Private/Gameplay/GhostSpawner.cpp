@@ -6,6 +6,7 @@
 #include "Object/GhostSoul.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
+#include "GameFramework/GhostAIController.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
@@ -46,13 +47,16 @@ void AGhostSpawner::SpawnGhost()
 			SpawnVolume->Bounds.Origin, SpawnVolume->Bounds.BoxExtent));
 
 		float fTime = FMath::RandRange(fSpawnTime - 1.f, fSpawnTime + 1.f);
-		GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
-			fTime, false);
+		//GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
+		//	fTime, false);
 	}
 }
 void AGhostSpawner::DeactiveGhost(AGhostSoul* ghost)
 {
 	// TODO: Freelist에 오브젝트를 반납.
+	GhostActorFreelist->ReturnElement(ghost);
+	GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
+		3.0f, false);
 }
 void AGhostSpawner::SetActive(bool bInActive)
 {
@@ -68,3 +72,8 @@ void AGhostSpawner::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void AGhostSpawner::BeginDestroy()
+{
+	//GhostActorFreelist->ReleaseFreeList();
+	Super::BeginDestroy();
+}

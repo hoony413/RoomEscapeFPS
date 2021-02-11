@@ -67,4 +67,6 @@ namespace Helper
 	}
 
 	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world);
+
+	ROOMESCAPEFPS_API void SetActorActive(class AActor* InActor, bool bActive);
 }

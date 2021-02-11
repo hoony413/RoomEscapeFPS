@@ -15,6 +15,7 @@ AGhostAIController::AGhostAIController()
 void AGhostAIController::BeginPlay()
 {
 	Super::BeginPlay();
+	//SetGhostState(EGhostStateMachine::EIdle);
 	bActive = true;
 }
 
@@ -30,12 +31,27 @@ void AGhostAIController::SetGhostState(EGhostStateMachine InState)
 	{
 		APawn* pawn = GetPawn();
 		if (pawn)
-		{	// TODO: pawn에게 Ghost Disappear 통지.
+		{	// TODO: 모든 클라이언트에게 Ghost Disappear 통지.
 			bActive = false;
 			fDelta = 0.f;
+			NetMulticastOnGhostDead();
 		}
 	}
 }
+
+void AGhostAIController::NetMulticastOnGhostDead_Implementation()
+{
+	APawn* pawn = GetPawn();
+	if (pawn)
+	{
+		AGhostSoul* ghost = Cast<AGhostSoul>(pawn);
+		if (ghost)
+		{	// 사라짐 애니메이션.
+			ghost->PlayDeadAnimation();
+		}
+	}
+}
+
 void AGhostAIController::MoveToGhostInBoundingBoxRandomPos()
 {
 	APawn* pawn = GetPawn();

@@ -22,10 +22,10 @@ void AProjectileHandler::BeginPlay()
 	
 }
 
-class ACharmProjectile* AProjectileHandler::GetCharm()
+class ACharmProjectile* AProjectileHandler::GetCharm(class APawn* InOwner)
 {
 	check(CharmFreelist);
-	return CharmFreelist->GetElement<ACharmProjectile>();
+	return CharmFreelist->GetElement<ACharmProjectile>(InOwner);
 }
 void AProjectileHandler::ReturnCharm(class ACharmProjectile* InCharm)
 {
@@ -40,3 +40,8 @@ void AProjectileHandler::Tick(float DeltaTime)
 
 }
 
+void AProjectileHandler::BeginDestroy()
+{
+	//CharmFreelist->ReleaseFreeList();
+	Super::BeginDestroy();
+}

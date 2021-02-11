@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Helper/Helper.h"
+#include "GameFramework/Pawn.h"
 #include "Freelist.generated.h"
 
 /**
@@ -24,7 +25,7 @@ public:
 	UFreelist();
 
 	template<typename T>
-	T* GetElement()
+	T* GetElement(class APawn* InOwner = nullptr)
 	{
 		check(T::StaticClass()->IsChildOf(AActor::StaticClass()));
 		T* t = nullptr;
@@ -41,6 +42,7 @@ public:
 			if (freelistObj->IsInFreeList())
 			{
 				t = Cast<T>(FreeList[i]);
+				t->SetOwner(InOwner);
 				bFind = true;
 				break;
 			}
@@ -48,7 +50,10 @@ public:
 
 		if (bFind == false)
 		{
-			t = GetWorld()->SpawnActor<T>(TargetObjectToPooling.LoadSynchronous());
+			FActorSpawnParameters params;
+			params.Owner = InOwner;
+			params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+			t = GetWorld()->SpawnActor<T>(TargetObjectToPooling.LoadSynchronous(), params);
 			FreeList.Add(t);
 		}
 		check(t);
@@ -74,6 +79,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
 
 private:
 	UPROPERTY()

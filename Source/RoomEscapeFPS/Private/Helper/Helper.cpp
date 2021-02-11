@@ -15,11 +15,30 @@ namespace Helper
 
 	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world)
 	{
-		int32 i = 0;
 		for (TActorIterator<AProjectileHandler> it(world); it; ++it)
 		{
 			return *it;
 		}
 		return nullptr;
+	}
+
+	ROOMESCAPEFPS_API void SetActorActive(class AActor* InActor, bool bActive)
+	{
+		ensure(InActor);
+
+		// 액터를 Hidden 처리
+		InActor->SetActorHiddenInGame(!bActive);
+		
+		// 액터의 충돌 검출 끄기
+		InActor->SetActorEnableCollision(!bActive);
+		
+		// 액터 틱 끄기
+		InActor->SetActorTickEnabled(bActive);
+		TArray<UActorComponent*> components;
+		InActor->GetComponents(components);
+		for (UActorComponent* c : components)
+		{
+			c->SetActive(bActive);
+		}
 	}
 }

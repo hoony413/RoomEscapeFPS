@@ -250,21 +250,25 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 		
 		check(cachedProjectileHandlerPtr.IsValid());
 
-		ACharmProjectile* proj = cachedProjectileHandlerPtr.Get()->GetCharm();
+		ACharmProjectile* proj = cachedProjectileHandlerPtr.Get()->GetCharm(this);
 		if (proj)
 		{
+			const FRotator SpawnRotation = GetControlRotation();
+			//// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+			//const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+			//
+			////Set Spawn Collision Handling Override
+			//FActorSpawnParameters ActorSpawnParams;
+			//ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
 			// 탄체 시작위치: 보정된 캐릭터 발 위치(50) + 캐릭터 방향벡터 * 스칼라 값(20) 
 			FVector FirePosition = 
 				GetCharacterMovement()->GetActorFeetLocation() + 
 				(GetActorForwardVector() * 20);
-			FirePosition.Z += 100.f;
+			FirePosition.Z += 120.f;
 
-			// 탄체 발사방향.
-			//FVector FireDir = FirstPersonCameraComponent->GetForwardVector();
-			// 탄체 주인 설정 후 격발은 Netmulticast로 해야하나?
-			
-			proj->SetInstigator(this);
-			proj->Fire(FirePosition, FirstPersonCameraComponent->GetComponentRotation().Vector());
+			// 격발은 Netmulticast로.
+			proj->Fire(FirePosition, SpawnRotation.Vector());
 		}
 	}
 }

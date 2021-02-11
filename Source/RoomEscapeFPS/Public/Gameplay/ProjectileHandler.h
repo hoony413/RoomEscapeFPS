@@ -15,12 +15,13 @@ public:
 	// Sets default values for this actor's properties
 	AProjectileHandler();
 
-	class ACharmProjectile* GetCharm();
+	class ACharmProjectile* GetCharm(class APawn* InOwner);
 	void ReturnCharm(class ACharmProjectile* InCharm);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
 
 public:	
 	// Called every frame

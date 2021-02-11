@@ -24,7 +24,11 @@ void UFreelist::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
-
+void UFreelist::BeginDestroy()
+{
+	ReleaseFreeList();
+	Super::BeginDestroy();
+}
 void UFreelist::ReleaseFreeList()
 {
 	for (auto& elem : FreeList)

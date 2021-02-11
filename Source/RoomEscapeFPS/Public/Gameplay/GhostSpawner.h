@@ -15,14 +15,15 @@ public:
 	// Sets default values for this actor's properties
 	AGhostSpawner();
 
+	void SpawnGhost();
+	void DeactiveGhost(class AGhostSoul* ghost);
+
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	void SpawnGhost();
-	void DeactiveGhost(class AGhostSoul* ghost);
+	virtual void BeginDestroy() override;
 
 public:	
 	// Called every frame
