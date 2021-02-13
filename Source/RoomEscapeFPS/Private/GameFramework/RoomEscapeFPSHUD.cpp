@@ -8,6 +8,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
+#include "UI/InventoryPanel.h"
 #include "UI/BasePage.h"
 
 ARoomEscapeFPSHUD::ARoomEscapeFPSHUD()
@@ -40,4 +41,6 @@ void ARoomEscapeFPSHUD::DrawHUD()
 void ARoomEscapeFPSHUD::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetUIMgr()->OpenWidget<UInventoryPanel>();
 }

@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "Gameplay/PipeGameInfo.h"
+#include "Gameplay/TypeInfoHeader.h"
 #include "RoomEscapeFPSPlayerState.generated.h"
 
 /**
  * 플레이어스테이트
  PlayerController가 스폰될 때(플레이어 접속 완료 시) 같이 스폰된다.
- PlayerState는 서버/클라이언트 모두 접근 가능한데, 서버의 경우 모든 플레이어의 PlayerState를
+ PlayerState는 서버/클라이언트 모두 존재하는데(리플리케이트), 서버의 경우 모든 플레이어의 PlayerState를
  참조 가능하며, 클라이언트는 자기자신의 PlayerState만 참조 가능하다.
- (그도 그럴 것이, 클라이언트는 GameMode 참조 불가능이므로)
  */
 UENUM()
 enum class EReplicateState : uint8
@@ -21,6 +21,24 @@ enum class EReplicateState : uint8
 	ETrue = 1,
 	EUnknown = 2,
 };
+
+USTRUCT()
+struct ROOMESCAPEFPS_API FItemInfo
+{
+	GENERATED_BODY()
+
+public:
+	FItemInfo() {}
+	FItemInfo(EItemType InType, uint32 InCount)
+	{
+		ItemType = InType;
+		ItemCount = InCount;
+	}
+
+	EItemType ItemType;
+	uint32 ItemCount;
+};
+
 UCLASS()
 class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerState : public APlayerState
 {
@@ -28,9 +46,11 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerState : public APlayerState
 	
 public:
 	//virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void BeginPlay() override;
+
+//--------------------------------------- 파이프게임 관련
 	// 파이프게임 생성
 	void InitializePipeGame(uint8 GridSize);
 	
@@ -47,8 +67,8 @@ public:
 
 	UFUNCTION(Server, Reliable)
 		void ServerClearPipeGame();
-	UFUNCTION(Client, Reliable)
-		void ClientClearPipeGame();
+	//UFUNCTION(Client, Reliable)
+	//	void ClientClearPipeGame();
 
 	FORCEINLINE struct FPipeGameInfo& GetPipeGameInfo() { return PipeGameInfo; }
 
@@ -66,4 +86,15 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_PipeGameSuccessInfo)
 		EReplicateState PipeGameSuccessInfo = EReplicateState::EUnknown;
+
+//--------------------------------------- 파이프게임 관련
+
+//--------------------------------------- 아이템 획득 관련
+public:
+	void AddItemToInventory(EItemType InType, uint32 InCount);
+	void ModifyItemFromInventory(EItemType InType, int32 delta);
+
+protected:
+	UPROPERTY()
+	TArray<FItemInfo> InventoryInfo;
 };

@@ -18,7 +18,7 @@ public:
 	void SpawnGhost();
 	void DeactiveGhost(class AGhostSoul* ghost);
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -41,6 +41,6 @@ private:
 
 	FTimerHandle SpawnTimer;
 
-	UPROPERTY(/*Replicated, */ EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		float fSpawnTime = 1.5f;
 };

@@ -14,7 +14,7 @@ namespace Helper
 	}
 
 	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world)
-	{
+	{	// TODO: 맵에 하나만 존재하므로 일단 이렇게 처리. 추후 예외처리는 고민.
 		for (TActorIterator<AProjectileHandler> it(world); it; ++it)
 		{
 			return *it;

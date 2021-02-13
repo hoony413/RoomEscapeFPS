@@ -8,6 +8,7 @@
 #include "TimerManager.h"
 #include "GameFramework/GhostAIController.h"
 #include "Components/BoxComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AGhostSpawner::AGhostSpawner()
@@ -26,14 +27,19 @@ AGhostSpawner::AGhostSpawner()
 void AGhostSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-	// 임시 코드. 추후 트리거를 통해 true 로 설정해야 함.
-	SetActive(true);
+
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		fSpawnTime = 1.5f;
+		// 임시 코드. 추후 트리거를 통해 true 로 설정해야 함.
+		SetActive(true);
+	}
 }
 
 void AGhostSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	//DOREPLIFETIME(AGhostSpawner, fSpawnTime);
+	DOREPLIFETIME(AGhostSpawner, fSpawnTime);
 }
 
 void AGhostSpawner::SpawnGhost()

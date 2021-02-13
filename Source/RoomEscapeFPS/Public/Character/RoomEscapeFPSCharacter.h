@@ -12,6 +12,17 @@ class UCameraComponent;
 class UMotionControllerComponent;
 class USoundBase;
 
+USTRUCT()
+struct ROOMESCAPEFPS_API FLookingObjectInfo
+{
+	GENERATED_BODY()
+
+public:
+	FLookingObjectInfo() {}
+
+	TWeakObjectPtr<class AActor> cachedInteractObject;
+};
+
 UCLASS(config=Game)
 class ARoomEscapeFPSCharacter : public ACharacter
 {
@@ -40,7 +51,7 @@ class ARoomEscapeFPSCharacter : public ACharacter
 public:
 	ARoomEscapeFPSCharacter();
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Tick(float DeltaTime) override;
 
 #if WITH_EDITOR
@@ -50,10 +61,10 @@ public:
 protected:
 	virtual void BeginPlay();
 
-	void ChangeInteractText(FName& text);
+	void ChangeInteractText(const FString& str);
 
 	UFUNCTION()
-		void TurnOnOffWidget(bool bOnOff);
+		void TurnOnOffWidget(const FString& infoStr, bool bOnOff);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -78,9 +89,6 @@ public:
 		TSoftObjectPtr<class UInteractionPanel> InteractWidget;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact C++ class")
 		TSubclassOf<class AInteractiveObject> InteractableObject;
-
-	UPROPERTY()
-		TWeakObjectPtr<class AActor> cachedInteractObject;
 
 	FTimerHandle FlashTimer;
 
@@ -112,7 +120,7 @@ protected:
 
 	void ToggleFlash();
 	UFUNCTION()
-	void FlashToggleAnimation();
+		void FlashToggleAnimation();
 
 private:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", Meta = (AllowPrivateAccess = "true"))
@@ -123,5 +131,9 @@ private:
 	bool IsLooking = false;
 
 	TWeakObjectPtr<class AProjectileHandler> cachedProjectileHandlerPtr;
+
+	FVector pos;
+	FVector dir;
+	FVector end;
 };
 

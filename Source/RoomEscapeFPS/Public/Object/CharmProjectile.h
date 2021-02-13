@@ -20,6 +20,7 @@ public:
 	virtual void SetIsInFreeList(bool bFreeList) override;
 
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void Fire(const FVector& pos, const FVector& dir);
 
@@ -62,12 +63,14 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		class UProjectileMovementComponent* ProjMovement;
 
-	UPROPERTY(/*Replicated, */EditAnywhere, BlueprintReadOnly, Category = "Projectile Col Size", Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Projectile Col Size", Meta = (AllowPrivateAccess = "true"))
 		float SphereRadius;
 
 	TWeakObjectPtr<class AActor> Instigator;
 	TWeakObjectPtr<class AActor> Victim;
 
-	float fLifeTime = 0.5f;
-	float fLifeStartTime = 0.f;
+	UPROPERTY(Replicated)
+		float fLifeTime = 0.5f;
+	UPROPERTY(Replicated)
+		float fLifeStartTime = 0.f;
 };

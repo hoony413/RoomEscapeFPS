@@ -10,6 +10,9 @@
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "Gameplay/ProjectileHandler.h"
+#include "GameFramework/RoomEscapeFPSGameMode.h"
+#include "GameFramework/RoomEscapeFPSPlayerState.h"
+#include "GameFramework/RoomEscapeFPSGameState.h"
 //#include "Paper2D/Classes/PaperSprite.h"
 
 /**
@@ -64,6 +67,28 @@ namespace Helper
 		}
 
 		return nullptr;
+	}
+
+	template<typename Functor>
+	ROOMESCAPEFPS_API void ServerImplementToClient(UWorld* world, int32 InPlayerID, Functor func)
+	{
+		//check(GetNetMode() == NM_DedicatedServer);
+		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
+		if (gm)
+		{
+			ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
+			if (gs)
+			{
+				for (auto& elem : gs->PlayerArray)
+				{
+					ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
+					if (gsps->GetPlayerId() == InPlayerID)
+					{
+						func();
+					}
+				}
+			}
+		}
 	}
 
 	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world);

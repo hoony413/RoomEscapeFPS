@@ -116,7 +116,7 @@ void AGhostSoul::SetIsInFreeList(bool bFreeList)
 			controller->SetGhostState(EGhostStateMachine::EIdle);
 		}
 		// TODO: 풀에 있는 고스트 사용 시 파티클 잔상이 기존 위치에 남아서 보이는 문제가 있어 
-		// 고스트 리스폰 시 딜레이를 줘야 한다(아래 코드가 왜 의도대로 되지 않는지 확인 필요.
+		// 고스트 리스폰 시 딜레이를 줘야 한다(아래 코드가 왜 의도대로 되지 않는지 확인 필요)
 		//GhostParticle->SetVisibility(false);
 		//GetWorld()->GetTimerManager().SetTimer(EmitterDelayTimer, this, &AGhostSoul::DelayActivateParticle,
 		//	1.0f, false);

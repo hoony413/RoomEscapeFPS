@@ -18,7 +18,7 @@ public:
 	virtual void NativeOnInitialized() override;
 	virtual FString GetBPPath() override { return TEXT(
 "WidgetBlueprint'/Game/Resources/Widgets/InteractionPanel_Widget.InteractionPanel_Widget_C'"); }
-	void SetText(FName& str);
+	void SetText(const FText& txt);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

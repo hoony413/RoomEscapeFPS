@@ -24,7 +24,7 @@ class ROOMESCAPEFPS_API AInteractiveObject : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AInteractiveObject();
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -40,7 +40,9 @@ public:
 	EInteractiveObjectState GetCurrentState() { return CurrentState; }
 	virtual EInteractiveObjectState GetNextState();
 
-	void ToggleState();
+	virtual void ToggleState(APawn* requester);
+
+	FORCEINLINE const FString& GetInformationMessage() const { return InformationStr; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -52,13 +54,6 @@ private:
 		void NetMulticast_Interaction(EInteractiveObjectState NextState);
 
 protected:
-	UPROPERTY(VisibleDefaultsOnly)
-	UBoxComponent* LineTraceBox;
-	UPROPERTY(EditAnywhere)
-	FVector LineTraceBoxOffset;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector LineTraceBoxSize;
-
 	virtual void SetTimeline();
 	// UFUNCTION 상속을 위한 함수 분리
 	UFUNCTION()
@@ -66,6 +61,13 @@ protected:
 	virtual void LaunchTimelineInternal();
 
 protected:
+	UPROPERTY(VisibleDefaultsOnly)
+		UBoxComponent* LineTraceBox;
+	UPROPERTY(EditAnywhere)
+		FVector LineTraceBoxOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector LineTraceBoxSize;
+
 	UPROPERTY(EditAnywhere, Category = "Timeline Info")
 		bool IsUseTimeline = false;
 	UPROPERTY(EditAnywhere, Category = "Timeline Info")
@@ -76,13 +78,14 @@ protected:
 		class UCurveFloat* TimelineCurve;
 	UPROPERTY()
 		FTimeline Timeline;
+	
+	UPROPERTY(EditAnywhere, Category = "Information Message")
+		FString InformationStr;
 
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentState)
+		EInteractiveObjectState	CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
+	
 	float TimelineDelta = 0.f;
 	float CurveFloatValue = 0.f;
 
-private:
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentState)
-	EInteractiveObjectState	CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
-
-	bool IsLooking = false;
 };

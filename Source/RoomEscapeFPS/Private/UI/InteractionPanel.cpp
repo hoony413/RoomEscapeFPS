@@ -9,10 +9,10 @@ void UInteractionPanel::NativeOnInitialized()
 	Super::NativeOnInitialized();
 }
 
-void UInteractionPanel::SetText(FName& str)
+void UInteractionPanel::SetText(const FText& txt)
 {
 	if (InfoText != nullptr)
 	{
-		InfoText->SetText(FText::FromName(str));
+		InfoText->SetText(txt);
 	}
 }

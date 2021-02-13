@@ -69,10 +69,10 @@ ARoomEscapeFPSCharacter::ARoomEscapeFPSCharacter()
 
 	SpotLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("FlashSpotLight"));
 	SpotLight->SetupAttachment(Flash);
-	SpotLight->SetIntensity(100000);
 
 	InteractSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractSphere"));
 	InteractSphere->SetupAttachment(FirstPersonCameraComponent);
+	SpotLight->SetIntensity(100000.0f);
 }
 
 void ARoomEscapeFPSCharacter::BeginPlay()
@@ -80,7 +80,10 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	InteractSphere->SetSphereRadius(350.f);
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		InteractSphere->SetSphereRadius(SphereRadius);
+	}
 	Mesh1P->SetHiddenInGame(bUsingMotionControllers, true);
 	SpotLight->SetVisibility(false);
 
@@ -119,26 +122,26 @@ void ARoomEscapeFPSCharacter::PostEditChangeProperty(struct FPropertyChangedEven
 void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	FHitResult result;
-	FVector pos = FirstPersonCameraComponent->GetComponentLocation();
-	FVector dir = FirstPersonCameraComponent->GetForwardVector();
-	FVector end = pos + (dir * ArmRange);
-
-	UWorld* world = GetWorld();
-	world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
-
-	bool cachedLooking = IsLooking;
-	IsLooking = result.Component.IsValid() && result.Actor.IsValid() &&
-		result.Actor.Get()->IsA(InteractableObject) ? true : false;
-
-	if (cachedLooking != IsLooking)
+	
+	if (GetNetMode() == NM_Client)
 	{
-		if (IsLooking)
-		{
-			cachedInteractObject = result.Actor.Get();
-		}
+		FHitResult result;
+		pos = FirstPersonCameraComponent->GetComponentLocation();
+		dir = FirstPersonCameraComponent->GetForwardVector();
+		end = pos + (dir * ArmRange);
 
-		TurnOnOffWidget(IsLooking);
+		UWorld* world = GetWorld();
+		world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
+
+		bool cachedLooking = IsLooking;
+		IsLooking = result.Component.IsValid() && result.Actor.IsValid() &&
+			result.Actor.Get()->IsA(InteractableObject) ? true : false;
+
+		if (cachedLooking != IsLooking)
+		{
+			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
+			TurnOnOffWidget(obj->GetInformationMessage(), IsLooking);
+		}
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
@@ -156,41 +159,43 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		// TODO: 범위 안에 있는지 체크
+		// 범위 안에 있는지 체크
 		TSet<AActor*> Actors;
 		if (InteractableObject != nullptr)
 		{
 			InteractSphere->GetOverlappingActors(Actors, InteractableObject);
 			for (const auto& elem : Actors)
-			{	// 오버랩 액터 추적
-				if (cachedInteractObject.IsValid() && cachedInteractObject.Get() == elem)
-				{	// 캐시되어 있는(보고 있는) 오브젝트임. Use 처리한다.
-					AInteractiveObject* obj = Cast<AInteractiveObject>(cachedInteractObject.Get());
-					obj->OnInteraction(obj->GetNextState());
-					obj->ToggleState();
-					return;
-				}
+			{	
+				AInteractiveObject* obj = Cast<AInteractiveObject>(elem);
+				obj->OnInteraction(obj->GetNextState());
+				obj->ToggleState(this);
+				return;
 			}
 		}
 	}
 }
-void ARoomEscapeFPSCharacter::ChangeInteractText(FName& text)
+void ARoomEscapeFPSCharacter::ChangeInteractText(const FString& str)
 {
 	if (InteractWidget == nullptr)
 		return;
 
 	if (InteractWidget)
 	{
-		InteractWidget->SetText(text);
+		FText txt = FText::FromString(str);
+		InteractWidget->SetText(txt);
 	}
 }
-void ARoomEscapeFPSCharacter::TurnOnOffWidget(bool bOnOff)
+void ARoomEscapeFPSCharacter::TurnOnOffWidget(const FString& infoStr, bool bOnOff)
 {
 	if (!IsLocallyControlled() || GetNetMode() != NM_Client)
 		return;
 
-	if (bOnOff == false && InteractWidget == nullptr)
+	if (bOnOff == false)
+	{
+		if (InteractWidget != nullptr)
+			InteractWidget->SetVisibility(ESlateVisibility::Collapsed);
 		return;
+	}
 
 	if (InteractWidget == nullptr)
 	{
@@ -200,6 +205,8 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(bool bOnOff)
 	{
 		InteractWidget->SetVisibility(bOnOff ?
 			ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+
+		ChangeInteractText(infoStr);
 	}
 }
 
@@ -254,9 +261,6 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 		if (proj)
 		{
 			const FRotator SpawnRotation = GetControlRotation();
-			//// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			//const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-			//
 			////Set Spawn Collision Handling Override
 			//FActorSpawnParameters ActorSpawnParams;
 			//ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;

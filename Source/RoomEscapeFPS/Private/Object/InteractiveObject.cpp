@@ -27,10 +27,7 @@ AInteractiveObject::AInteractiveObject()
 	LineTraceBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LineTraceBox"));
 	LineTraceBox->SetupAttachment(TimelineMesh);
 
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
-	}
+	LineTraceBox->SetCollisionProfileName(FName(TEXT("Interaction")));
 }
 void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -50,6 +47,10 @@ void AInteractiveObject::BeginPlay()
 		SetTimeline();
 	}
 
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
+	}
 	//DEBUG_BOX_BLUE(LineTraceBox, GetActorLocation() + LineTraceBox->GetRelativeLocation());
 }
 
@@ -121,7 +122,7 @@ void AInteractiveObject::NetMulticast_Interaction_Implementation(EInteractiveObj
 		}
 	}
 }
-void AInteractiveObject::ToggleState()
+void AInteractiveObject::ToggleState(APawn* requester)
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{

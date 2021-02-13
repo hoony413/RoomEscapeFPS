@@ -7,7 +7,10 @@
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
 #include "UI/PipeGameUI.h"
+
 #include "Net/UnrealNetwork.h"
+
+#include "Gameplay/TypeInfoHeader.h"
 
 //bool ARoomEscapeFPSPlayerState::ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags)
 //{
@@ -281,15 +284,53 @@ void ARoomEscapeFPSPlayerState::ServerClearPipeGame_Implementation()
 		//ClientClearPipeGame();
 	}
 }
-void ARoomEscapeFPSPlayerState::ClientClearPipeGame_Implementation()
+//void ARoomEscapeFPSPlayerState::ClientClearPipeGame_Implementation()
+//{
+//	APawn* pawn = GetPawn();
+//	if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+//	{
+//		UPipeGameUI* pipeUI = GetUIMgr()->GetPipeGameUI();
+//		if (pipeUI)
+//		{
+//			pipeUI->CloseUI();
+//		}
+//	}
+//}
+
+void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, uint32 InCount)
 {
-	APawn* pawn = GetPawn();
-	if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+	bool bFind = false;
+	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
 	{
-		UPipeGameUI* pipeUI = GetUIMgr()->GetPipeGameUI();
-		if (pipeUI)
+		if (InType == InventoryInfo[i].ItemType)
 		{
-			pipeUI->CloseUI();
+			InventoryInfo[i].ItemCount = InCount;
+			bFind = true;
+			break;
 		}
 	}
+
+	if (bFind == false)
+	{
+		InventoryInfo.Add(FItemInfo(InType, InCount));
+	}
+}
+void ARoomEscapeFPSPlayerState::ModifyItemFromInventory(EItemType InType, int32 delta)
+{
+	bool bFind = false;
+	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
+	{
+		if (InType == InventoryInfo[i].ItemType)
+		{
+			if (InventoryInfo[i].ItemCount + delta < 0)
+			{
+				ensureMsgf(false, TEXT("Item StackCount Can't be lower than zero"));
+				return;
+			}
+			InventoryInfo[i].ItemCount += delta;
+			break;
+		}
+	}
+
+	check(bFind);
 }

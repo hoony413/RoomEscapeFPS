@@ -23,7 +23,7 @@ public:
 
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	class UBoxComponent* GetBoundingBox();
 

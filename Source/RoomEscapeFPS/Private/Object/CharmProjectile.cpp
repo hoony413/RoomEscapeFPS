@@ -13,6 +13,7 @@
 //#include "Object/ProjectileExplodeEffect.h"
 #include "Runtime/Engine/Classes/Particles/ParticleSystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ACharmProjectile::ACharmProjectile()
@@ -40,6 +41,13 @@ ACharmProjectile::ACharmProjectile()
 	}
 }
 
+void ACharmProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACharmProjectile, fLifeTime);
+	DOREPLIFETIME(ACharmProjectile, fLifeStartTime);
+}
+
 // Called when the game starts or when spawned
 void ACharmProjectile::BeginPlay()
 {
@@ -53,6 +61,12 @@ void ACharmProjectile::BeginPlay()
 	}
 
 	Instigator = owner;
+
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		fLifeTime = 0.5f;
+		fLifeStartTime = 0.f;
+	}
 }
 
 void ACharmProjectile::Fire(const FVector& pos, const FVector& dir)
@@ -61,7 +75,6 @@ void ACharmProjectile::Fire(const FVector& pos, const FVector& dir)
 	{
 		NetMulticastFire(pos, dir);
 		fLifeStartTime = GetWorld()->GetTimeSeconds();
-		fLifeTime = 1.f;
 	}
 }
 void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const FVector& dir)

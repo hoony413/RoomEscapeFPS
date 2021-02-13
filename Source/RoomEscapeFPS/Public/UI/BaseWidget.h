@@ -22,7 +22,7 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-	virtual FString GetBPPath() { check(false) return ""; }
+	virtual FString GetBPPath() { ensureMsgf(false, TEXT("This Function must be overridden and return BP_Path!")); return ""; }
 
 protected:
 	virtual void SetWidgetAnimation();
