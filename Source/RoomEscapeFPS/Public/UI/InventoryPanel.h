@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/BaseWidget.h"
+#include "Gameplay/TypeInfoHeader.h"
 #include "InventoryPanel.generated.h"
 
 /**
@@ -19,5 +20,22 @@ public:
 		return TEXT(
 			"WidgetBlueprint'/Game/Resources/Widgets/InventoryPanel_Widget.InventoryPanel_Widget_C'");
 	}
+
+	void SetItemToQuickSlot(EItemType InType);
+	void SetFlashBatteryVisibility(bool bOnOff);
+	void UpdateProgressBar(float fCurrentBatteryValue);
+
+protected:
+	//UPROPERTY(meta = (BindWidget))
+	//	class UImage* BackgroundImage;
+	//UPROPERTY(meta = (BindWidget))
+	//	class UImage* BackgroundImage;
+	//UPROPERTY(meta = (BindWidget))
+	//	class UImage* BackgroundImage;
+	//UPROPERTY(meta = (BindWidget))
+	//	class UImage* BackgroundImage;
+
+	UPROPERTY(meta = (bindWidget))
+		class UProgressBar* FlashProgressBar;
 	
 };

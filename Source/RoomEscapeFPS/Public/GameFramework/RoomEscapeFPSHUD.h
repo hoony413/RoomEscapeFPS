@@ -18,9 +18,12 @@ public:
 	virtual void DrawHUD() override;
 	virtual void BeginPlay() override;
 
+	class UInventoryPanel* GetInventoryPanel();
+
 private:
 	/** Crosshair asset pointer */
 	class UTexture2D* CrosshairTex;
 
+	TWeakObjectPtr<class UInventoryPanel> cachedPanel;
 };
 

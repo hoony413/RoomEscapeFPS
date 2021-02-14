@@ -106,6 +106,7 @@ public:
 
 	FORCEINLINE class USphereComponent* GetInteractSphere() const { return InteractSphere; }
 
+	void UpdateFlashIntensity(float InIntensity);
 
 protected:
 	UFUNCTION(Reliable, Server, WithValidation)

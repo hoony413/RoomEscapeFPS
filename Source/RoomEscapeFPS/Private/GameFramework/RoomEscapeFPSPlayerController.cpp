@@ -104,13 +104,16 @@ void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 			if (gs)
 			{
 				ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>();
-				int32 id = GetPlayerState<ARoomEscapeFPSPlayerState>()->GetPlayerId();
-				for (auto& elem : gs->PlayerArray)
+				if (ps)
 				{
-					ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
-					if (gsps->GetPlayerId() == id)
+					int32 id = ps->GetPlayerId();
+					for (auto& elem : gs->PlayerArray)
 					{
-						gsps->InitializePipeGame(5);
+						ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
+						if (gsps->GetPlayerId() == id)
+						{
+							gsps->InitializePipeGame(5);
+						}
 					}
 				}
 			}

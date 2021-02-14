@@ -8,7 +8,7 @@
 void UUIManager::InitManager()
 {
 	Super::InitManager();
-//	
+////backup code
 //	for (TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 //	{
 //		UClass* Class = *ClassIt;

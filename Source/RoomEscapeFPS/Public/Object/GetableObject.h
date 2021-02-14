@@ -8,7 +8,7 @@
 #include "GetableObject.generated.h"
 
 /**
- * 
+ * 획득 시 아이템 인벤토리에 추가되는 아이템.
  */
 UCLASS()
 class ROOMESCAPEFPS_API AGetableObject : public AInteractiveObject
@@ -25,7 +25,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-private:
+protected:
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
 		EItemType ItemType;
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "1"))

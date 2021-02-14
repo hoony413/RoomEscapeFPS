@@ -3,10 +3,15 @@
 
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
+#include "GameFramework/RoomEscapeFPSHUD.h"
+#include "Character/RoomEscapeFPSCharacter.h"
 #include "Gameplay/PipeGameInfo.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
 #include "UI/PipeGameUI.h"
+#include "UI/InventoryPanel.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -30,10 +35,21 @@ void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameInfo);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, bInitializePipeGame);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameSuccessInfo);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, InventoryInfo);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fBatteryRemainValue);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fBatteryMaxValue);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fBatteryUpdateValue);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fFlashIntensity);
 }
 void ARoomEscapeFPSPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		fBatteryRemainValue = 0.f;
+		fBatteryUpdateValue = 1.f;
+		fBatteryMaxValue = 300.f;
+	}
 	//bInitializePipeGame = EReplicateState::EUnknown;
 	//PipeGameSuccessInfo = EReplicateState::EUnknown;
 }
@@ -313,6 +329,7 @@ void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, uint32 InCo
 	if (bFind == false)
 	{
 		InventoryInfo.Add(FItemInfo(InType, InCount));
+		// TODO: 아이템 최초 획득일 경우 획득한 아이템에 대한 안내 위젯 생성.
 	}
 }
 void ARoomEscapeFPSPlayerState::ModifyItemFromInventory(EItemType InType, int32 delta)
@@ -333,4 +350,60 @@ void ARoomEscapeFPSPlayerState::ModifyItemFromInventory(EItemType InType, int32 
 	}
 
 	check(bFind);
+}
+
+void ARoomEscapeFPSPlayerState::ToggleBatteryReduceState(bool bOnOff)
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		if (bOnOff)
+		{
+			if (UpdateBatteryDele.IsBound() == false)
+			{
+				UpdateBatteryDele.BindUObject(this, &ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue, -fBatteryUpdateValue);
+			}
+			GetWorld()->GetTimerManager().SetTimer(FlashBatteryTimerHandle, UpdateBatteryDele, 1.f, true);
+		}
+		else
+		{
+			GetWorld()->GetTimerManager().ClearTimer(FlashBatteryTimerHandle);
+		}
+	}
+}
+
+void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(float fDelta)
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		fBatteryRemainValue += fDelta;
+		if (fBatteryRemainValue <= 0)
+		{
+			fBatteryRemainValue = 0.f;
+			ToggleBatteryReduceState(false);
+		}
+	}
+}
+void ARoomEscapeFPSPlayerState::OnRep_BatteryRemainValue()
+{
+	// TODO: UI에 차감 표시.
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+	if (hud)
+	{
+		float fPercent = fBatteryRemainValue / fBatteryMaxValue;
+		hud->GetInventoryPanel()->UpdateProgressBar(fPercent);
+		ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetPawn());
+		if (character)
+		{
+			fFlashIntensity = 100000.0f;
+			if (fBatteryRemainValue <= 0.f)
+			{
+				fFlashIntensity = 0.f;
+			}
+			else if (fBatteryRemainValue <= 100.f)
+			{
+				fFlashIntensity = 40000.0f;
+			}
+			character->UpdateFlashIntensity(fFlashIntensity);
+		}
+	}
 }

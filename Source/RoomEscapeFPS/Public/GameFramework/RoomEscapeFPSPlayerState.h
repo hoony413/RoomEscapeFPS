@@ -35,7 +35,9 @@ public:
 		ItemCount = InCount;
 	}
 
+	UPROPERTY()
 	EItemType ItemType;
+	UPROPERTY()
 	uint32 ItemCount;
 };
 
@@ -89,12 +91,33 @@ private:
 
 //--------------------------------------- 파이프게임 관련
 
-//--------------------------------------- 아이템 획득 관련
+//--------------------------------------- 아이템 관련
 public:
 	void AddItemToInventory(EItemType InType, uint32 InCount);
 	void ModifyItemFromInventory(EItemType InType, int32 delta);
 
+	void ToggleBatteryReduceState(bool bOnOff);
+	void UpdateBatteryRemainValue(float fDelta);
+
+	FORCEINLINE const float GetRemainBatteryValue() { return fBatteryRemainValue; }
+
 protected:
-	UPROPERTY()
+	UFUNCTION()
+		void OnRep_BatteryRemainValue();
+
+	UPROPERTY(Replicated)
 	TArray<FItemInfo> InventoryInfo;
+
+	UPROPERTY(ReplicatedUsing = OnRep_BatteryRemainValue)
+		float fBatteryRemainValue;
+
+	UPROPERTY(Replicated)
+		float fBatteryMaxValue;
+	UPROPERTY(Replicated)
+		float fBatteryUpdateValue;
+	UPROPERTY(Replicated)
+		float fFlashIntensity;
+
+	FTimerHandle FlashBatteryTimerHandle;
+	FTimerDelegate UpdateBatteryDele;
 };

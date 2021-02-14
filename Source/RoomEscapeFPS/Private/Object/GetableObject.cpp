@@ -34,15 +34,26 @@ void AGetableObject::ToggleState(APawn* requester)
 		check(requester);
 		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		Helper::SetActorActive(this, false);
-		ARoomEscapeFPSPlayerState* ps = Cast<ARoomEscapeFPSPlayerState>(requester->GetPlayerState());
-		check(ps);
+		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
 		
-		int32 id = ps->GetPlayerId();
-		auto AddItemToPlayerInventory = [&]()
+		if (ItemType == EItemType::EItemType_Battery)
 		{
-			ps->AddItemToInventory(ItemType, DefaultGetCount);
-		};
-		Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
+			ps->UpdateBatteryRemainValue(30.f);
+		}
+		else if (ItemType == EItemType::EItemType_Flash)
+		{
+			ps->UpdateBatteryRemainValue(90.f);
+		}
+		else
+		{
+			int32 id = ps->GetPlayerId();
+			auto AddItemToPlayerInventory = [&]()
+			{
+				ps->AddItemToInventory(ItemType, DefaultGetCount);
+			};
+			Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
+		}
+		
 		Destroy();
 	}
 }

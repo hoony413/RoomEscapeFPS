@@ -70,7 +70,6 @@ public:
 	FORCEINLINE void CachPipeGameUI(class UPipeGameUI* InUI) { cachedPipeGameUI = InUI; }
 
 private:
-	
 	UPROPERTY()
 	class UPipeGameUI* cachedPipeGameUI;
 };

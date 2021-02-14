@@ -42,5 +42,17 @@ void ARoomEscapeFPSHUD::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetUIMgr()->OpenWidget<UInventoryPanel>();
+	cachedPanel = GetUIMgr()->OpenWidget<UInventoryPanel>();
+	cachedPanel->SetFlashBatteryVisibility(false);
+
+	// TODO: 후레쉬 획득할 때 SetFlashBatteryVisibility를 true로 설정한다.
+}
+
+UInventoryPanel* ARoomEscapeFPSHUD::GetInventoryPanel()
+{
+	if (cachedPanel.IsValid())
+	{
+		return cachedPanel.Get();
+	}
+	return nullptr;
 }
