@@ -25,6 +25,8 @@ void AGetableObject::BeginPlay()
 		IsUseTimeline = false;
 		CurrentState = EInteractiveObjectState::EState_Open_Or_On;
 	}
+
+	InformationStr = TEXT("Press 'E' key to get");
 }
 
 void AGetableObject::ToggleState(APawn* requester)
@@ -34,26 +36,23 @@ void AGetableObject::ToggleState(APawn* requester)
 		check(requester);
 		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		Helper::SetActorActive(this, false);
+		
 		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		
-		if (ItemType == EItemType::EItemType_Battery)
+		int32 id = ps->GetPlayerId();
+		auto AddItemToPlayerInventory = [this, &ps]()
 		{
-			ps->UpdateBatteryRemainValue(30.f);
-		}
-		else if (ItemType == EItemType::EItemType_Flash)
-		{
-			ps->UpdateBatteryRemainValue(90.f);
-		}
-		else
-		{
-			int32 id = ps->GetPlayerId();
-			auto AddItemToPlayerInventory = [&]()
+			// UI를 켜줘야 하는 특수 아이템타입에 대한 처리.
+			if (ps->IsFirstGet(ItemType) && bFirstGetNeedsUpdateUI)
 			{
-				ps->AddItemToInventory(ItemType, DefaultGetCount);
-			};
-			Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
-		}
-		
+				ps->ClientProcessHUDOnFirstItemGet(ItemType);
+			}
+			if (AdditionalItemType != EItemType::NONE)
+			{	// 후레쉬 획득의 경우, 후레쉬 획득과 함께 배터리도 일부 충전해줘야 한다.
+				ps->AddItemToInventory(AdditionalItemType, AdditionalGetCount);
+			}
+			ps->AddItemToInventory(ItemType, DefaultGetCount);
+		};
+		Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
 		Destroy();
 	}
 }

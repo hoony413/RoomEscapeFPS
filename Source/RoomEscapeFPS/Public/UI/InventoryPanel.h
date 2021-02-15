@@ -21,21 +21,17 @@ public:
 			"WidgetBlueprint'/Game/Resources/Widgets/InventoryPanel_Widget.InventoryPanel_Widget_C'");
 	}
 
-	void SetItemToQuickSlot(EItemType InType);
 	void SetFlashBatteryVisibility(bool bOnOff);
-	void UpdateProgressBar(float fCurrentBatteryValue);
+	void SetCharmVisibility(bool bOnOff);
+
+	void UpdateBatteryPower(float fCurrentBatteryValue);
+	void UpdateCharmCount(int32 InCount);
 
 protected:
-	//UPROPERTY(meta = (BindWidget))
-	//	class UImage* BackgroundImage;
-	//UPROPERTY(meta = (BindWidget))
-	//	class UImage* BackgroundImage;
-	//UPROPERTY(meta = (BindWidget))
-	//	class UImage* BackgroundImage;
-	//UPROPERTY(meta = (BindWidget))
-	//	class UImage* BackgroundImage;
-
-	UPROPERTY(meta = (bindWidget))
+	UPROPERTY(meta = (BindWidget))
 		class UProgressBar* FlashProgressBar;
-	
+	UPROPERTY(meta = (BindWidget))
+		class UCanvasPanel* CharmCanvasPanel;
+	UPROPERTY(meta = (BindWidget))
+		class UTextBlock* CharmCountText;
 };

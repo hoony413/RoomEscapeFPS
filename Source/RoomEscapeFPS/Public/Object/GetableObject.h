@@ -30,4 +30,12 @@ protected:
 		EItemType ItemType;
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "1"))
 		int32 DefaultGetCount;
+
+	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
+		EItemType AdditionalItemType = EItemType::NONE;
+	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "0"))
+		int32 AdditionalGetCount = 0;
+
+	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
+		bool bFirstGetNeedsUpdateUI;
 };

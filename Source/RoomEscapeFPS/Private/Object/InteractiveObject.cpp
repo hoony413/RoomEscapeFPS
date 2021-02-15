@@ -28,6 +28,8 @@ AInteractiveObject::AInteractiveObject()
 	LineTraceBox->SetupAttachment(TimelineMesh);
 
 	LineTraceBox->SetCollisionProfileName(FName(TEXT("Interaction")));
+
+	InformationStr = TEXT("Press 'E' key to use");
 }
 void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

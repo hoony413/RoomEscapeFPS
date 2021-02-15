@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "Gameplay/TypeInfoHeader.h"
 #include "RoomEscapeFPSHUD.generated.h"
 
 UCLASS()
@@ -19,6 +20,12 @@ public:
 	virtual void BeginPlay() override;
 
 	class UInventoryPanel* GetInventoryPanel();
+
+	void SetVisibleOnHUD(EItemType InType, bool bOnOff);
+
+protected:
+	void SetVisibleBatteryInfo(bool bOnOff);
+	void SetVisibleCharmInfo(bool bOnOff);
 
 private:
 	/** Crosshair asset pointer */

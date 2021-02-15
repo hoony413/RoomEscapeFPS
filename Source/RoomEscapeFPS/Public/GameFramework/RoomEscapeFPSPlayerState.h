@@ -92,32 +92,39 @@ private:
 //--------------------------------------- 파이프게임 관련
 
 //--------------------------------------- 아이템 관련
+
 public:
 	void AddItemToInventory(EItemType InType, uint32 InCount);
 	void ModifyItemFromInventory(EItemType InType, int32 delta);
+	
+	const uint32 GetItemCount(EItemType InType);
+	uint32* GetItemCountRef(EItemType InType);
 
 	void ToggleBatteryReduceState(bool bOnOff);
-	void UpdateBatteryRemainValue(float fDelta);
 
-	FORCEINLINE const float GetRemainBatteryValue() { return fBatteryRemainValue; }
+	bool IsFirstGet(EItemType InType);
 
+	UFUNCTION(Client, Reliable)
+	void ClientProcessHUDOnFirstItemGet(EItemType InType);
+	
 protected:
-	UFUNCTION()
-		void OnRep_BatteryRemainValue();
+	void UpdateBatteryRemainValue(int32 InDelta);
 
-	UPROPERTY(Replicated)
+	UFUNCTION()
+		void OnRep_InventoryInfo();
+
+	UPROPERTY(ReplicatedUsing = OnRep_InventoryInfo)
 	TArray<FItemInfo> InventoryInfo;
 
-	UPROPERTY(ReplicatedUsing = OnRep_BatteryRemainValue)
-		float fBatteryRemainValue;
-
 	UPROPERTY(Replicated)
-		float fBatteryMaxValue;
+		uint32 BatteryMaxValue;
 	UPROPERTY(Replicated)
-		float fBatteryUpdateValue;
+		int32 BatteryUpdateValue;
 	UPROPERTY(Replicated)
 		float fFlashIntensity;
 
 	FTimerHandle FlashBatteryTimerHandle;
 	FTimerDelegate UpdateBatteryDele;
+
+//--------------------------------------- 아이템 관련
 };

@@ -36,9 +36,8 @@ void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, bInitializePipeGame);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameSuccessInfo);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, InventoryInfo);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fBatteryRemainValue);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fBatteryMaxValue);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fBatteryUpdateValue);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, BatteryMaxValue);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, BatteryUpdateValue);
 	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fFlashIntensity);
 }
 void ARoomEscapeFPSPlayerState::BeginPlay()
@@ -46,9 +45,8 @@ void ARoomEscapeFPSPlayerState::BeginPlay()
 	Super::BeginPlay();
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		fBatteryRemainValue = 0.f;
-		fBatteryUpdateValue = 1.f;
-		fBatteryMaxValue = 300.f;
+		BatteryUpdateValue = 1;
+		BatteryMaxValue = 300u;
 	}
 	//bInitializePipeGame = EReplicateState::EUnknown;
 	//PipeGameSuccessInfo = EReplicateState::EUnknown;
@@ -339,9 +337,10 @@ void ARoomEscapeFPSPlayerState::ModifyItemFromInventory(EItemType InType, int32 
 	{
 		if (InType == InventoryInfo[i].ItemType)
 		{
+			bFind = true;
 			if (InventoryInfo[i].ItemCount + delta < 0)
 			{
-				ensureMsgf(false, TEXT("Item StackCount Can't be lower than zero"));
+				ensureMsgf(false, TEXT("Item StackCount Can't be lower than zero!"));
 				return;
 			}
 			InventoryInfo[i].ItemCount += delta;
@@ -349,9 +348,32 @@ void ARoomEscapeFPSPlayerState::ModifyItemFromInventory(EItemType InType, int32 
 		}
 	}
 
-	check(bFind);
+	ensureMsgf(false, TEXT("Item not found!"));
 }
-
+const uint32 ARoomEscapeFPSPlayerState::GetItemCount(EItemType InType)
+{
+	bool bFind = false;
+	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
+	{
+		if (InType == InventoryInfo[i].ItemType)
+		{
+			bFind = true;
+			return InventoryInfo[i].ItemCount;
+		}
+	}
+	return 0u;
+}
+void ARoomEscapeFPSPlayerState::GetItemCountRef(EItemType InType, uint32& OutCount)
+{
+	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
+	{
+		if (InType == InventoryInfo[i].ItemType)
+		{
+			OutCount = InventoryInfo[i].ItemCount;
+			break;
+		}
+	}
+}
 void ARoomEscapeFPSPlayerState::ToggleBatteryReduceState(bool bOnOff)
 {
 	if (GetNetMode() == NM_DedicatedServer)
@@ -360,7 +382,7 @@ void ARoomEscapeFPSPlayerState::ToggleBatteryReduceState(bool bOnOff)
 		{
 			if (UpdateBatteryDele.IsBound() == false)
 			{
-				UpdateBatteryDele.BindUObject(this, &ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue, -fBatteryUpdateValue);
+				UpdateBatteryDele.BindUObject(this, &ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue, -BatteryUpdateValue);
 			}
 			GetWorld()->GetTimerManager().SetTimer(FlashBatteryTimerHandle, UpdateBatteryDele, 1.f, true);
 		}
@@ -370,36 +392,77 @@ void ARoomEscapeFPSPlayerState::ToggleBatteryReduceState(bool bOnOff)
 		}
 	}
 }
+uint32* ARoomEscapeFPSPlayerState::GetItemCountRef(EItemType InType)
+{
+	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
+	{
+		if (InType == InventoryInfo[i].ItemType)
+		{
+			return &InventoryInfo[i].ItemCount;
+		}
+	}
 
-void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(float fDelta)
+	return nullptr;
+}
+void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(int32 InDelta)
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		fBatteryRemainValue += fDelta;
-		if (fBatteryRemainValue <= 0)
+		uint32* batteryRemain = GetItemCountRef(EItemType::Battery);
+		
+		*batteryRemain += InDelta;
+		if (*batteryRemain <= 0u)
 		{
-			fBatteryRemainValue = 0.f;
+			*batteryRemain = 0u;
 			ToggleBatteryReduceState(false);
+		}
+		else if (*batteryRemain >= BatteryMaxValue)
+		{
+			*batteryRemain = BatteryMaxValue;
 		}
 	}
 }
-void ARoomEscapeFPSPlayerState::OnRep_BatteryRemainValue()
+
+bool ARoomEscapeFPSPlayerState::IsFirstGet(EItemType InType)
 {
-	// TODO: UI에 차감 표시.
+	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
+	{
+		if (InType == InventoryInfo[i].ItemType)
+			return false;
+	}
+	return true;
+}
+void ARoomEscapeFPSPlayerState::ClientProcessHUDOnFirstItemGet_Implementation(EItemType InType)
+{
 	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
 	if (hud)
 	{
-		float fPercent = fBatteryRemainValue / fBatteryMaxValue;
-		hud->GetInventoryPanel()->UpdateProgressBar(fPercent);
+		hud->SetVisibleOnHUD(InType, true);
+	}
+}
+
+void ARoomEscapeFPSPlayerState::OnRep_InventoryInfo()
+{
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+	if (hud)
+	{	// 부적 카운트 업데이트(UI)
+		hud->GetInventoryPanel()->UpdateCharmCount(GetItemCount(EItemType::Charm));
+		
+		// 배터리 잔량 업데이트(UI)
+		uint32 batteryRemain = GetItemCount(EItemType::Battery);
+		float fPercent = (float)batteryRemain / BatteryMaxValue;
+		hud->GetInventoryPanel()->UpdateBatteryPower(fPercent);
+
+		// 배터리 잔량에 따른 광량 업데이트
 		ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetPawn());
 		if (character)
 		{
 			fFlashIntensity = 100000.0f;
-			if (fBatteryRemainValue <= 0.f)
+			if (batteryRemain <= 0u)
 			{
 				fFlashIntensity = 0.f;
 			}
-			else if (fBatteryRemainValue <= 100.f)
+			else if (batteryRemain <= 100u)
 			{
 				fFlashIntensity = 40000.0f;
 			}

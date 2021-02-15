@@ -3,11 +3,8 @@
 
 #include "UI/InventoryPanel.h"
 #include "Components/ProgressBar.h"
-
-void UInventoryPanel::SetItemToQuickSlot(EItemType InType)
-{
-
-}
+#include "Components/TextBlock.h"
+#include "Components/CanvasPanel.h"
 
 void UInventoryPanel::SetFlashBatteryVisibility(bool bOnOff)
 {
@@ -17,12 +14,26 @@ void UInventoryPanel::SetFlashBatteryVisibility(bool bOnOff)
 			ESlateVisibility::Hidden);
 	}
 }
-
-void UInventoryPanel::UpdateProgressBar(float fCurrentBatteryValue)
+void UInventoryPanel::SetCharmVisibility(bool bOnOff)
+{
+	if (CharmCanvasPanel)
+	{
+		CharmCanvasPanel->SetVisibility(bOnOff ? ESlateVisibility::SelfHitTestInvisible :
+			ESlateVisibility::Hidden);
+	}
+}
+void UInventoryPanel::UpdateBatteryPower(float fCurrentBatteryValue)
 {
 	if (FlashProgressBar)
 	{
 		FlashProgressBar->SetPercent(fCurrentBatteryValue);
 	}
 }
-
+void UInventoryPanel::UpdateCharmCount(int32 InCount)
+{
+	if (CharmCountText)
+	{
+		FText txt = FText::FromString(FString::Printf(TEXT("x%d"), InCount));
+		CharmCountText->SetText(txt);
+	}
+}

@@ -11,8 +11,9 @@
 UENUM()
 enum class EItemType : uint8
 {
-	EItemType_Flash,
-	EItemType_Charm,
-	EItemType_Key,
-	EItemType_Battery,
+	NONE,
+	Flash,
+	Charm,
+	Key,
+	Battery,
 };

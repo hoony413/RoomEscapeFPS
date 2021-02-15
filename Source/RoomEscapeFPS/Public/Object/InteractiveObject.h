@@ -79,7 +79,7 @@ protected:
 	UPROPERTY()
 		FTimeline Timeline;
 	
-	UPROPERTY(EditAnywhere, Category = "Information Message")
+	UPROPERTY(VisibleDefaultsOnly, Category = "Information Message")
 		FString InformationStr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentState)

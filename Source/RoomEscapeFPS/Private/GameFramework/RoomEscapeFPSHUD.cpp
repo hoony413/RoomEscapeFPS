@@ -8,6 +8,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
+#include "Gameplay/TypeInfoHeader.h"
 #include "UI/InventoryPanel.h"
 #include "UI/BasePage.h"
 
@@ -43,9 +44,10 @@ void ARoomEscapeFPSHUD::BeginPlay()
 	Super::BeginPlay();
 
 	cachedPanel = GetUIMgr()->OpenWidget<UInventoryPanel>();
-	cachedPanel->SetFlashBatteryVisibility(false);
 
-	// TODO: 후레쉬 획득할 때 SetFlashBatteryVisibility를 true로 설정한다.
+	// 후레쉬, 부적 획득할 때 Visibility를 true로 설정하고, 초기값은 false.
+	SetVisibleBatteryInfo(false);
+	SetVisibleCharmInfo(false);
 }
 
 UInventoryPanel* ARoomEscapeFPSHUD::GetInventoryPanel()
@@ -55,4 +57,28 @@ UInventoryPanel* ARoomEscapeFPSHUD::GetInventoryPanel()
 		return cachedPanel.Get();
 	}
 	return nullptr;
+}
+void ARoomEscapeFPSHUD::SetVisibleOnHUD(EItemType InType, bool bOnOff)
+{
+	switch (InType)
+	{
+	case EItemType::Flash:
+		SetVisibleBatteryInfo(bOnOff);
+		// TODO: 후레쉬 안내 위젯 생성
+		break;
+	case EItemType::Charm:
+		SetVisibleCharmInfo(bOnOff);
+		// TODO: 부적 안내 위젯 생성
+		break;
+	}
+}
+void ARoomEscapeFPSHUD::SetVisibleBatteryInfo(bool bOnOff)
+{
+	check(cachedPanel.IsValid());
+	cachedPanel->SetFlashBatteryVisibility(bOnOff);
+}
+void ARoomEscapeFPSHUD::SetVisibleCharmInfo(bool bOnOff)
+{
+	check(cachedPanel.IsValid());
+	cachedPanel->SetCharmVisibility(bOnOff);
 }
