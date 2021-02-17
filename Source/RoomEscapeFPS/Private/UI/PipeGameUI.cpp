@@ -14,7 +14,7 @@
 void UPipeGameUI::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGridSize)
 {
 	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(GetOwningPlayer(), this);
-	GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(true);
+	GetOwningPlayer()->SetShowMouseCursor(true);
 	CommitButton->OnClicked.AddDynamic(this, &UPipeGameUI::OnClickedCommitButton);
 	CloseButton->OnClicked.AddDynamic(this, &UPipeGameUI::OnClickedCloseButton);
 
@@ -123,7 +123,7 @@ void UPipeGameUI::OnClickedCloseButton()
 void UPipeGameUI::CloseUI()
 {
 	UWidgetBlueprintLibrary::SetInputMode_GameOnly(GetOwningPlayer());
-	GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
+	GetOwningPlayer()->SetShowMouseCursor(false);
 	GetUIMgr()->CachPipeGameUI(nullptr);
 	bRequested = false;
 	RemoveFromParent();

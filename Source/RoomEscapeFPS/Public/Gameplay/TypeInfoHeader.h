@@ -11,7 +11,7 @@
 UENUM()
 enum class EItemType : uint8
 {
-	NONE,
+	NONE = 0u,
 	Flash,
 	Charm,
 	Key,

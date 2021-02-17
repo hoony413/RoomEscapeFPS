@@ -20,6 +20,14 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void ToggleState(APawn* requester) override;
+	virtual void CaptureCurrentScene();
+
+	FORCEINLINE const FString& GetItemNameStr() { return ItemNameStr; }
+	FORCEINLINE const FString& GetItemDescStr() { return ItemDescStr; }
+
+	FORCEINLINE bool IsFirstGetNeedsUpdateUI() { return bFirstGetNeedsUpdateUI; }
+	FORCEINLINE EItemType GetItemType() { return ItemType; }
+	FORCEINLINE USceneCaptureComponent2D* GetSceneCapture() { return SceneCapturer; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -30,12 +38,19 @@ protected:
 		EItemType ItemType;
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "1"))
 		int32 DefaultGetCount;
+	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
+		class USceneCaptureComponent2D* SceneCapturer;
 
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
 		EItemType AdditionalItemType = EItemType::NONE;
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "0"))
 		int32 AdditionalGetCount = 0;
 
-	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = FirstGetInfo, meta = (AllowPrivateAccess = "true"))
 		bool bFirstGetNeedsUpdateUI;
+	UPROPERTY(EditAnywhere, Category = FirstGetInfo, meta = (AllowPrivateAccess = "true"))
+		FString ItemNameStr;
+	UPROPERTY(EditAnywhere, Category = FirstGetInfo, meta = (AllowPrivateAccess = "true"))
+		FString ItemDescStr;
+
 };

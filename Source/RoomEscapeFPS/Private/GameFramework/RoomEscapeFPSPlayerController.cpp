@@ -91,7 +91,7 @@ void ARoomEscapeFPSPlayerController::OnFire()
 void ARoomEscapeFPSPlayerController::OnTestKey()
 {
 	// 개인 UI 조작 시 이런식으로 호출하면 된다.
-	ServerOnTestKey();
+	//ServerOnTestKey();
 }
 void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 {

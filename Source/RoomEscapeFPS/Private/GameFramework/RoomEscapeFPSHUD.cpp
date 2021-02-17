@@ -64,11 +64,9 @@ void ARoomEscapeFPSHUD::SetVisibleOnHUD(EItemType InType, bool bOnOff)
 	{
 	case EItemType::Flash:
 		SetVisibleBatteryInfo(bOnOff);
-		// TODO: 후레쉬 안내 위젯 생성
 		break;
 	case EItemType::Charm:
 		SetVisibleCharmInfo(bOnOff);
-		// TODO: 부적 안내 위젯 생성
 		break;
 	}
 }

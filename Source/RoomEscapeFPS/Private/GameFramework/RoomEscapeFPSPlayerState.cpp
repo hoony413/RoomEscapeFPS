@@ -11,7 +11,10 @@
 #include "Managers/UIManager.h"
 #include "UI/PipeGameUI.h"
 #include "UI/InventoryPanel.h"
+#include "UI/FirstGetItemInfoPanel.h"
 #include "Kismet/GameplayStatics.h"
+#include "Object/GetableObject.h"
+#include "Components/SceneCaptureComponent2D.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -311,14 +314,14 @@ void ARoomEscapeFPSPlayerState::ServerClearPipeGame_Implementation()
 //	}
 //}
 
-void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, uint32 InCount)
+void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, int32 InCount)
 {
 	bool bFind = false;
 	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
 	{
 		if (InType == InventoryInfo[i].ItemType)
 		{
-			InventoryInfo[i].ItemCount = InCount;
+			InventoryInfo[i].ItemCount += InCount;
 			bFind = true;
 			break;
 		}
@@ -327,52 +330,30 @@ void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, uint32 InCo
 	if (bFind == false)
 	{
 		InventoryInfo.Add(FItemInfo(InType, InCount));
-		// TODO: ¾ÆÀÌÅÛ ÃÖÃÊ È¹µæÀÏ °æ¿ì È¹µæÇÑ ¾ÆÀÌÅÛ¿¡ ´ëÇÑ ¾È³» À§Á¬ »ý¼º.
 	}
-}
-void ARoomEscapeFPSPlayerState::ModifyItemFromInventory(EItemType InType, int32 delta)
-{
-	bool bFind = false;
-	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
-	{
-		if (InType == InventoryInfo[i].ItemType)
-		{
-			bFind = true;
-			if (InventoryInfo[i].ItemCount + delta < 0)
-			{
-				ensureMsgf(false, TEXT("Item StackCount Can't be lower than zero!"));
-				return;
-			}
-			InventoryInfo[i].ItemCount += delta;
-			break;
-		}
-	}
-
-	ensureMsgf(false, TEXT("Item not found!"));
 }
 const uint32 ARoomEscapeFPSPlayerState::GetItemCount(EItemType InType)
 {
-	bool bFind = false;
 	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
 	{
 		if (InType == InventoryInfo[i].ItemType)
 		{
-			bFind = true;
 			return InventoryInfo[i].ItemCount;
 		}
 	}
 	return 0u;
 }
-void ARoomEscapeFPSPlayerState::GetItemCountRef(EItemType InType, uint32& OutCount)
+
+bool ARoomEscapeFPSPlayerState::AmIHaveItem(EItemType InType)
 {
 	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
 	{
 		if (InType == InventoryInfo[i].ItemType)
 		{
-			OutCount = InventoryInfo[i].ItemCount;
-			break;
+			return InventoryInfo[i].ItemCount > 0;
 		}
 	}
+	return false;
 }
 void ARoomEscapeFPSPlayerState::ToggleBatteryReduceState(bool bOnOff)
 {
@@ -432,12 +413,18 @@ bool ARoomEscapeFPSPlayerState::IsFirstGet(EItemType InType)
 	}
 	return true;
 }
-void ARoomEscapeFPSPlayerState::ClientProcessHUDOnFirstItemGet_Implementation(EItemType InType)
+void ARoomEscapeFPSPlayerState::ClientProcessHUDOnFirstItemGet_Implementation(class AGetableObject* InObj)
 {
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	if (hud)
+	UFirstGetItemInfoPanel* ItemInfoUI = GetUIMgr()->OpenWidget<UFirstGetItemInfoPanel>();
+	if (ItemInfoUI)
 	{
-		hud->SetVisibleOnHUD(InType, true);
+		ItemInfoUI->SetItemNameText(InObj->GetItemNameStr());
+		ItemInfoUI->SetItemDescText(InObj->GetItemDescStr());
+	}
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+	if (hud && InObj)
+	{
+		hud->SetVisibleOnHUD(InObj->GetItemType(), true);
 	}
 }
 

@@ -37,6 +37,5 @@ void AProjectileHandler::ReturnCharm(class ACharmProjectile* InCharm)
 void AProjectileHandler::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 

@@ -16,11 +16,14 @@
 #include "Components/PrimitiveComponent.h"
 #include "UI/InteractionPanel.h"
 #include "Object/InteractiveObject.h"
+#include "Object/GetableObject.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
 #include "Gameplay/ProjectileHandler.h"
 #include "Object/CharmProjectile.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/RoomEscapeFPSHUD.h"
+#include "UI/InventoryPanel.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -142,7 +145,16 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		if (cachedLooking != IsLooking)
 		{
 			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
-			TurnOnOffWidget(obj->GetInformationMessage(), IsLooking);
+			TurnOnOffWidget(obj, IsLooking);
+			
+			if (IsLooking)
+			{
+				AGetableObject* gObj = Cast<AGetableObject>(result.Actor.Get());
+				if (gObj && gObj->IsFirstGetNeedsUpdateUI())
+				{
+					gObj->CaptureCurrentScene();
+				}
+			}
 		}
 	}
 }
@@ -167,8 +179,7 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 		dir = GetControlRotation().Vector();
 		end = pos + (dir * ArmRange);
 
-		UWorld* world = GetWorld();
-		world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
+		GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
 
 		bool bNowLookingActor = 
 			result.Component.IsValid() && result.Actor.IsValid() &&
@@ -179,6 +190,7 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 		if (InteractableObject != nullptr && bNowLookingActor)
 		{
 			InteractSphere->GetOverlappingActors(Actors, InteractableObject);
+			AActor* actor = result.Actor.Get();
 			for (const auto& elem : Actors)
 			{	
 				if (elem == result.Actor.Get())
@@ -203,12 +215,12 @@ void ARoomEscapeFPSCharacter::ChangeInteractText(const FString& str)
 		InteractWidget->SetText(txt);
 	}
 }
-void ARoomEscapeFPSCharacter::TurnOnOffWidget(const FString& infoStr, bool bOnOff)
+void ARoomEscapeFPSCharacter::TurnOnOffWidget(AInteractiveObject* InObj, bool bOnOff)
 {
 	if (!IsLocallyControlled() || GetNetMode() != NM_Client)
 		return;
 
-	if (bOnOff == false)
+	if (InObj == nullptr || bOnOff == false)
 	{
 		if (InteractWidget != nullptr)
 			InteractWidget->SetVisibility(ESlateVisibility::Collapsed);
@@ -224,12 +236,22 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(const FString& infoStr, bool bOnOf
 		InteractWidget->SetVisibility(bOnOff ?
 			ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
-		ChangeInteractText(infoStr);
+		ChangeInteractText(InObj->GetInformationMessage());
 	}
 }
 
 void ARoomEscapeFPSCharacter::OnFlash()
 {
+	if (GetNetMode() == NM_Client)
+	{
+		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
+		if (ps)
+		{
+			if (!ps->AmIHaveItem(EItemType::Flash))
+				return;
+		}
+	}
+	
 	ServerOnFlash();
 }
 bool ARoomEscapeFPSCharacter::ServerOnFlash_Validate()
@@ -240,9 +262,16 @@ void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		IsFlash = !IsFlash;
+		// TODO: 후레쉬를 가지고 있지 않은 경우 리턴.
 		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		ps->ToggleBatteryReduceState(IsFlash);
+		if (ps)
+		{
+			if (ps->AmIHaveItem(EItemType::Flash))
+			{
+				IsFlash = !IsFlash;
+				ps->ToggleBatteryReduceState(IsFlash);
+			}
+		}
 	}
 }
 void ARoomEscapeFPSCharacter::OnRep_IsFlash()
@@ -267,6 +296,21 @@ void ARoomEscapeFPSCharacter::UpdateFlashIntensity(float InIntensity)
 
 void ARoomEscapeFPSCharacter::OnFire()
 {
+	if (GetNetMode() == NM_Client)
+	{
+		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
+		if (ps)
+		{
+			if (!ps->AmIHaveItem(EItemType::Charm))
+				return;
+			
+			ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+			if (hud)
+			{	// 부적 카운트 업데이트(UI)
+				hud->GetInventoryPanel()->UpdateCharmCount(ps->GetItemCount(EItemType::Charm) - 1);
+			}
+		}
+	}
 	ServerOnFire();
 }
 bool ARoomEscapeFPSCharacter::ServerOnFire_Validate()
@@ -277,6 +321,15 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
+		// TODO: 부적을 가지고 있지 않은 경우 리턴.
+		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
+		if (ps)
+		{
+			if (!ps->AmIHaveItem(EItemType::Charm))
+				return;
+
+			ps->AddItemToInventory(EItemType::Charm, -1);
+		}
 		// TODO: 부적 탄체 생성, 플레이어로부터 발사 처리.
 		if (!cachedProjectileHandlerPtr.IsValid())
 		{
@@ -304,7 +357,6 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 		}
 	}
 }
-
 void ARoomEscapeFPSCharacter::FlashToggleAnimation()
 {
 	if (FlashAnimation != nullptr)

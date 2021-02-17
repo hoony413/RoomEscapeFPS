@@ -64,7 +64,7 @@ protected:
 	void ChangeInteractText(const FString& str);
 
 	UFUNCTION()
-		void TurnOnOffWidget(const FString& infoStr, bool bOnOff);
+		void TurnOnOffWidget(class AInteractiveObject* InObj, bool bOnOff);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

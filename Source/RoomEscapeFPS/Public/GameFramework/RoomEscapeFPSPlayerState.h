@@ -94,19 +94,18 @@ private:
 //--------------------------------------- 아이템 관련
 
 public:
-	void AddItemToInventory(EItemType InType, uint32 InCount);
-	void ModifyItemFromInventory(EItemType InType, int32 delta);
-	
+	void AddItemToInventory(EItemType InType, int32 InCount);
 	const uint32 GetItemCount(EItemType InType);
 	uint32* GetItemCountRef(EItemType InType);
+	bool AmIHaveItem(EItemType InType);
 
 	void ToggleBatteryReduceState(bool bOnOff);
 
 	bool IsFirstGet(EItemType InType);
 
 	UFUNCTION(Client, Reliable)
-	void ClientProcessHUDOnFirstItemGet(EItemType InType);
-	
+	void ClientProcessHUDOnFirstItemGet(class AGetableObject* InObj);
+
 protected:
 	void UpdateBatteryRemainValue(int32 InDelta);
 
