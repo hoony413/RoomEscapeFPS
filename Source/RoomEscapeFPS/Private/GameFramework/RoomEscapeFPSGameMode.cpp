@@ -27,10 +27,11 @@ void ARoomEscapeFPSGameMode::BeginPlay()
 
 void ARoomEscapeFPSGameMode::PostLogin(APlayerController* NewPlayer)
 {
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(NewPlayer->GetHUD());
-	if (hud)
+	Super::PostLogin(NewPlayer);
+
+	ARoomEscapeFPSPlayerController* pc = Cast<ARoomEscapeFPSPlayerController>(NewPlayer);
+	if (pc)
 	{
-		hud->InitializeHUD();
-		hud->SetVisibilityLoadingScreen(false);
+		pc->ClientSetupHUD();
 	}
 }

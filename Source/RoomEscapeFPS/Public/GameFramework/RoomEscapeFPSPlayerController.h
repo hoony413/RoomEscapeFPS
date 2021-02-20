@@ -21,6 +21,9 @@ public:
 	UFUNCTION()
 		void OnTestKey();
 
+	UFUNCTION(Client, Reliable)
+		void ClientSetupHUD();
+
 protected:
 	UFUNCTION()
 	void Jump();

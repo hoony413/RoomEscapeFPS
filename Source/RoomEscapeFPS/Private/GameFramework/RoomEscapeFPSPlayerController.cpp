@@ -1,14 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GameFramework/RoomEscapeFPSPlayerController.h"
-#include "Helper/Helper.h"
-#include "Managers/UIManager.h"
 #include "GameFramework/RoomEscapeFPSGameMode.h"
+#include "GameFramework/RoomEscapeFPSHUD.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Character/RoomEscapeFPSCharacter.h"
 #include "Net/UnrealNetwork.h"
 
+#include "Helper/Helper.h"
+#include "Managers/UIManager.h"
 #include "UI/PipeGameUI.h"
 #include "UI/InteractionPanel.h"
 
@@ -46,7 +47,15 @@ void ARoomEscapeFPSPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("LookUp", this, &ARoomEscapeFPSPlayerController::AddControllerPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ARoomEscapeFPSPlayerController::LookUpAtRate);
 }
-
+void ARoomEscapeFPSPlayerController::ClientSetupHUD_Implementation()
+{
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetHUD());
+	if (hud)
+	{
+		hud->SetVisibilityLoadingScreen(false);
+		hud->InitializeHUD();
+	}
+}
 void ARoomEscapeFPSPlayerController::Jump()
 {
 	ACharacter* character = GetCharacter();

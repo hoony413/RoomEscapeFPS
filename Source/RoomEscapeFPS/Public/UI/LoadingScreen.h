@@ -14,4 +14,6 @@ class ROOMESCAPEFPS_API ULoadingScreen : public UBaseWidget
 {
 	GENERATED_BODY()
 	
+public:
+	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/OutGame/Loading_Widget.Loading_Widget_C'"); }
 };

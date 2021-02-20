@@ -22,10 +22,10 @@ ARoomEscapeFPSHUD::ARoomEscapeFPSHUD()
 	//CrosshairTex = CrosshairTexObj.Object;
 }
 
-
 void ARoomEscapeFPSHUD::DrawHUD()
 {
 	Super::DrawHUD();
+	//InitializeHUD();
 }
 void ARoomEscapeFPSHUD::InitializeHUD()
 {
