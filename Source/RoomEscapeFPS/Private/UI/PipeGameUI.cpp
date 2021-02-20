@@ -8,6 +8,7 @@
 #include "Components/UniformGridPanel.h"
 #include "Gameplay/PipeGameInfo.h"
 #include "Runtime/UMG/Public/Blueprint/WidgetBlueprintLibrary.h"
+#include "GameFramework/RoomEscapeFPSHUD.h"
 #include "UI/SuccessFailPanel.h"
 #include "UI/PipeGame_Node.h"
 
@@ -102,7 +103,11 @@ void UPipeGameUI::OnClickedCommitButton()
 	{
 		bRequested = true;
 		// 결과를 받으면 연출을 시작해야하므로 현재 팝업을 캐싱한다.
-		GetUIMgr()->CachPipeGameUI(this);
+		ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetOwningPlayer()->GetHUD());
+		if (hud)
+		{
+			hud->CachPipeGameUI(this);
+		}
 		ARoomEscapeFPSPlayerState* ps = GetOwningPlayerState<ARoomEscapeFPSPlayerState>(true);
 		if (ps)
 		{
@@ -124,7 +129,12 @@ void UPipeGameUI::CloseUI()
 {
 	UWidgetBlueprintLibrary::SetInputMode_GameOnly(GetOwningPlayer());
 	GetOwningPlayer()->SetShowMouseCursor(false);
-	GetUIMgr()->CachPipeGameUI(nullptr);
+	
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetOwningPlayer()->GetHUD());
+	if (hud)
+	{
+		hud->CachPipeGameUI(nullptr);
+	}
 	bRequested = false;
 	RemoveFromParent();
 }

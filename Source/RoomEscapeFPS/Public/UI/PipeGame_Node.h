@@ -30,7 +30,7 @@ class ROOMESCAPEFPS_API UPipeGame_Node : public UBaseWidget
 public:
 	void InitializePipeNode(FPipeNode& InNode, uint8 InGridSize);
 
-	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/PipeGame_Node_Widget.PipeGame_Node_Widget_C'"); }
+	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/PipeGame_Node_Widget.PipeGame_Node_Widget_C'"); }
 	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
 	void PlayResultAnimation();

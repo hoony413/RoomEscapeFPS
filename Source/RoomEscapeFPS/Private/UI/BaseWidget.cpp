@@ -7,6 +7,7 @@
 void UBaseWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+	SetWidgetAnimation();
 }
 
 void UBaseWidget::SetWidgetAnimation()

@@ -214,10 +214,14 @@ void ARoomEscapeFPSPlayerState::OnRep_PipeGameSuccessInfo()
 	
 	if (GetNetMode() == NM_Client)
 	{
-		UPipeGameUI* gameUI = GetUIMgr()->GetPipeGameUI();
-		if (gameUI)
+		ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+		if (hud)
 		{
-			gameUI->CheckCommittedAnswerAnimation(PipeGameSuccessInfo == EReplicateState::ETrue ? true : false);
+			UPipeGameUI* gameUI = hud->GetPipeGameUI();
+			if (gameUI)
+			{
+				gameUI->CheckCommittedAnswerAnimation(PipeGameSuccessInfo == EReplicateState::ETrue ? true : false);
+			}
 		}
 	}
 }

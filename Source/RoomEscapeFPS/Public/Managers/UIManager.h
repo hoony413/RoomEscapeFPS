@@ -36,10 +36,12 @@ public:
 
 		// CDO로부터 BP경로 받기
 		FString path = Cast<UBaseWidget>(T::StaticClass()->ClassDefaultObject)->GetBPPath();
+		//const FString& path = GetPath(T::StaticClass()->ClassDefaultObject->GetFName());
+		check(!path.IsEmpty());
 
 		// 오브젝트 로드(위젯BP)
 		UClass* classObj = LoadObject<UClass>(world, *path);
-		check(classObj != nullptr);
+		check(classObj);
 
 		// 위젯 생성
 		T* widget = Cast<T>(UUserWidget::CreateWidgetInstance(*world, classObj, NAME_None));
@@ -65,11 +67,4 @@ public:
 		}
 		return t;
 	}
-
-	FORCEINLINE class UPipeGameUI* GetPipeGameUI() { return cachedPipeGameUI; }
-	FORCEINLINE void CachPipeGameUI(class UPipeGameUI* InUI) { cachedPipeGameUI = InUI; }
-
-private:
-	UPROPERTY()
-	class UPipeGameUI* cachedPipeGameUI;
 };

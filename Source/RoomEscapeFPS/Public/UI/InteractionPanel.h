@@ -17,7 +17,7 @@ class ROOMESCAPEFPS_API UInteractionPanel : public UBaseWidget
 public:
 	virtual void NativeOnInitialized() override;
 	virtual FString GetBPPath() override { return TEXT(
-"WidgetBlueprint'/Game/Resources/Widgets/InteractionPanel_Widget.InteractionPanel_Widget_C'"); }
+"WidgetBlueprint'/Game/Resources/Widgets/InGame/InteractionPanel_Widget.InteractionPanel_Widget_C'"); }
 	void SetText(const FText& txt);
 
 protected:

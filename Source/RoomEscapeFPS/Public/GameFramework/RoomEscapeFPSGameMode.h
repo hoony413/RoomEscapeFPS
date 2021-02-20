@@ -37,6 +37,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	// 플레이어 접속 시 처리할 액션.
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 	// 게임 목표 설정(모든 플레이어는 이 값을 참조하여 승리 조건을 알아야 한다)
 };
 

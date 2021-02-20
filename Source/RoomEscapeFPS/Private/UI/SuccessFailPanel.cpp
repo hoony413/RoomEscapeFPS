@@ -2,7 +2,7 @@
 
 
 #include "UI/SuccessFailPanel.h"
-#include "Components/EditableTextBox.h"
+#include "Components/TextBlock.h"
 
 void USuccessFailPanel::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
 {

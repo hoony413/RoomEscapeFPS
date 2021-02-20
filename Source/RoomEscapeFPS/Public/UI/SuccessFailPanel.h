@@ -15,14 +15,14 @@ class ROOMESCAPEFPS_API USuccessFailPanel : public UBaseWidget
 	GENERATED_BODY()
 	
 public:
-	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/SuccessFailPanel_Widget.SuccessFailPanel_Widget_C'"); }
+	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/SuccessFailPanel_Widget.SuccessFailPanel_Widget_C'"); }
 	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
 	void LaunchAnimation(bool bSuccess);
 
 private:
 	UPROPERTY(meta = (BindWidget))
-		class UEditableTextBox* NoticeTextBox;
+		class UTextBlock* NoticeTextBox;
 
 	bool bReverseAnim = false;
 };

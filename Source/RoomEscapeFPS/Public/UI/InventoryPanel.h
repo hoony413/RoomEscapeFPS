@@ -18,11 +18,12 @@ class ROOMESCAPEFPS_API UInventoryPanel : public UBaseWidget
 public:
 	virtual FString GetBPPath() override {
 		return TEXT(
-			"WidgetBlueprint'/Game/Resources/Widgets/InventoryPanel_Widget.InventoryPanel_Widget_C'");
+			"WidgetBlueprint'/Game/Resources/Widgets/InGame/InventoryPanel_Widget.InventoryPanel_Widget_C'");
 	}
 
 	void SetFlashBatteryVisibility(bool bOnOff);
 	void SetCharmVisibility(bool bOnOff);
+	void SetCrossHairVisibility(bool bOnOff);
 
 	void UpdateBatteryPower(float fCurrentBatteryValue);
 	void UpdateCharmCount(int32 InCount);
@@ -34,4 +35,6 @@ protected:
 		class UCanvasPanel* CharmCanvasPanel;
 	UPROPERTY(meta = (BindWidget))
 		class UTextBlock* CharmCountText;
+	UPROPERTY(meta = (BindWidget))
+		class UImage* CrossHairImage;
 };

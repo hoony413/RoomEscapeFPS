@@ -20,7 +20,7 @@ public:
 
 	virtual FString GetBPPath() override {
 		return TEXT(
-			"WidgetBlueprint'/Game/Resources/Widgets/FirstGetItemInfo_Widget.FirstGetItemInfo_Widget_C'");
+			"WidgetBlueprint'/Game/Resources/Widgets/InGame/FirstGetItemInfo_Widget.FirstGetItemInfo_Widget_C'");
 	}
 
 	void SetItemNameText(const FString& InStr);

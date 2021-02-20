@@ -19,7 +19,9 @@ public:
 	virtual bool IsInFreeList() override;
 	virtual void SetIsInFreeList(bool bFreeList) override;
 
-	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void Fire(const FVector& pos, const FVector& dir);

@@ -3,6 +3,8 @@
 #include "GameFramework/RoomEscapeFPSGameMode.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
+#include "Gameplay/GhostSpawner.h"
 #include "Character/RoomEscapeFPSCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Helper/Helper.h"
@@ -21,9 +23,14 @@ ARoomEscapeFPSGameMode::ARoomEscapeFPSGameMode()
 void ARoomEscapeFPSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	//if (HUDClass)
-	//{
-	//	HUDClass->AddToRoot();
-	//}
+void ARoomEscapeFPSGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(NewPlayer->GetHUD());
+	if (hud)
+	{
+		hud->InitializeHUD();
+		hud->SetVisibilityLoadingScreen(false);
+	}
 }

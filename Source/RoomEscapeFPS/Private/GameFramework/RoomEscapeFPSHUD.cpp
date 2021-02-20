@@ -10,44 +10,36 @@
 #include "Managers/UIManager.h"
 #include "Gameplay/TypeInfoHeader.h"
 #include "UI/InventoryPanel.h"
-#include "UI/BasePage.h"
+#include "Managers/UIManager.h"
+#include "Helper/Helper.h"
+#include "UI/LoadingScreen.h"
+#include "UI/PipeGameUI.h"
 
 ARoomEscapeFPSHUD::ARoomEscapeFPSHUD()
 {
 	// Set the crosshair texture
-	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("/Game/Resources/Textures/FirstPersonCrosshair"));
-	CrosshairTex = CrosshairTexObj.Object;
+	//static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("/Game/Resources/Textures/FirstPersonCrosshair"));
+	//CrosshairTex = CrosshairTexObj.Object;
 }
 
 
 void ARoomEscapeFPSHUD::DrawHUD()
 {
 	Super::DrawHUD();
-
-	// Draw very simple crosshair
-
-	// find center of the Canvas
-	const FVector2D Center(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.5f);
-
-	// offset by half the texture's dimensions so that the center of the texture aligns with the center of the Canvas
-	const FVector2D CrosshairDrawPosition( (Center.X),
-										   (Center.Y + 20.0f));
-
-	// draw the crosshair
-	FCanvasTileItem TileItem( CrosshairDrawPosition, CrosshairTex->Resource, FLinearColor::White);
-	TileItem.BlendMode = SE_BLEND_Translucent;
-	Canvas->DrawItem( TileItem );
 }
-
-void ARoomEscapeFPSHUD::BeginPlay()
+void ARoomEscapeFPSHUD::InitializeHUD()
 {
-	Super::BeginPlay();
-
+	// TODO: GameMode에서 JoinSession 완료되면 클라이언트로 RPC하도록 로직 수정
 	cachedPanel = GetUIMgr()->OpenWidget<UInventoryPanel>();
 
 	// 후레쉬, 부적 획득할 때 Visibility를 true로 설정하고, 초기값은 false.
 	SetVisibleBatteryInfo(false);
 	SetVisibleCharmInfo(false);
+	SetVisibleCrossHair(true);
+}
+void ARoomEscapeFPSHUD::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 UInventoryPanel* ARoomEscapeFPSHUD::GetInventoryPanel()
@@ -58,6 +50,15 @@ UInventoryPanel* ARoomEscapeFPSHUD::GetInventoryPanel()
 	}
 	return nullptr;
 }
+class UPipeGameUI* ARoomEscapeFPSHUD::GetPipeGameUI()
+{
+	if (cachedPipeGameUI.IsValid())
+	{
+		return cachedPipeGameUI.Get();
+	}
+	return nullptr;
+}
+
 void ARoomEscapeFPSHUD::SetVisibleOnHUD(EItemType InType, bool bOnOff)
 {
 	switch (InType)
@@ -70,6 +71,21 @@ void ARoomEscapeFPSHUD::SetVisibleOnHUD(EItemType InType, bool bOnOff)
 		break;
 	}
 }
+void ARoomEscapeFPSHUD::SetVisibilityLoadingScreen(bool bOpen)
+{
+	if (bOpen)
+	{
+		cachedLoading = GetUIMgr()->OpenWidget<ULoadingScreen>();
+	}
+	else
+	{
+		if (cachedLoading.IsValid())
+		{
+			cachedLoading->RemoveFromParent();
+		}
+		cachedLoading = nullptr;
+	}
+}
 void ARoomEscapeFPSHUD::SetVisibleBatteryInfo(bool bOnOff)
 {
 	check(cachedPanel.IsValid());
@@ -79,4 +95,9 @@ void ARoomEscapeFPSHUD::SetVisibleCharmInfo(bool bOnOff)
 {
 	check(cachedPanel.IsValid());
 	cachedPanel->SetCharmVisibility(bOnOff);
+}
+void ARoomEscapeFPSHUD::SetVisibleCrossHair(bool bOnOff)
+{
+	check(cachedPanel.IsValid());
+	cachedPanel->SetCrossHairVisibility(bOnOff);
 }

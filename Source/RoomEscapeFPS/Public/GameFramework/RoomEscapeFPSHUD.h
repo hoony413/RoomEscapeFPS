@@ -19,18 +19,28 @@ public:
 	virtual void DrawHUD() override;
 	virtual void BeginPlay() override;
 
+	void InitializeHUD();
+
+	void SetVisibilityLoadingScreen(bool bOpen);
+
 	class UInventoryPanel* GetInventoryPanel();
 
 	void SetVisibleOnHUD(EItemType InType, bool bOnOff);
 
+	class UPipeGameUI* GetPipeGameUI();
+	FORCEINLINE void CachPipeGameUI(class UPipeGameUI* InUI) { cachedPipeGameUI = InUI; }
+
 protected:
 	void SetVisibleBatteryInfo(bool bOnOff);
 	void SetVisibleCharmInfo(bool bOnOff);
+	void SetVisibleCrossHair(bool bOnOff);
 
 private:
-	/** Crosshair asset pointer */
-	class UTexture2D* CrosshairTex;
+	///** Crosshair asset pointer */
+	//class UTexture2D* CrosshairTex;
 
 	TWeakObjectPtr<class UInventoryPanel> cachedPanel;
+	TWeakObjectPtr<class ULoadingScreen> cachedLoading;
+	TWeakObjectPtr<class UPipeGameUI> cachedPipeGameUI;
 };
 

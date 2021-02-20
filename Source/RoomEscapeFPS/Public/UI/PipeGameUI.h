@@ -18,7 +18,7 @@ class ROOMESCAPEFPS_API UPipeGameUI : public UBaseWidget
 public:
 	void InitializeGrid(TArray<struct FPipeNode>& PipeNodesInfo, uint8 InGridSize);
 
-	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/PipeGame_Widget.PipeGame_Widget_C'"); }
+	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/PipeGame_Widget.PipeGame_Widget_C'"); }
 
 	void CheckCommittedAnswerAnimation(bool bSuccess);
 

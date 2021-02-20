@@ -31,8 +31,7 @@ void AGhostSpawner::BeginPlay()
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		fSpawnTime = 1.5f;
-		// 임시 코드. 추후 트리거를 통해 true 로 설정해야 함.
-		SetActive(true);
+		SetActive(false);
 	}
 }
 

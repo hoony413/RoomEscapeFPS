@@ -2,7 +2,7 @@
 
 
 #include "Managers/UIManager.h"
-#include "Kismet2/KismetEditorUtilities.h"
+//#include "D:\UnrealEngine\Engine\Source\Editor\UnrealEd\Public\Kismet2\KismetEditorUtilities.h"
 #include "UI/BaseWidget.h"
 
 void UUIManager::InitManager()
@@ -25,18 +25,25 @@ void UUIManager::InitManager()
 //			continue;
 //		}
 //
-//#if WITH_EDITOR
-//		// Ignore skeleton classes (semi-compiled versions that only exist in-editor)
-//		if (FKismetEditorUtilities::IsClassABlueprintSkeleton(Class))
-//		{
-//			continue;
-//		}
-//#endif
+////#if WITH_EDITOR
+////		// Ignore skeleton classes (semi-compiled versions that only exist in-editor)
+////		if (FKismetEditorUtilities::IsClassABlueprintSkeleton(Class))
+////		{
+////			continue;
+////		}
+////#endif
 //
 //		// Check this class is a subclass of Base
 //		if (!Class->IsChildOf(UBaseWidget::StaticClass()))
 //		{
 //			continue;
+//		}
+//
+//		UBaseWidget* widgetCDO = Cast<UBaseWidget>(Class->ClassDefaultObject);
+//		FString path = widgetCDO->GetBPPath();
+//		if (!WidgetBPPathInfo.Contains(widgetCDO->GetFName()))
+//		{
+//			WidgetBPPathInfo.Add(widgetCDO->GetFName(), path);
 //		}
 //	}
 }

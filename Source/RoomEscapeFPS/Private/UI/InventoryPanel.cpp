@@ -22,6 +22,14 @@ void UInventoryPanel::SetCharmVisibility(bool bOnOff)
 			ESlateVisibility::Hidden);
 	}
 }
+void UInventoryPanel::SetCrossHairVisibility(bool bOnOff)
+{
+	if (CrossHairImage)
+	{
+		CrossHairImage->SetVisibility(bOnOff ? ESlateVisibility::SelfHitTestInvisible :
+			ESlateVisibility::Hidden);
+	}
+}
 void UInventoryPanel::UpdateBatteryPower(float fCurrentBatteryValue)
 {
 	if (FlashProgressBar)
