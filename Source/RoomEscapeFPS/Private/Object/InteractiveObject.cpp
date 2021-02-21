@@ -20,23 +20,29 @@ AInteractiveObject::AInteractiveObject()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
-	TimelineMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TimelineMesh"));
-	TimelineMesh->SetOnlyOwnerSee(false);
-	TimelineMesh->SetupAttachment(RootComponent);
+	ParentComp = CreateDefaultSubobject<USceneComponent>(TEXT("Parent"));
+	ParentComp->SetupAttachment(RootComponent);
+
+	DefaultMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DefaultMesh"));
+	DefaultMesh->SetOnlyOwnerSee(false);
+	DefaultMesh->SetupAttachment(ParentComp);
 
 	LineTraceBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LineTraceBox"));
-	LineTraceBox->SetupAttachment(TimelineMesh);
+	LineTraceBox->SetupAttachment(ParentComp);
 
 	LineTraceBox->SetCollisionProfileName(FName(TEXT("Interaction")));
 
+	TimelineMeshes.Empty();
 	InformationStr = TEXT("Press 'E' key to use");
 }
+
 void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AInteractiveObject, CurrentState);
 }
+
 // Called when the game starts or when spawned
+const FName TimelineMeshTag = FName(TEXT("TimelineMesh"));
 void AInteractiveObject::BeginPlay()
 {
 	Super::BeginPlay();
@@ -46,39 +52,91 @@ void AInteractiveObject::BeginPlay()
 
 	if (IsUseTimeline)
 	{
+		TArray<UActorComponent*> actors = GetComponentsByTag(UStaticMeshComponent::StaticClass(), TimelineMeshTag);
+		ensureMsgf(actors.Num() == TimelineMeshes.Num(), TEXT("TimelineMeshes and TaggedMeshes count must be equal!"));
+		for (int32 i = 0; i < actors.Num(); ++i)
+		{
+			UStaticMeshComponent* TimelineMesh = Cast<UStaticMeshComponent>(actors[i]);
+			if (TimelineMesh)
+			{
+				TimelineMeshes[i].StaticMeshComponent = TimelineMesh;
+				TimelineMeshes[i].StaticMeshComponent->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
+			}
+		}
+		
 		SetTimeline();
 	}
-
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
-	}
+	
+#if WITH_EDITOR
 	//DEBUG_BOX_BLUE(LineTraceBox, GetActorLocation() + LineTraceBox->GetRelativeLocation());
+#endif
 }
 
 void AInteractiveObject::SetTimeline()
 {
 	if (TimelineCurve != nullptr)
 	{
-		FOnTimelineFloat TimelineCallback;
-		TimelineCallback.BindUFunction(this, FName("LaunchTimeline"));
-		Timeline.AddInterpFloat(TimelineCurve, TimelineCallback);
-
-		//FOnTimelineEventStatic TimelineFinishedCallback;
-		//TimelineFinishedCallback.BindUFunction(this, FName{ TEXT("") });
-		//Timeline.SetTimelineFinishedFunc()
-	}
-}
-
-void AInteractiveObject::LaunchTimelineInternal()
-{
-	if (TimelineCurve)
-	{
-		TimelineDelta = Timeline.GetPlaybackPosition();
-		CurveFloatValue = CurveWeightValue * TimelineCurve->GetFloatValue(TimelineDelta);
-
-		FQuat NewRotation = FQuat(FRotator(0.f, CurveFloatValue, 0.f));
-		TimelineMesh->SetRelativeRotation(NewRotation);
+		for (auto& elem : TimelineMeshes)
+		{
+			auto Func = [this, &elem](float fNotUseInLambda)
+			{
+				if (TimelineCurve)
+				{
+					TimelineDelta = elem.Timeline.GetPlaybackPosition();
+					CurveFloatValue = elem.fCurveWeightValue * TimelineCurve->GetFloatValue(TimelineDelta);
+			
+					switch (elem.ControlType)
+					{
+					case ETimelineControlType::ELocationX:
+					{
+						FVector NewLocation(elem.StaticMeshComponent->GetRelativeLocation());
+						NewLocation.X = StartCurveValue + CurveFloatValue;
+						elem.StaticMeshComponent->SetRelativeLocation(NewLocation);
+					}
+					break;
+					case ETimelineControlType::ELocationY:
+					{
+						FVector NewLocation(elem.StaticMeshComponent->GetRelativeLocation());
+						NewLocation.Y = StartCurveValue + CurveFloatValue;
+						elem.StaticMeshComponent->SetRelativeLocation(NewLocation);
+					}
+					break;
+					case ETimelineControlType::ELocationZ:
+					{
+						FVector NewLocation(elem.StaticMeshComponent->GetRelativeLocation());
+						NewLocation.Z = StartCurveValue + CurveFloatValue;
+						elem.StaticMeshComponent->SetRelativeLocation(NewLocation);
+					}
+					break;
+					case ETimelineControlType::ERotationX:
+					{
+						FRotator NewRotation(elem.StaticMeshComponent->GetRelativeRotation());
+						NewRotation.Roll = StartCurveValue + CurveFloatValue;
+						elem.StaticMeshComponent->SetRelativeRotation(NewRotation);
+					}
+					break;
+					case ETimelineControlType::ERotationY:
+					{
+						FRotator NewRotation(elem.StaticMeshComponent->GetRelativeRotation());
+						NewRotation.Yaw = StartCurveValue + CurveFloatValue;
+						elem.StaticMeshComponent->SetRelativeRotation(NewRotation);
+					}
+					break;
+					case ETimelineControlType::ERotationZ:
+					{
+						FRotator NewRotation(elem.StaticMeshComponent->GetRelativeRotation());
+						NewRotation.Pitch = StartCurveValue + CurveFloatValue;
+						elem.StaticMeshComponent->SetRelativeRotation(NewRotation);
+					}
+					break;
+					}
+				}
+			};
+			
+			FOnTimelineFloatStatic TimelineCallback;
+			TimelineCallback.BindLambda(Func);
+			elem.Timeline.AddInterpFloat(TimelineCurve, TimelineCallback);
+		}
 	}
 }
 // Called every frame
@@ -87,65 +145,94 @@ void AInteractiveObject::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (IsUseTimeline)
 	{
-		Timeline.TickTimeline(DeltaTime);
+		for (auto& elem : TimelineMeshes)
+		{
+			elem.Timeline.TickTimeline(DeltaTime);
+		}
 	}
 }
-EInteractiveObjectState AInteractiveObject::GetNextState()
+
+FTimelinedStaticMeshComponent* AInteractiveObject::FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex)
 {
-	if (CurrentState == EInteractiveObjectState::EState_Open_Or_On)
+	for(int32 i = 0; i < TimelineMeshes.Num(); ++i)
 	{
-		return EInteractiveObjectState::EState_Close_Or_Off;
+		if (InMesh == TimelineMeshes[i].StaticMeshComponent)
+		{
+			OutIndex = i;
+			return &TimelineMeshes[i];
+		}
 	}
-	else if (CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
+	return nullptr;
+}
+
+void AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
+{
+	int32 Index = 0;
+	FTimelinedStaticMeshComponent* find = FindTimelineMeshComponent(Cast<UStaticMeshComponent>(InComp), Index);
+	if (find)
 	{
-		return EInteractiveObjectState::EState_Open_Or_On;
-	}
-	return EInteractiveObjectState::EState_Playing;
-}
-void AInteractiveObject::OnInteraction(EInteractiveObjectState NextState)
-{
-	NetMulticast_Interaction(NextState);
-}
-void AInteractiveObject::NetMulticast_Interaction_Implementation(EInteractiveObjectState NextState)
-{
-	if (IsUseTimeline)
-	{	// 타임라인 처리.
-		if (CurrentState == EInteractiveObjectState::EState_Playing)
+		if (find->CurrentState == EInteractiveObjectState::EState_Open_Or_On)
 		{
-			return;
+			find->CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		}
-		else if (NextState == EInteractiveObjectState::EState_Close_Or_Off)
+		else if (find->CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
 		{
-			Timeline.ReverseFromEnd();
-		}
-		else if (NextState == EInteractiveObjectState::EState_Open_Or_On)
-		{
-			Timeline.PlayFromStart();
-		}
-	}
-}
-void AInteractiveObject::ToggleState(APawn* requester)
-{
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		if (CurrentState == EInteractiveObjectState::EState_Open_Or_On)
-		{
-			CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
-		}
-		else if (CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
-		{
-			CurrentState = EInteractiveObjectState::EState_Open_Or_On;
+			find->CurrentState = EInteractiveObjectState::EState_Open_Or_On;
 		}
 		else
 		{
-			CurrentState = EInteractiveObjectState::EState_Playing;
+			find->CurrentState = EInteractiveObjectState::EState_Playing;
+		}
+	}
+
+	if (IsUseTimeline)
+	{
+		NetMulticast_Interaction(Index, find->CurrentState);
+	}
+}
+void AInteractiveObject::NetMulticast_Interaction_Implementation(int32 index, EInteractiveObjectState InState)
+{
+	// 타임라인 처리.
+	if (GetNetMode() == NM_Client)
+	{
+		if (InState == EInteractiveObjectState::EState_Close_Or_Off)
+		{
+			TimelineMeshes[index].Timeline.ReverseFromEnd();
+		}
+		else if (InState == EInteractiveObjectState::EState_Open_Or_On)
+		{
+			switch (TimelineMeshes[index].ControlType)
+			{
+			case ETimelineControlType::ELocationX:
+				StartCurveValue =
+					TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().X;
+				break;
+			case ETimelineControlType::ELocationY:
+				StartCurveValue =
+					TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Y;
+				break;
+			case ETimelineControlType::ELocationZ:
+				StartCurveValue =
+					TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Z;
+				break;
+			case ETimelineControlType::ERotationX:
+				StartCurveValue =
+					TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
+				break;
+			case ETimelineControlType::ERotationY:
+				StartCurveValue =
+					TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
+				break;
+			case ETimelineControlType::ERotationZ:
+				StartCurveValue =
+					TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
+				break;
+			}
+			TimelineMeshes[index].Timeline.PlayFromStart();
 		}
 	}
 }
-void AInteractiveObject::OnRep_CurrentState()
-{
 
-}
 #if WITH_EDITOR
 void AInteractiveObject::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {

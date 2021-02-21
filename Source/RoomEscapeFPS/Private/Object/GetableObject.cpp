@@ -26,7 +26,7 @@ AGetableObject::AGetableObject()
 	SceneCapturer->bCaptureEveryFrame = false;
 	SceneCapturer->bCaptureOnMovement = false;
 	SceneCapturer->MaxViewDistanceOverride = -1.f;
-	SceneCapturer->SetupAttachment(TimelineMesh);
+	SceneCapturer->SetupAttachment(DefaultMesh);
 }
 
 void AGetableObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -40,7 +40,6 @@ void AGetableObject::BeginPlay()
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		IsUseTimeline = false;
-		CurrentState = EInteractiveObjectState::EState_Open_Or_On;
 	}
 
 	// 블루프린트에서 추가한 컴포넌트는 생성자에서 검색되지 않는다. BeginPlay에서 설정하면 됨.
@@ -50,19 +49,20 @@ void AGetableObject::BeginPlay()
 	{
 		if (elem->IsA<UStaticMeshComponent>())
 		{
-			SceneCapturer->ShowOnlyComponent(Cast<UStaticMeshComponent>(elem));
+			UStaticMeshComponent* mesh = Cast<UStaticMeshComponent>(elem);
+			SceneCapturer->ShowOnlyComponent(mesh);
+			mesh->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
 		}
 	}
 
 	InformationStr = TEXT("Press 'E' key to get");
 }
 
-void AGetableObject::ToggleState(APawn* requester)
+void AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
-	if (GetNetMode() == NM_DedicatedServer && CurrentState == EInteractiveObjectState::EState_Open_Or_On)
+	if (GetNetMode() == NM_DedicatedServer)
 	{
 		check(requester);
-		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		Helper::SetActorActive(this, false);
 		
 		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();

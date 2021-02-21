@@ -80,7 +80,7 @@ void AGhostAIController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bActive == false)
 		return;
-
+	
 	if (CurrentState == EGhostStateMachine::EIdle)
 	{
 		MoveToGhostInBoundingBoxRandomPos();

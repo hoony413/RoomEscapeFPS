@@ -16,6 +16,55 @@ enum class EInteractiveObjectState
 	EState_Playing,
 	EState_Close_Or_Off,
 };
+
+UENUM()
+enum class ETimelineControlType
+{
+	ELocationX,
+	ELocationY,
+	ELocationZ,
+	ERotationX,
+	ERotationY,
+	ERotationZ,
+};
+
+USTRUCT()
+struct ROOMESCAPEFPS_API FTimelinedStaticMeshComponent
+{
+	GENERATED_BODY()
+
+public:
+	FTimelinedStaticMeshComponent() {}
+	FTimelinedStaticMeshComponent(int32 InIndex, class UStaticMeshComponent* InComp, ETimelineControlType InType, EInteractiveObjectState InState = EInteractiveObjectState::EState_Close_Or_Off, float InCurveWeightValue = 1.f)
+	{
+		StaticMeshComponent = InComp;
+		ControlType = InType;
+		CurrentState = InState;
+		fCurveWeightValue = InCurveWeightValue;
+
+		fCurrentCurveValue = 0.f;
+		fTimelineDelta = 0.f;
+	}
+
+	
+	UPROPERTY(EditAnywhere)
+		EInteractiveObjectState CurrentState;
+	UPROPERTY(EditAnywhere)
+		float fCurveWeightValue;
+	UPROPERTY(EditAnywhere)
+		ETimelineControlType ControlType;
+
+	UPROPERTY()
+		class UStaticMeshComponent* StaticMeshComponent;
+	UPROPERTY()
+		float fCurrentCurveValue;
+	UPROPERTY()
+		float fTimelineDelta;
+	UPROPERTY()
+		FTimeline Timeline;
+};
+
+
 UCLASS(Blueprintable)
 class ROOMESCAPEFPS_API AInteractiveObject : public AActor
 {
@@ -33,14 +82,7 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	UFUNCTION()
-	virtual void OnInteraction(EInteractiveObjectState NextState);
-
-	UFUNCTION()
-		virtual void OnRep_CurrentState();
-	EInteractiveObjectState GetCurrentState() { return CurrentState; }
-	virtual EInteractiveObjectState GetNextState();
-
-	virtual void ToggleState(APawn* requester);
+	virtual void OnInteraction(APawn* requester, class UPrimitiveComponent* InComp);
 
 	FORCEINLINE const FString& GetInformationMessage() const { return InformationStr; }
 
@@ -48,20 +90,21 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-private:
-	// 오브젝트 브로드캐스트
+public:
+	// 타임라인 애니메이션 멀티캐스트
 	UFUNCTION(NetMulticast, Unreliable)
-		void NetMulticast_Interaction(EInteractiveObjectState NextState);
+		void NetMulticast_Interaction(int32 index, EInteractiveObjectState InState);
 
 protected:
 	virtual void SetTimeline();
-	// UFUNCTION 상속을 위한 함수 분리
-	UFUNCTION()
-		void LaunchTimeline() { LaunchTimelineInternal(); }
-	virtual void LaunchTimelineInternal();
+	
+	FTimelinedStaticMeshComponent* FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex);
 
 protected:
-	UPROPERTY(VisibleDefaultsOnly)
+	UPROPERTY(EditAnywhere)
+		class USceneComponent* ParentComp;
+
+	UPROPERTY(EditAnywhere)
 		UBoxComponent* LineTraceBox;
 	UPROPERTY(EditAnywhere)
 		FVector LineTraceBoxOffset;
@@ -71,21 +114,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Timeline Info")
 		bool IsUseTimeline = false;
 	UPROPERTY(EditAnywhere, Category = "Timeline Info")
-		float CurveWeightValue = 1.f;
-	UPROPERTY(EditAnywhere, Category = "Timeline Info")
-		class UStaticMeshComponent* TimelineMesh;
+		TArray<FTimelinedStaticMeshComponent> TimelineMeshes;
 	UPROPERTY(EditAnywhere, Category = "Timeline Info")
 		class UCurveFloat* TimelineCurve;
-	UPROPERTY()
-		FTimeline Timeline;
 	
 	UPROPERTY(VisibleDefaultsOnly, Category = "Information Message")
 		FString InformationStr;
 
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentState)
-		EInteractiveObjectState	CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
-	
+	UPROPERTY(EditAnywhere)
+		class UStaticMeshComponent* DefaultMesh;
+
 	float TimelineDelta = 0.f;
 	float CurveFloatValue = 0.f;
-
+	float StartCurveValue = 0.f;
 };

@@ -393,7 +393,7 @@ void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(int32 InDelta)
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		uint32* batteryRemain = GetItemCountRef(EItemType::Battery);
+		uint32* batteryRemain = GetItemCountRef(EItemType::BatteryPower);
 		
 		*batteryRemain += InDelta;
 		if (*batteryRemain <= 0u)
@@ -440,7 +440,7 @@ void ARoomEscapeFPSPlayerState::OnRep_InventoryInfo()
 		hud->GetInventoryPanel()->UpdateCharmCount(GetItemCount(EItemType::Charm));
 		
 		// 배터리 잔량 업데이트(UI)
-		uint32 batteryRemain = GetItemCount(EItemType::Battery);
+		uint32 batteryRemain = GetItemCount(EItemType::BatteryPower);
 		float fPercent = (float)batteryRemain / BatteryMaxValue;
 		hud->GetInventoryPanel()->UpdateBatteryPower(fPercent);
 

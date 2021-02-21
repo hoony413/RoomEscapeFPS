@@ -138,12 +138,12 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		UWorld* world = GetWorld();
 		world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
 
-		bool cachedLooking = IsLooking;
+		//bool cachedLooking = IsLooking;
 		IsLooking = result.Component.IsValid() && result.Actor.IsValid() &&
 			result.Actor.Get()->IsA(InteractableObject) ? true : false;
 
-		if (cachedLooking != IsLooking)
-		{
+		//if (cachedLooking != IsLooking)
+		//{
 			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
 			TurnOnOffWidget(obj, IsLooking);
 			
@@ -155,7 +155,7 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 					gObj->CaptureCurrentScene();
 				}
 			}
-		}
+		//}
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
@@ -179,7 +179,7 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 		dir = GetControlRotation().Vector();
 		end = pos + (dir * ArmRange);
 
-		GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
+		GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel3);
 
 		bool bNowLookingActor = 
 			result.Component.IsValid() && result.Actor.IsValid() &&
@@ -193,11 +193,10 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 			AActor* actor = result.Actor.Get();
 			for (const auto& elem : Actors)
 			{	
-				if (elem == result.Actor.Get())
+				if (elem == actor)
 				{
 					AInteractiveObject* obj = Cast<AInteractiveObject>(elem);
-					obj->OnInteraction(obj->GetNextState());
-					obj->ToggleState(this);
+					obj->OnInteraction(this, result.Component.Get());
 					return;
 				}
 			}
@@ -250,9 +249,9 @@ void ARoomEscapeFPSCharacter::OnFlash()
 			if (!ps->AmIHaveItem(EItemType::Flash))
 				return;
 		}
+
+		ServerOnFlash();
 	}
-	
-	ServerOnFlash();
 }
 bool ARoomEscapeFPSCharacter::ServerOnFlash_Validate()
 {
@@ -299,19 +298,17 @@ void ARoomEscapeFPSCharacter::OnFire()
 	if (GetNetMode() == NM_Client)
 	{
 		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		if (ps)
-		{
-			if (!ps->AmIHaveItem(EItemType::Charm))
-				return;
-			
-			ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-			if (hud)
-			{	// 부적 카운트 업데이트(UI)
-				hud->GetInventoryPanel()->UpdateCharmCount(ps->GetItemCount(EItemType::Charm) - 1);
-			}
+		if (!ps->AmIHaveItem(EItemType::Charm))
+			return;
+
+		ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+		if (hud)
+		{	// 부적 카운트 업데이트(UI)
+			hud->GetInventoryPanel()->UpdateCharmCount(ps->GetItemCount(EItemType::Charm) - 1);
 		}
+
+		ServerOnFire();
 	}
-	ServerOnFire();
 }
 bool ARoomEscapeFPSCharacter::ServerOnFire_Validate()
 {

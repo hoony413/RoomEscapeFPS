@@ -16,4 +16,5 @@ enum class EItemType : uint8
 	Charm,
 	Key,
 	Battery,
+	BatteryPower,
 };

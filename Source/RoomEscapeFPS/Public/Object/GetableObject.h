@@ -19,7 +19,7 @@ public:
 	AGetableObject();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void ToggleState(APawn* requester) override;
+	virtual void OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
 	virtual void CaptureCurrentScene();
 
 	FORCEINLINE const FString& GetItemNameStr() { return ItemNameStr; }
@@ -27,7 +27,7 @@ public:
 
 	FORCEINLINE bool IsFirstGetNeedsUpdateUI() { return bFirstGetNeedsUpdateUI; }
 	FORCEINLINE EItemType GetItemType() { return ItemType; }
-	FORCEINLINE USceneCaptureComponent2D* GetSceneCapture() { return SceneCapturer; }
+	//FORCEINLINE USceneCaptureComponent2D* GetSceneCapture() { return SceneCapturer; }
 
 protected:
 	// Called when the game starts or when spawned
