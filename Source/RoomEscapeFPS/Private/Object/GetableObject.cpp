@@ -12,6 +12,7 @@
 
 AGetableObject::AGetableObject()
 {
+	bReplicates = true;
 	SceneCapturer = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture2D"));
 	SceneCapturer->ProjectionType = ECameraProjectionMode::Perspective;
 	SceneCapturer->FOVAngle = 90.f;
@@ -37,10 +38,6 @@ void AGetableObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void AGetableObject::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		IsUseTimeline = false;
-	}
 
 	// 블루프린트에서 추가한 컴포넌트는 생성자에서 검색되지 않는다. BeginPlay에서 설정하면 됨.
 	TArray<UStaticMeshComponent*> actors;

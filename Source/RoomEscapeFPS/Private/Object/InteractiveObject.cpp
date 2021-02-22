@@ -11,6 +11,7 @@
 #include "UI/InteractionPanel.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
+#include "Object/GetableObject.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -34,6 +35,8 @@ AInteractiveObject::AInteractiveObject()
 
 	TimelineMeshes.Empty();
 	InformationStr = TEXT("Press 'E' key to use");
+
+	bIsNonInteractive = false;
 }
 
 void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -41,8 +44,14 @@ void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 }
 
-// Called when the game starts or when spawned
+// Tags
 const FName TimelineMeshTag = FName(TEXT("TimelineMesh"));
+const FName FlashSpawnerTag = FName(TEXT("FlashSpawner"));
+const FName BatterySpawnerTag = FName(TEXT("BatterySpawner"));
+const FName CharmSpawnerTag = FName(TEXT("CharmSpawner"));
+const FName KeySpawnerTag = FName(TEXT("KeySpawner"));
+
+// Called when the game starts or when spawned
 void AInteractiveObject::BeginPlay()
 {
 	Super::BeginPlay();
@@ -50,23 +59,49 @@ void AInteractiveObject::BeginPlay()
 	LineTraceBox->SetBoxExtent(LineTraceBoxSize);
 	LineTraceBox->SetRelativeLocation(LineTraceBoxOffset);
 
-	if (IsUseTimeline)
+	TArray<UActorComponent*> actors = GetComponentsByClass(UStaticMeshComponent::StaticClass());
+	for (int32 i = 0, j = 0; i < actors.Num(); ++i)
 	{
-		TArray<UActorComponent*> actors = GetComponentsByTag(UStaticMeshComponent::StaticClass(), TimelineMeshTag);
-		ensureMsgf(actors.Num() == TimelineMeshes.Num(), TEXT("TimelineMeshes and TaggedMeshes count must be equal!"));
-		for (int32 i = 0; i < actors.Num(); ++i)
+		UStaticMeshComponent* mesh = Cast<UStaticMeshComponent>(actors[i]);
+		if (mesh)
 		{
-			UStaticMeshComponent* TimelineMesh = Cast<UStaticMeshComponent>(actors[i]);
-			if (TimelineMesh)
+			AGetableObject* obj = nullptr;
+			if (IsUseTimeline && mesh->ComponentHasTag(TimelineMeshTag))
 			{
-				TimelineMeshes[i].StaticMeshComponent = TimelineMesh;
-				TimelineMeshes[i].StaticMeshComponent->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
+				TimelineMeshes[j].StaticMeshComponent = mesh;
+				TimelineMeshes[j].StaticMeshComponent->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
+				++j;
+			}
+
+			if (GetNetMode() == NM_DedicatedServer)
+			{
+				if (mesh->ComponentHasTag(FlashSpawnerTag))
+				{
+					obj = GetWorld()->SpawnActor<AGetableObject>(FlashObj.LoadSynchronous(), FActorSpawnParameters());
+				}
+				else if (mesh->ComponentHasTag(BatterySpawnerTag))
+				{
+					obj = GetWorld()->SpawnActor<AGetableObject>(BatteryObj.LoadSynchronous(), FActorSpawnParameters());
+				}
+				else if (mesh->ComponentHasTag(CharmSpawnerTag))
+				{
+					obj = GetWorld()->SpawnActor<AGetableObject>(CharmObj.LoadSynchronous(), FActorSpawnParameters());
+				}
+				else if (mesh->ComponentHasTag(KeySpawnerTag))
+				{
+					obj = GetWorld()->SpawnActor<AGetableObject>(KeyObj.LoadSynchronous(), FActorSpawnParameters());
+				}
+
+				if (obj)
+				{
+					obj->AttachToComponent(mesh, FAttachmentTransformRules::KeepWorldTransform);
+					obj->SetActorRelativeLocation(FVector(0, 0, 5));
+				}
 			}
 		}
-		
-		SetTimeline();
 	}
-	
+	SetTimeline();
+
 #if WITH_EDITOR
 	//DEBUG_BOX_BLUE(LineTraceBox, GetActorLocation() + LineTraceBox->GetRelativeLocation());
 #endif
@@ -84,7 +119,6 @@ void AInteractiveObject::SetTimeline()
 				{
 					TimelineDelta = elem.Timeline.GetPlaybackPosition();
 					CurveFloatValue = elem.fCurveWeightValue * TimelineCurve->GetFloatValue(TimelineDelta);
-			
 					switch (elem.ControlType)
 					{
 					case ETimelineControlType::ELocationX:
@@ -171,17 +205,16 @@ void AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveCompone
 	FTimelinedStaticMeshComponent* find = FindTimelineMeshComponent(Cast<UStaticMeshComponent>(InComp), Index);
 	if (find)
 	{
+		if (IsUseTimeline && find->Timeline.IsPlaying())
+			return;
+
 		if (find->CurrentState == EInteractiveObjectState::EState_Open_Or_On)
 		{
 			find->CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		}
-		else if (find->CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
-		{
-			find->CurrentState = EInteractiveObjectState::EState_Open_Or_On;
-		}
 		else
 		{
-			find->CurrentState = EInteractiveObjectState::EState_Playing;
+			find->CurrentState = EInteractiveObjectState::EState_Open_Or_On;
 		}
 	}
 
@@ -193,8 +226,8 @@ void AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveCompone
 void AInteractiveObject::NetMulticast_Interaction_Implementation(int32 index, EInteractiveObjectState InState)
 {
 	// 타임라인 처리.
-	if (GetNetMode() == NM_Client)
-	{
+	//if (GetNetMode() == NM_Client)
+	//{
 		if (InState == EInteractiveObjectState::EState_Close_Or_Off)
 		{
 			TimelineMeshes[index].Timeline.ReverseFromEnd();
@@ -230,7 +263,7 @@ void AInteractiveObject::NetMulticast_Interaction_Implementation(int32 index, EI
 			}
 			TimelineMeshes[index].Timeline.PlayFromStart();
 		}
-	}
+	//}
 }
 
 #if WITH_EDITOR

@@ -136,26 +136,19 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		end = pos + (dir * ArmRange);
 
 		UWorld* world = GetWorld();
-		world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
+		IsLooking = world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
 
-		//bool cachedLooking = IsLooking;
-		IsLooking = result.Component.IsValid() && result.Actor.IsValid() &&
-			result.Actor.Get()->IsA(InteractableObject) ? true : false;
+		AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
+		TurnOnOffWidget(obj, IsLooking);
 
-		//if (cachedLooking != IsLooking)
-		//{
-			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
-			TurnOnOffWidget(obj, IsLooking);
-			
-			if (IsLooking)
+		if (IsLooking)
+		{
+			AGetableObject* gObj = Cast<AGetableObject>(result.Actor.Get());
+			if (gObj && gObj->IsFirstGetNeedsUpdateUI())
 			{
-				AGetableObject* gObj = Cast<AGetableObject>(result.Actor.Get());
-				if (gObj && gObj->IsFirstGetNeedsUpdateUI())
-				{
-					gObj->CaptureCurrentScene();
-				}
+				gObj->CaptureCurrentScene();
 			}
-		//}
+		}
 	}
 }
 void ARoomEscapeFPSCharacter::OnUse()
@@ -173,34 +166,53 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		// 서버도 바라보고 있는 물체를 한번 체크한다.
+		// 서버도 바라보고 있는 물체로 판단한다.
 		FHitResult result;
 		pos = FirstPersonCameraComponent->GetComponentLocation();
 		dir = GetControlRotation().Vector();
 		end = pos + (dir * ArmRange);
 
-		GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel3);
-
-		bool bNowLookingActor = 
-			result.Component.IsValid() && result.Actor.IsValid() &&
-			result.Actor.Get()->IsA(InteractableObject) ? true : false;
-
-		// 범위 안에 있는지 체크
-		TSet<AActor*> Actors;
-		if (InteractableObject != nullptr && bNowLookingActor)
+		bool bNowLookingActor = GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel3);
+		if (bNowLookingActor)
 		{
-			InteractSphere->GetOverlappingActors(Actors, InteractableObject);
-			AActor* actor = result.Actor.Get();
-			for (const auto& elem : Actors)
-			{	
-				if (elem == actor)
-				{
-					AInteractiveObject* obj = Cast<AInteractiveObject>(elem);
-					obj->OnInteraction(this, result.Component.Get());
-					return;
-				}
+			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
+			if (obj->IsNotInteractive() == false)
+			{
+				obj->OnInteraction(this, result.Component.Get());
 			}
 		}
+		//else
+		//{
+		//	bNowLookingActor = GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel3);
+		//	if (bNowLookingActor)
+		//	{
+		//		AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
+		//		if (obj->IsNotInteractive() == false)
+		//		{
+		//			obj->OnInteraction(this, result.Component.Get());
+		//		}
+		//	}
+		//}
+
+		// 범위 안에 있는지 체크
+		//TSet<AActor*> Actors;
+		//if (InteractableObject != nullptr && bNowLookingActor)
+		//{
+		//	InteractSphere->GetOverlappingActors(Actors, InteractableObject);
+		//	AActor* actor = result.Actor.Get();
+		//	for (const auto& elem : Actors)
+		//	{	
+		//		if (elem == actor)
+		//		{
+		//			AInteractiveObject* obj = Cast<AInteractiveObject>(elem);
+		//			if (obj->IsNotInteractive() == false)
+		//			{
+		//				obj->OnInteraction(this, result.Component.Get());
+		//				return;
+		//			}
+		//		}
+		//	}
+		//}
 	}
 }
 void ARoomEscapeFPSCharacter::ChangeInteractText(const FString& str)

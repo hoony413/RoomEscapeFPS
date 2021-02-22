@@ -13,7 +13,6 @@ UENUM()
 enum class EInteractiveObjectState
 {
 	EState_Open_Or_On,
-	EState_Playing,
 	EState_Close_Or_Off,
 };
 
@@ -86,6 +85,9 @@ public:
 
 	FORCEINLINE const FString& GetInformationMessage() const { return InformationStr; }
 
+	UFUNCTION()
+		FORCEINLINE bool IsNotInteractive() { return bIsNonInteractive; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -111,18 +113,31 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector LineTraceBoxSize;
 
-	UPROPERTY(EditAnywhere, Category = "Timeline Info")
-		bool IsUseTimeline = false;
-	UPROPERTY(EditAnywhere, Category = "Timeline Info")
-		TArray<FTimelinedStaticMeshComponent> TimelineMeshes;
-	UPROPERTY(EditAnywhere, Category = "Timeline Info")
-		class UCurveFloat* TimelineCurve;
-	
-	UPROPERTY(VisibleDefaultsOnly, Category = "Information Message")
+	UPROPERTY(EditAnywhere, Category = "Information Message")
 		FString InformationStr;
 
 	UPROPERTY(EditAnywhere)
 		class UStaticMeshComponent* DefaultMesh;
+
+	UPROPERTY(EditAnywhere)
+		bool bIsNonInteractive;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
+		bool IsUseTimeline = false;
+	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
+		TArray<FTimelinedStaticMeshComponent> TimelineMeshes;
+	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
+		class UCurveFloat* TimelineCurve;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+		TSoftClassPtr<class AGetableObject> FlashObj;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+		TSoftClassPtr<class AGetableObject> BatteryObj;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+		TSoftClassPtr<class AGetableObject> CharmObj;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+		TSoftClassPtr<class AGetableObject> KeyObj;
 
 	float TimelineDelta = 0.f;
 	float CurveFloatValue = 0.f;
