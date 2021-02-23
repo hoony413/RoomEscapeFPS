@@ -144,7 +144,7 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 		if (IsLooking)
 		{
 			AGetableObject* gObj = Cast<AGetableObject>(result.Actor.Get());
-			if (gObj && gObj->IsFirstGetNeedsUpdateUI())
+			if (gObj && gObj->IsNeedUINotify())
 			{
 				gObj->CaptureCurrentScene();
 			}
@@ -176,7 +176,7 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 		if (bNowLookingActor)
 		{
 			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
-			if (obj->IsNotInteractive() == false)
+			if (obj && obj->IsNotInteractive() == false)
 			{
 				obj->OnInteraction(this, result.Component.Get());
 			}

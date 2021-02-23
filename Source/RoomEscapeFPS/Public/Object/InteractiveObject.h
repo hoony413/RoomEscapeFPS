@@ -95,7 +95,7 @@ protected:
 public:
 	// 타임라인 애니메이션 멀티캐스트
 	UFUNCTION(NetMulticast, Unreliable)
-		void NetMulticast_Interaction(int32 index, EInteractiveObjectState InState);
+		virtual void NetMulticast_Interaction(int32 index, EInteractiveObjectState InState);
 
 protected:
 	virtual void SetTimeline();
@@ -122,22 +122,14 @@ protected:
 	UPROPERTY(EditAnywhere)
 		bool bIsNonInteractive;
 
+	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
+		TArray<FTimelinedStaticMeshComponent> TimelineMeshes;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
 		bool IsUseTimeline = false;
 	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
-		TArray<FTimelinedStaticMeshComponent> TimelineMeshes;
-	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
 		class UCurveFloat* TimelineCurve;
-
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> FlashObj;
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> BatteryObj;
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> CharmObj;
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> KeyObj;
 
 	float TimelineDelta = 0.f;
 	float CurveFloatValue = 0.f;

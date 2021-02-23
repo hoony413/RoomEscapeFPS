@@ -11,7 +11,6 @@
 #include "UI/InteractionPanel.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
-#include "Object/GetableObject.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -34,7 +33,7 @@ AInteractiveObject::AInteractiveObject()
 	LineTraceBox->SetCollisionProfileName(FName(TEXT("Interaction")));
 
 	TimelineMeshes.Empty();
-	InformationStr = TEXT("Press 'E' key to use");
+	//InformationStr = TEXT("Press 'E' key to use");
 
 	bIsNonInteractive = false;
 }
@@ -46,10 +45,6 @@ void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 // Tags
 const FName TimelineMeshTag = FName(TEXT("TimelineMesh"));
-const FName FlashSpawnerTag = FName(TEXT("FlashSpawner"));
-const FName BatterySpawnerTag = FName(TEXT("BatterySpawner"));
-const FName CharmSpawnerTag = FName(TEXT("CharmSpawner"));
-const FName KeySpawnerTag = FName(TEXT("KeySpawner"));
 
 // Called when the game starts or when spawned
 void AInteractiveObject::BeginPlay()
@@ -59,47 +54,18 @@ void AInteractiveObject::BeginPlay()
 	LineTraceBox->SetBoxExtent(LineTraceBoxSize);
 	LineTraceBox->SetRelativeLocation(LineTraceBoxOffset);
 
-	TArray<UActorComponent*> actors = GetComponentsByClass(UStaticMeshComponent::StaticClass());
-	for (int32 i = 0, j = 0; i < actors.Num(); ++i)
+	TArray<UStaticMeshComponent*> meshes;
+	GetComponents<UStaticMeshComponent>(meshes);
+	for (int32 i = 0, j = 0; i < meshes.Num(); ++i)
 	{
-		UStaticMeshComponent* mesh = Cast<UStaticMeshComponent>(actors[i]);
-		if (mesh)
+		if (IsUseTimeline && meshes[i]->ComponentHasTag(TimelineMeshTag))
 		{
-			AGetableObject* obj = nullptr;
-			if (IsUseTimeline && mesh->ComponentHasTag(TimelineMeshTag))
-			{
-				TimelineMeshes[j].StaticMeshComponent = mesh;
-				TimelineMeshes[j].StaticMeshComponent->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
-				++j;
-			}
-
-			if (GetNetMode() == NM_DedicatedServer)
-			{
-				if (mesh->ComponentHasTag(FlashSpawnerTag))
-				{
-					obj = GetWorld()->SpawnActor<AGetableObject>(FlashObj.LoadSynchronous(), FActorSpawnParameters());
-				}
-				else if (mesh->ComponentHasTag(BatterySpawnerTag))
-				{
-					obj = GetWorld()->SpawnActor<AGetableObject>(BatteryObj.LoadSynchronous(), FActorSpawnParameters());
-				}
-				else if (mesh->ComponentHasTag(CharmSpawnerTag))
-				{
-					obj = GetWorld()->SpawnActor<AGetableObject>(CharmObj.LoadSynchronous(), FActorSpawnParameters());
-				}
-				else if (mesh->ComponentHasTag(KeySpawnerTag))
-				{
-					obj = GetWorld()->SpawnActor<AGetableObject>(KeyObj.LoadSynchronous(), FActorSpawnParameters());
-				}
-
-				if (obj)
-				{
-					obj->AttachToComponent(mesh, FAttachmentTransformRules::KeepWorldTransform);
-					obj->SetActorRelativeLocation(FVector(0, 0, 5));
-				}
-			}
+			TimelineMeshes[j].StaticMeshComponent = meshes[i];
+			TimelineMeshes[j].StaticMeshComponent->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
+			++j;
 		}
 	}
+	
 	SetTimeline();
 
 #if WITH_EDITOR

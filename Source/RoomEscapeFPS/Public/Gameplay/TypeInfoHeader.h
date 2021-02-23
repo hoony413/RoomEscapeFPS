@@ -17,4 +17,5 @@ enum class EItemType : uint8
 	Key,
 	Battery,
 	BatteryPower,
+	Book,
 };

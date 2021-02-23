@@ -7,12 +7,10 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "Gameplay/TypeInfoHeader.h"
 #include "Engine/Classes/Engine/TextureRenderTarget2D.h"
-#include "Engine/Classes/Engine/CanvasRenderTarget2D.h"
 #include "Helper/Helper.h"
 
 AGetableObject::AGetableObject()
 {
-	bReplicates = true;
 	SceneCapturer = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture2D"));
 	SceneCapturer->ProjectionType = ECameraProjectionMode::Perspective;
 	SceneCapturer->FOVAngle = 90.f;
@@ -28,6 +26,8 @@ AGetableObject::AGetableObject()
 	SceneCapturer->bCaptureOnMovement = false;
 	SceneCapturer->MaxViewDistanceOverride = -1.f;
 	SceneCapturer->SetupAttachment(DefaultMesh);
+
+	bNeedsUINotify = true;
 }
 
 void AGetableObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -52,7 +52,7 @@ void AGetableObject::BeginPlay()
 		}
 	}
 
-	InformationStr = TEXT("Press 'E' key to get");
+	//InformationStr = TEXT("Press 'E' key to get");
 }
 
 void AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
@@ -60,14 +60,16 @@ void AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* 
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		check(requester);
-		Helper::SetActorActive(this, false);
-		
 		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
+		if (ItemType == EItemType::Flash && !ps->IsFirstGet(ItemType))
+			return;
+
+		Helper::SetActorActive(this, false);
 		int32 id = ps->GetPlayerId();
 		auto AddItemToPlayerInventory = [this, &ps]()
 		{
-			// UI를 켜줘야 하는 특수 아이템타입에 대한 처리.
-			if (ps->IsFirstGet(ItemType) && bFirstGetNeedsUpdateUI)
+			// 튜토리얼 UI를 켜줘야 하는 특수 아이템타입에 대한 처리.
+			if (ps->IsFirstGet(ItemType) && bNeedsUINotify)
 			{
 				ps->ClientProcessHUDOnFirstItemGet(this);
 			}

@@ -25,9 +25,8 @@ public:
 	FORCEINLINE const FString& GetItemNameStr() { return ItemNameStr; }
 	FORCEINLINE const FString& GetItemDescStr() { return ItemDescStr; }
 
-	FORCEINLINE bool IsFirstGetNeedsUpdateUI() { return bFirstGetNeedsUpdateUI; }
+	FORCEINLINE bool IsNeedUINotify() { return bNeedsUINotify; }
 	FORCEINLINE EItemType GetItemType() { return ItemType; }
-	//FORCEINLINE USceneCaptureComponent2D* GetSceneCapture() { return SceneCapturer; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -46,11 +45,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "0"))
 		int32 AdditionalGetCount = 0;
 
-	UPROPERTY(EditAnywhere, Category = FirstGetInfo, meta = (AllowPrivateAccess = "true"))
-		bool bFirstGetNeedsUpdateUI;
-	UPROPERTY(EditAnywhere, Category = FirstGetInfo, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
+		bool bNeedsUINotify;
+	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
 		FString ItemNameStr;
-	UPROPERTY(EditAnywhere, Category = FirstGetInfo, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
 		FString ItemDescStr;
 
 };
