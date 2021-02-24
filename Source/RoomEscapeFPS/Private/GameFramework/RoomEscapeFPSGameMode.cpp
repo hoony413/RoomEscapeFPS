@@ -23,6 +23,8 @@ ARoomEscapeFPSGameMode::ARoomEscapeFPSGameMode()
 void ARoomEscapeFPSGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Clue_1_Answer = 170;
 }
 
 void ARoomEscapeFPSGameMode::PostLogin(APlayerController* NewPlayer)
@@ -35,3 +37,4 @@ void ARoomEscapeFPSGameMode::PostLogin(APlayerController* NewPlayer)
 		pc->ClientSetupHUD();
 	}
 }
+

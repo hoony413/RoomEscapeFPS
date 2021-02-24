@@ -18,4 +18,12 @@ enum class EItemType : uint8
 	Battery,
 	BatteryPower,
 	Book,
+	Diary,
+};
+
+UENUM()
+enum class EServerSolutionType : uint8
+{
+	ESolution_1,
+	ESolution_2,
 };

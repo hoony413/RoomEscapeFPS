@@ -41,6 +41,7 @@ AInteractiveObject::AInteractiveObject()
 void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AInteractiveObject, TimelineMeshes);
 }
 
 // Tags
@@ -152,7 +153,7 @@ void AInteractiveObject::Tick(float DeltaTime)
 	}
 }
 
-FTimelinedStaticMeshComponent* AInteractiveObject::FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex)
+FTimelineInfo* AInteractiveObject::FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex)
 {
 	for(int32 i = 0; i < TimelineMeshes.Num(); ++i)
 	{
@@ -168,7 +169,7 @@ FTimelinedStaticMeshComponent* AInteractiveObject::FindTimelineMeshComponent(cla
 void AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
 	int32 Index = 0;
-	FTimelinedStaticMeshComponent* find = FindTimelineMeshComponent(Cast<UStaticMeshComponent>(InComp), Index);
+	FTimelineInfo* find = FindTimelineMeshComponent(Cast<UStaticMeshComponent>(InComp), Index);
 	if (find)
 	{
 		if (IsUseTimeline && find->Timeline.IsPlaying())
@@ -178,58 +179,56 @@ void AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveCompone
 		{
 			find->CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		}
-		else
+		else if(find->CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
 		{
 			find->CurrentState = EInteractiveObjectState::EState_Open_Or_On;
 		}
 	}
 
+	OnChildObjectChanged.ExecuteIfBound();
+
 	if (IsUseTimeline)
 	{
-		NetMulticast_Interaction(Index, find->CurrentState);
+		NetMulticast_Timeline(Index, find->CurrentState);
 	}
 }
-void AInteractiveObject::NetMulticast_Interaction_Implementation(int32 index, EInteractiveObjectState InState)
+void AInteractiveObject::NetMulticast_Timeline_Implementation(int32 index, EInteractiveObjectState InState)
 {
-	// 타임라인 처리.
-	//if (GetNetMode() == NM_Client)
-	//{
-		if (InState == EInteractiveObjectState::EState_Close_Or_Off)
+	if (InState == EInteractiveObjectState::EState_Close_Or_Off)
+	{
+		TimelineMeshes[index].Timeline.ReverseFromEnd();
+	}
+	else if (InState == EInteractiveObjectState::EState_Open_Or_On)
+	{
+		switch (TimelineMeshes[index].ControlType)
 		{
-			TimelineMeshes[index].Timeline.ReverseFromEnd();
+		case ETimelineControlType::ELocationX:
+			StartCurveValue =
+				TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().X;
+			break;
+		case ETimelineControlType::ELocationY:
+			StartCurveValue =
+				TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Y;
+			break;
+		case ETimelineControlType::ELocationZ:
+			StartCurveValue =
+				TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Z;
+			break;
+		case ETimelineControlType::ERotationX:
+			StartCurveValue =
+				TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
+			break;
+		case ETimelineControlType::ERotationY:
+			StartCurveValue =
+				TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
+			break;
+		case ETimelineControlType::ERotationZ:
+			StartCurveValue =
+				TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
+			break;
 		}
-		else if (InState == EInteractiveObjectState::EState_Open_Or_On)
-		{
-			switch (TimelineMeshes[index].ControlType)
-			{
-			case ETimelineControlType::ELocationX:
-				StartCurveValue =
-					TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().X;
-				break;
-			case ETimelineControlType::ELocationY:
-				StartCurveValue =
-					TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Y;
-				break;
-			case ETimelineControlType::ELocationZ:
-				StartCurveValue =
-					TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Z;
-				break;
-			case ETimelineControlType::ERotationX:
-				StartCurveValue =
-					TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
-				break;
-			case ETimelineControlType::ERotationY:
-				StartCurveValue =
-					TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
-				break;
-			case ETimelineControlType::ERotationZ:
-				StartCurveValue =
-					TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
-				break;
-			}
-			TimelineMeshes[index].Timeline.PlayFromStart();
-		}
-	//}
+		TimelineMeshes[index].Timeline.PlayFromStart();
+	}
 }
 
 #if WITH_EDITOR

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Gameplay/TypeInfoHeader.h"
 #include "RoomEscapeFPSGameState.generated.h"
 
 /**
@@ -21,7 +22,15 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSGameState : public AGameStateBase
 
 		
 public:
-	// 파이프게임 데이터를 PlayerState로 넘겨주기만 하자.
-	// (파이프게임 진행 정보는 플레이어 개인 영역이므로)
-	void HandoverPipeGameInfo(const int32 inID, struct FPipeGameInfo* nodeInfo);
+	void OnCorrectAnswer(EServerSolutionType InType);
+
+	void AddToSolutionResultActor(class AInteractiveObject* InObj);
+
+protected:
+	virtual void BeginPlay() override;
+	class AInteractiveObject* FindResultActor(EServerSolutionType InType);
+
+protected:
+	UPROPERTY()
+	TArray<class AInteractiveObject*> OnCorrectResultActor;
 };

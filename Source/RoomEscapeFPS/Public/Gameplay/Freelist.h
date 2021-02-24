@@ -11,7 +11,6 @@
 /**
  * 
  */
-class UFreelistObjectInterface;
 class IFreelistObjectInterface;
 
 UCLASS()
