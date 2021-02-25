@@ -42,20 +42,14 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	// 1번 단서의 답: 170 : 1010 1010
-	template<typename T>
-	bool CheckAnswer(const T answer, EServerSolutionType InType)
-	{
-		if (InType == EServerSolutionType::ESolution_1)
-		{
-			return answer == Clue_1_Answer;
-		}
+	// 2번 단서의 답: 132(서 동 남)
+	bool CheckAnswer(const int32 answer, EServerSolutionType InType);
 
-		return false;
-	}
 	// 게임 목표 설정(모든 플레이어는 이 값을 참조하여 승리 조건을 알아야 한다)
 
 protected:
 	int32 Clue_1_Answer = 170;
+	int32 Clue_2_Answer = 132;
 };
 
 

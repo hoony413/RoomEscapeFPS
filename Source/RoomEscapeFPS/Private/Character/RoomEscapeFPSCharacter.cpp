@@ -85,7 +85,7 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		SphereRadius = ArmRange - 50.f;
+		SphereRadius = ArmRange;
 		IsFlash = false;
 		InteractSphere->SetSphereRadius(SphereRadius);
 	}
@@ -176,7 +176,7 @@ void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 		if (bNowLookingActor)
 		{
 			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
-			if (obj && obj->IsNotInteractive() == false)
+			if (obj && obj->IsNonInteracable() == false)
 			{
 				obj->OnInteraction(this, result.Component.Get());
 			}
@@ -235,6 +235,14 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(AInteractiveObject* InObj, bool bO
 	{
 		if (InteractWidget != nullptr)
 			InteractWidget->SetVisibility(ESlateVisibility::Collapsed);
+		return;
+	}
+	else if (InObj->IsNonInteracable())
+	{
+		if (InteractWidget)
+		{
+			InteractWidget->SetVisibility(ESlateVisibility::Collapsed);
+		}
 		return;
 	}
 

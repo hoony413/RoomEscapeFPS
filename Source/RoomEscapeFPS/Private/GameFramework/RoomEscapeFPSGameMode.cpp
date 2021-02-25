@@ -25,6 +25,21 @@ void ARoomEscapeFPSGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	Clue_1_Answer = 170;
+	Clue_2_Answer = 132;
+}
+
+bool ARoomEscapeFPSGameMode::CheckAnswer(const int32 answer, EServerSolutionType InType)
+{
+	if (InType == EServerSolutionType::ESolution_1)
+	{
+		return answer == Clue_1_Answer;
+	}
+	else if (InType == EServerSolutionType::ESolution_2)
+	{
+		return answer == Clue_2_Answer;
+	}
+
+	return false;
 }
 
 void ARoomEscapeFPSGameMode::PostLogin(APlayerController* NewPlayer)

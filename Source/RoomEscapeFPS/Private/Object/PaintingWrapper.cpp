@@ -10,13 +10,15 @@ void APaintingWrapper::BeginPlay()
 	Super::BeginPlay();
 	for (int32 i = 0, j = ChildActors.Num() - 1; i < ChildActors.Num(); ++i, --j)
 	{
-		APaintingObject* obj = Cast<APaintingObject>(ChildActors[i]);
+		APaintingObject* obj = Cast<APaintingObject>(ChildActors[i]->GetChildActor());
 		if (obj)
 		{
-			if (obj->OnChildObjectChanged.IsBound() == false)
+			if (obj->OnInteractionHappened.IsBound() == false)
 			{
-				obj->OnChildObjectChanged.BindUObject(this, &APaintingWrapper::ServerOnStateChanged);
+				obj->OnInteractionHappened.BindUObject(this, &APaintingWrapper::ServerOnStateChanged);
 			}
+
+			obj->SetDigit(j);
 		}
 	}
 }

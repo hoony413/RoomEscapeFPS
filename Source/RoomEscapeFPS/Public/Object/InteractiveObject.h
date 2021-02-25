@@ -69,7 +69,8 @@ public:
 		FTimeline Timeline;
 };
 
-DECLARE_DELEGATE(FOnChildObjectChangedDele);
+DECLARE_DELEGATE(FOnInteractionHappened);
+DECLARE_DELEGATE_RetVal_TwoParams(bool, FOnSolutionSuccessResult, APawn*, UPrimitiveComponent*);
 
 UCLASS(Blueprintable)
 class ROOMESCAPEFPS_API AInteractiveObject : public AActor
@@ -88,12 +89,14 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	UFUNCTION()
-	virtual void OnInteraction(APawn* requester, class UPrimitiveComponent* InComp);
+	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp);
 
 	FORCEINLINE const FString& GetInformationMessage() const { return InformationStr; }
+	FORCEINLINE class UPrimitiveComponent* GetSolutionResultComp() { return cachedSolutionResultComp; }
 
-	UFUNCTION()
-		FORCEINLINE bool IsNotInteractive() { return bIsNonInteractive; }
+	FORCEINLINE bool IsNonInteracable() { return bIsNonInteractable; }
+
+	FORCEINLINE EServerSolutionResultType GetSolutionResultType() { return SolutionResultType; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -109,7 +112,8 @@ protected:
 	FTimelineInfo* FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex);
 
 public:
-	FOnChildObjectChangedDele OnChildObjectChanged;
+	FOnInteractionHappened OnInteractionHappened;
+	FOnSolutionSuccessResult OnSolutionSuccessResult;
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -128,11 +132,16 @@ protected:
 	UPROPERTY(EditAnywhere)
 		class UStaticMeshComponent* DefaultMesh;
 
-	UPROPERTY(EditAnywhere)
-		bool bIsNonInteractive;
+	UPROPERTY(Replicated, EditAnywhere)
+		bool bIsNonInteractable;
+	UPROPERTY(Replicated, EditAnywhere)
+		EServerSolutionResultType SolutionResultType;
 
 	UPROPERTY(Replicated, EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
 		TArray<FTimelineInfo> TimelineMeshes;
+
+	UPROPERTY()
+		class UPrimitiveComponent* cachedSolutionResultComp;
 
 	float StartCurveValue = 0.f;
 

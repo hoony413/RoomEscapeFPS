@@ -24,6 +24,15 @@ enum class EItemType : uint8
 UENUM()
 enum class EServerSolutionType : uint8
 {
+	ENONE,
 	ESolution_1,
 	ESolution_2,
+};
+
+UENUM()
+enum class EServerSolutionResultType : uint8
+{
+	ENONE,
+	ESolutionResult_1,
+	ESolutionResult_2,
 };

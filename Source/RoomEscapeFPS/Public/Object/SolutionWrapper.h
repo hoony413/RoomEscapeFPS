@@ -29,6 +29,8 @@ public:
 
 protected:
 	UPROPERTY()
+		class USceneComponent* ParentComp;
+	UPROPERTY()
 		TArray<class UChildActorComponent*> ChildActors;
 
 private:

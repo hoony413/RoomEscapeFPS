@@ -4,21 +4,29 @@
 
 #include "CoreMinimal.h"
 #include "UI/BaseWidget.h"
-#include "SuccessFailPanel.generated.h"
+#include "NoticePanel.generated.h"
 
 /**
  * 
  */
+UENUM()
+enum class ENoticeType
+{
+	ESuccess,
+	EFailed,
+	EOpenNextDoor,
+	EDoorLocked,
+};
 UCLASS()
-class ROOMESCAPEFPS_API USuccessFailPanel : public UBaseWidget
+class ROOMESCAPEFPS_API UNoticePanel : public UBaseWidget
 {
 	GENERATED_BODY()
 	
 public:
-	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/SuccessFailPanel_Widget.SuccessFailPanel_Widget_C'"); }
+	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/NoticePanel_Widget.NoticePanel_Widget_C'"); }
 	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
-	void LaunchAnimation(bool bSuccess);
+	void OpenNotice(ENoticeType InType);
 
 private:
 	UPROPERTY(meta = (BindWidget))

@@ -37,7 +37,7 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 		void NetMulticastFire(const FVector& pos, const FVector& dir);
 
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast, Unreliable)
 		void NetMulticastProjectileExplode();
 
 

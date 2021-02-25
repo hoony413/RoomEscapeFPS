@@ -17,7 +17,7 @@ class ROOMESCAPEFPS_API ASwitchButtonObject : public ADynamicMtInteractiveObject
 public:
 	ASwitchButtonObject();
 
-	virtual void OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
+	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	FORCEINLINE bool GetIsPressed() { return bSwitchPressed; }

@@ -15,7 +15,7 @@ void AClueObject::BeginPlay()
 	InformationStr = TEXT("Press 'E' key to Check Clue");
 }
 
-void AClueObject::OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp)
+bool AClueObject::OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp)
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
@@ -32,4 +32,6 @@ void AClueObject::OnInteraction(class APawn* requester, class UPrimitiveComponen
 		};
 		Helper::ServerImplementToClient(GetWorld(), id, ShowClue);
 	}
+
+	return true;
 }

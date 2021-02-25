@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UI/SuccessFailPanel.h"
+#include "UI/NoticePanel.h"
 #include "Components/TextBlock.h"
 
-void USuccessFailPanel::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
+void UNoticePanel::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
 {
 	Super::OnAnimationFinished_Implementation(Animation);
 	if (!bReverseAnim && Animation == AnimArray[0])
@@ -18,17 +18,25 @@ void USuccessFailPanel::OnAnimationFinished_Implementation(const UWidgetAnimatio
 	}
 }
 
-void USuccessFailPanel::LaunchAnimation(bool bSuccess)
+void UNoticePanel::OpenNotice(ENoticeType InType)
 {
 	SetWidgetAnimation();
 
-	if (bSuccess)
+	if (InType == ENoticeType::ESuccess)
 	{
 		NoticeTextBox->SetText(FText::FromName(FName(TEXT("SUCCESS"))));
 	}
-	else
+	else if(InType == ENoticeType::EFailed)
 	{
 		NoticeTextBox->SetText(FText::FromName(FName(TEXT("FAILED"))));
+	}
+	else if (InType == ENoticeType::EOpenNextDoor)
+	{
+		NoticeTextBox->SetText(FText::FromName(FName(TEXT("DOOR UNLOCKED!"))));
+	}
+	else if (InType == ENoticeType::EDoorLocked)
+	{
+		NoticeTextBox->SetText(FText::FromName(FName(TEXT("Door is locked"))));
 	}
 
 	AddToPlayerScreen();

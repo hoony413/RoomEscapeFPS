@@ -55,14 +55,14 @@ void AGetableObject::BeginPlay()
 	//InformationStr = TEXT("Press 'E' key to get");
 }
 
-void AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
+bool AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		check(requester);
 		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
 		if (ItemType == EItemType::Flash && !ps->IsFirstGet(ItemType))
-			return;
+			return false;
 
 		Helper::SetActorActive(this, false);
 		int32 id = ps->GetPlayerId();
@@ -82,6 +82,8 @@ void AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* 
 		Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
 		Destroy();
 	}
+
+	return true;
 }
 
 void AGetableObject::CaptureCurrentScene()

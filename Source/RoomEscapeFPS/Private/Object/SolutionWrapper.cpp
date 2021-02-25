@@ -14,6 +14,8 @@ ASolutionWrapper::ASolutionWrapper()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	ParentComp = CreateDefaultSubobject<USceneComponent>(TEXT("Parent"));
+	ParentComp->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -21,13 +23,13 @@ void ASolutionWrapper::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 자식액터들 확보 후 정렬.
+	// 자식액터들 확보 후 컴포넌트 태그 번호 오름차순 정렬.
 	GetComponents<UChildActorComponent>(ChildActors);
 	Algo::Sort(ChildActors, [&](const UChildActorComponent* lhs, const UChildActorComponent* rhs)
 	{
 		int32 left = FCString::Atoi(*lhs->ComponentTags[0].ToString());
 		int32 right = FCString::Atoi(*rhs->ComponentTags[0].ToString());
-		return left > right; 
+		return left < right; 
 	});
 }
 
@@ -43,7 +45,7 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 			{
 				for (int32 i = 0; i < ChildActors.Num(); ++i)
 				{
-					ASwitchButtonObject* obj = Cast<ASwitchButtonObject>(ChildActors[i]);
+					ASwitchButtonObject* obj = Cast<ASwitchButtonObject>(ChildActors[i]->GetChildActor());
 					if (obj && obj->GetIsPressed())
 					{
 						int32 shift = obj->GetDigit();
@@ -55,15 +57,16 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 			{
 				for (int32 i = 0; i < ChildActors.Num(); ++i)
 				{
-					APaintingObject* obj = Cast<APaintingObject>(ChildActors[i]);
+					APaintingObject* obj = Cast<APaintingObject>(ChildActors[i]->GetChildActor());
 					if (obj)
 					{
-						answer += (int32)FMath::Pow(10, i) * (uint8)obj->GetRotateState();
+						int32 digit = obj->GetDigit();
+						answer += (int32)FMath::Pow(10, digit) * (uint8)obj->GetRotateState();
 					}
 				}
 			}
 
-			bool bSuccess = gm->CheckAnswer<int32>(answer, SolutionType);
+			bool bSuccess = gm->CheckAnswer(answer, SolutionType);
 			if (bSuccess)
 			{
 				// TODO: GameState에서 문제 풀이 성공에 따른 결과 로직 수행.

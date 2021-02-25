@@ -47,7 +47,7 @@ class ROOMESCAPEFPS_API ADynamicMtInteractiveObject : public AInteractiveObject
 	GENERATED_BODY()
 
 public:
-	virtual void OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
+	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
 
 protected:
 	virtual void BeginPlay() override;

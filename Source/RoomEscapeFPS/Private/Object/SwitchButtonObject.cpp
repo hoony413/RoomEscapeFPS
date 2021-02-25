@@ -14,11 +14,21 @@ void ASwitchButtonObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(ASwitchButtonObject, bSwitchPressed);
 	DOREPLIFETIME(ASwitchButtonObject, Digit);
 }
-void ASwitchButtonObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
+bool ASwitchButtonObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		bSwitchPressed = !bSwitchPressed;
 	}
-	Super::OnInteraction(requester, InComp);
+	
+	if (Super::OnInteraction(requester, InComp) == false)
+	{	// 스위치 변경 후, 부모 딴에서 false 리턴된 경우 플래그값을 초기 상태로 다시 되돌린다.
+		// TODO: 델리게이트가 부모 클래스에 있어 부득이 이런 구조로 되었는데... 개선방법 고민
+		if (GetNetMode() == NM_DedicatedServer)
+		{
+			bSwitchPressed = !bSwitchPressed;
+		}
+		return false;
+	}
+	return true;
 }

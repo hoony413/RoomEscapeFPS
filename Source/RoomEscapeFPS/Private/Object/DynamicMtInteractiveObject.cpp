@@ -5,15 +5,17 @@
 #include "Components/StaticMeshComponent.h"
 #include "Runtime/Engine/Classes/Materials/MaterialInstanceDynamic.h"
 
-void ADynamicMtInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
+bool ADynamicMtInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
-	Super::OnInteraction(requester, InComp);
+	if (Super::OnInteraction(requester, InComp) == false)
+		return false;
 
 	int32 index = 0;
 	int32 NotUseDummy = 0;
 	FDynamicMtInfo* find = FindDynamicMtMeshComponent(Cast<UStaticMeshComponent>(InComp), index);
 	FTimelineInfo* tFind = FindTimelineMeshComponent(Cast<UStaticMeshComponent>(InComp), NotUseDummy);
 	NetMulticast_DynamicMaterial(index, tFind->CurrentState);
+	return true;
 }
 void ADynamicMtInteractiveObject::NetMulticast_DynamicMaterial_Implementation(int32 index, EInteractiveObjectState InState)
 {

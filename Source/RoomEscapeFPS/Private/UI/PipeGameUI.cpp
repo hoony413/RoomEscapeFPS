@@ -9,7 +9,7 @@
 #include "Gameplay/PipeGameInfo.h"
 #include "Runtime/UMG/Public/Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
-#include "UI/SuccessFailPanel.h"
+#include "UI/NoticePanel.h"
 #include "UI/PipeGame_Node.h"
 
 void UPipeGameUI::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGridSize)
@@ -84,10 +84,10 @@ void UPipeGameUI::LaunchFlowAnimation(int32 gridIndex, bool bLastNode)
 	{	// 성공인 경우
 		bRequested = false;
 		// 성공/실패 결과팝업 분기.
-		USuccessFailPanel* panel = GetUIMgr()->GetWidget<USuccessFailPanel>();
+		UNoticePanel* panel = GetUIMgr()->GetWidget<UNoticePanel>();
 		if (panel)
 		{
-			panel->LaunchAnimation(bSucceed);
+			panel->OpenNotice(bSucceed ? ENoticeType::ESuccess : ENoticeType::EFailed);
 		}
 
 		FTimerHandle ClosePopupTimer;

@@ -19,7 +19,7 @@ public:
 	AGetableObject();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
+	virtual bool OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
 	virtual void CaptureCurrentScene();
 
 	FORCEINLINE const FString& GetItemNameStr() { return ItemNameStr; }

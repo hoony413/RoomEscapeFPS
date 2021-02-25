@@ -13,9 +13,11 @@ void APaintingObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APaintingObject, RotateState);
+	DOREPLIFETIME(APaintingObject, Digit);
 }
-void APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
+bool APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
+	ERotateState cachedRotateState = RotateState;
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		if (RotateState == ERotateState::ERotate_270)
@@ -27,37 +29,37 @@ void APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent*
 			RotateState = (ERotateState)((uint8)RotateState + 1u);
 		}
 	}
-	Super::OnInteraction(requester, InComp);
+
+	if (Super::OnInteraction(requester, InComp) == false)
+	{
+		if (GetNetMode() == NM_DedicatedServer)
+		{	// 백업된 로테이트 값으로 다시 복구.
+			RotateState = cachedRotateState;
+		}
+		return false;
+	}
+	
+	return true;
 }
 
 void APaintingObject::NetMulticast_Timeline_Implementation(int32 index, EInteractiveObjectState InState)
 {
-	switch (TimelineMeshes[index].ControlType)
-	{
-	case ETimelineControlType::ELocationX:
-		StartCurveValue =
-			TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().X;
-		break;
-	case ETimelineControlType::ELocationY:
-		StartCurveValue =
-			TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Y;
-		break;
-	case ETimelineControlType::ELocationZ:
-		StartCurveValue =
-			TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Z;
-		break;
-	case ETimelineControlType::ERotationX:
-		StartCurveValue =
-			TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
-		break;
-	case ETimelineControlType::ERotationY:
-		StartCurveValue =
-			TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
-		break;
-	case ETimelineControlType::ERotationZ:
-		StartCurveValue =
-			TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
-		break;
-	}
+	//switch (TimelineMeshes[index].ControlType)
+	//{
+	//case ETimelineControlType::ERotationX:
+	//	StartCurveValue =
+	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
+	//	break;
+	//case ETimelineControlType::ERotationY:
+	//	StartCurveValue =
+	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
+	//	break;
+	//case ETimelineControlType::ERotationZ:
+	//	StartCurveValue =
+	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
+	//	break;
+	//}
+	// 이미 회전 처리가 되었기 때문에, 회전 이전 초기값을 구하려면 -1 해야 한다.
+	StartCurveValue = (((uint8)RotateState - 1u) * 90) % 360;
 	TimelineMeshes[index].Timeline.PlayFromStart();
 }

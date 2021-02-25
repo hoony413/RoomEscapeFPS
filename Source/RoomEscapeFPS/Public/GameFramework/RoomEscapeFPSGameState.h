@@ -24,13 +24,16 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSGameState : public AGameStateBase
 public:
 	void OnCorrectAnswer(EServerSolutionType InType);
 
-	void AddToSolutionResultActor(class AInteractiveObject* InObj);
+	void AddToSolutionResultObject(class AInteractiveObject* InObj);
 
 protected:
 	virtual void BeginPlay() override;
-	class AInteractiveObject* FindResultActor(EServerSolutionType InType);
+	class AInteractiveObject* FindResultActor(EServerSolutionResultType InType);
+
+	UFUNCTION(NetMulticast, Unreliable)
+		void NetMulticastOpenDoorNotice();
 
 protected:
 	UPROPERTY()
-	TArray<class AInteractiveObject*> OnCorrectResultActor;
+	TArray<class AInteractiveObject*> OnSolutionResultObject;
 };
