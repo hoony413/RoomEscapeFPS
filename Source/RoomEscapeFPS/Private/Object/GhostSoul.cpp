@@ -35,7 +35,7 @@ AGhostSoul::AGhostSoul()
 	GhostParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GhostParticle"));
 	GhostParticle->SetupAttachment(RootComponent);
 	GhostParticle->bAutoActivate = true;
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleAsset(TEXT("ParticleSystem'/Game/ExternalResource/Particles/GhostFlaming_Particle.GhostFlaming_Particle'"));
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleAsset(TEXT("ParticleSystem'/Game/Resources/Particles/GhostFlaming_Particle.GhostFlaming_Particle'"));
 	if (ParticleAsset.Succeeded())
 	{
 		GhostParticle->SetTemplate(ParticleAsset.Object);
