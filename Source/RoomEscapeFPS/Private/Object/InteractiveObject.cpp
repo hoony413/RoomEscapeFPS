@@ -7,11 +7,11 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFrameWork/Character.h"
+#include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Components/StaticMeshComponent.h"
 #include "UI/InteractionPanel.h"
 #include "Helper/Helper.h"
 #include "Managers/UIManager.h"
-#include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -219,7 +219,7 @@ bool AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveCompone
 
 	OnInteractionHappened.ExecuteIfBound();
 
-	if (IsUseTimeline)
+	if (IsUseTimeline && find)
 	{
 		NetMulticast_Timeline(Index, find->CurrentState);
 	}

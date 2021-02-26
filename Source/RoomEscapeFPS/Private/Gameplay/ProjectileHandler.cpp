@@ -21,7 +21,6 @@ void AProjectileHandler::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
 class ACharmProjectile* AProjectileHandler::GetCharm(class APawn* InOwner)
 {
 	check(CharmFreelist);

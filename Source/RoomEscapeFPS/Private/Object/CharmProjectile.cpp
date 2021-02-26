@@ -43,8 +43,6 @@ ACharmProjectile::ACharmProjectile()
 void ACharmProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ACharmProjectile, fLifeTime);
-	DOREPLIFETIME(ACharmProjectile, fLifeStartTime);
 }
 
 // Called when the game starts or when spawned
@@ -121,9 +119,12 @@ void ACharmProjectile::OnComponentHit(UPrimitiveComponent* HitComponent, AActor*
 
 void ACharmProjectile::NetMulticastProjectileExplode_Implementation()
 {
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), 
-		ExplosionParticle.LoadSynchronous(), GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
-	if (GetNetMode() == NM_DedicatedServer)
+	if (GetNetMode() == NM_Client)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
+			ExplosionParticle.LoadSynchronous(), GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+	}
+	else if (GetNetMode() == NM_DedicatedServer)
 	{
 		DeactiveCharm();
 	}

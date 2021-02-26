@@ -7,15 +7,23 @@
 #include "GameFramework/RoomEscapeFPSGameMode.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Components/ChildActorComponent.h"
+#include "Helper/Helper.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ASolutionWrapper::ASolutionWrapper()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	bIsCleared = false;
 	ParentComp = CreateDefaultSubobject<USceneComponent>(TEXT("Parent"));
 	ParentComp->SetupAttachment(RootComponent);
+}
+
+void ASolutionWrapper::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ASolutionWrapper, bIsCleared);
 }
 
 // Called when the game starts or when spawned
@@ -35,9 +43,12 @@ void ASolutionWrapper::BeginPlay()
 
 void ASolutionWrapper::ServerOnStateChanged_Implementation()
 {
+	if (bIsCleared)
+		return;
+
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		ARoomEscapeFPSGameMode* gm = Cast<ARoomEscapeFPSGameMode>(GetWorld()->GetAuthGameMode());
+		ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
 		if (gm)
 		{
 			int32 answer = 0;
@@ -66,11 +77,19 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 				}
 			}
 
-			bool bSuccess = gm->CheckAnswer(answer, SolutionType);
-			if (bSuccess)
+			bIsCleared = gm->CheckAnswer(answer, SolutionType);
+			if (bIsCleared)
 			{
 				// TODO: GameState에서 문제 풀이 성공에 따른 결과 로직 수행.
 				gm->GetGameState<ARoomEscapeFPSGameState>()->OnCorrectAnswer(SolutionType);
+				if (SolutionType == EServerSolutionType::ESolution_1)
+				{
+					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::ESolveClue_1, ENextInformationType::ESolveClue_2, 1);
+				}
+				else if (SolutionType == EServerSolutionType::ESolution_2)
+				{
+					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::ESolveClue_2, ENextInformationType::ECaptureGhost, 1);
+				}
 			}
 		}
 	}

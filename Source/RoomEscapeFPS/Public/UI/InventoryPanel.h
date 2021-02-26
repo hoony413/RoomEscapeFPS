@@ -10,6 +10,7 @@
 /**
  * 
  */
+
 UCLASS()
 class ROOMESCAPEFPS_API UInventoryPanel : public UBaseWidget
 {
@@ -21,12 +22,15 @@ public:
 			"WidgetBlueprint'/Game/Resources/Widgets/InGame/InventoryPanel_Widget.InventoryPanel_Widget_C'");
 	}
 
+	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
+
 	void SetFlashBatteryVisibility(bool bOnOff);
 	void SetCharmVisibility(bool bOnOff);
 	void SetCrossHairVisibility(bool bOnOff);
 
 	void UpdateBatteryPower(float fCurrentBatteryValue);
 	void UpdateCharmCount(int32 InCount);
+	void UpdateNextInformation(ENextInformationType curType, ENextInformationType nextType, int32 InCount);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -37,4 +41,12 @@ protected:
 		class UTextBlock* CharmCountText;
 	UPROPERTY(meta = (BindWidget))
 		class UImage* CrossHairImage;
+	UPROPERTY(meta = (BindWidget))
+		class UTextBlock* NextInformationText;
+
+	UPROPERTY(EditAnywhere)
+		TArray<FString> NextInformationStrArray;
+
+	ENextInformationType CurrentType;
+	int32 CurrentCount = 0;
 };

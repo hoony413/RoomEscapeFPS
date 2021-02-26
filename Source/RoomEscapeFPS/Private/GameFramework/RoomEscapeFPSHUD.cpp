@@ -29,13 +29,17 @@ void ARoomEscapeFPSHUD::DrawHUD()
 }
 void ARoomEscapeFPSHUD::InitializeHUD()
 {
-	// TODO: GameMode에서 JoinSession 완료되면 클라이언트로 RPC하도록 로직 수정
+	// GameMode에서 JoinSession 완료되면 PlayerController에서 호출됨
 	cachedPanel = GetUIMgr()->OpenWidget<UInventoryPanel>();
 
 	// 후레쉬, 부적 획득할 때 Visibility를 true로 설정하고, 초기값은 false.
 	SetVisibleBatteryInfo(false);
 	SetVisibleCharmInfo(false);
 	SetVisibleCrossHair(true);
+	if (cachedPanel.IsValid())
+	{
+		cachedPanel->UpdateNextInformation(ENextInformationType::EFindLantern, ENextInformationType::EFindLantern, 0);
+	}
 }
 void ARoomEscapeFPSHUD::BeginPlay()
 {
@@ -58,7 +62,13 @@ class UPipeGameUI* ARoomEscapeFPSHUD::GetPipeGameUI()
 	}
 	return nullptr;
 }
-
+void ARoomEscapeFPSHUD::UpdateNextInfo(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
+{
+	if (cachedPanel.IsValid())
+	{
+		cachedPanel->UpdateNextInformation(curType, nextType, InCount);
+	}
+}
 void ARoomEscapeFPSHUD::SetVisibleOnHUD(EItemType InType, bool bOnOff)
 {
 	switch (InType)

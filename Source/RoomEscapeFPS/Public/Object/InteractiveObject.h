@@ -70,7 +70,7 @@ public:
 };
 
 DECLARE_DELEGATE(FOnInteractionHappened);
-DECLARE_DELEGATE_RetVal_TwoParams(bool, FOnSolutionSuccessResult, APawn*, UPrimitiveComponent*);
+DECLARE_DELEGATE_RetVal_TwoParams(bool, FOnSolutionSuccessResult, APawn*, UPrimitiveComponent*)
 
 UCLASS(Blueprintable)
 class ROOMESCAPEFPS_API AInteractiveObject : public AActor

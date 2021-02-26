@@ -56,14 +56,14 @@ void ARoomEscapeFPSPlayerState::BeginPlay()
 }
 /*
 파이프 게임:
-2x2 ~ 5x5까지 있는 큐브 형태의 퍼즐 게임으로,
+최소 2x2, 최대 nxn까지 있는 큐브 형태의 퍼즐 게임으로,
 각 노드(파이프 타일)의 방향을 돌려 물을 흐르게 한다.
 물은 왼쪽에서 오른쪽, 위에서 아래로만 흐르며, 맵 타일 생성 로직은 아래와 같다.
 
 1. 정답 경로 랜덤 생성
 2. 정답 경로의 타일 랜덤 회전 + 방향 추가
 3. 3번에서 추출한 정답 노드들에 랜덤한 회전값 부여.
-4. 클라이언트에서 UI에 표시 처리
+4. 클라이언트로 전달, UI 표시 처리
 */
 
 void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
@@ -205,6 +205,15 @@ void ARoomEscapeFPSPlayerState::ServerCheckCommittedAnswer_Implementation()
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		PipeGameSuccessInfo = CheckPipeAnswer();
+		if (PipeGameSuccessInfo == EReplicateState::ETrue)
+		{
+			ARoomEscapeFPSGameState* gs = Helper::GetGameState(GetWorld());
+			if (gs)
+			{
+				gs->OnCorrectAnswer(EServerSolutionType::EPipelineGame_Complete);
+			}
+			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::EPipelineComplete, ENextInformationType::ERunaway, 1);
+		}
 	}
 }
 void ARoomEscapeFPSPlayerState::OnRep_PipeGameSuccessInfo()
@@ -431,6 +440,14 @@ void ARoomEscapeFPSPlayerState::ClientProcessHUDOnFirstItemGet_Implementation(cl
 		hud->SetVisibleOnHUD(InObj->GetItemType(), true);
 	}
 }
+void ARoomEscapeFPSPlayerState::ClientProcessHUDOnUpdateNextInfo_Implementation(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
+{
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+	if (hud)
+	{
+		hud->UpdateNextInfo(curType, nextType, InCount);
+	}
+}
 
 void ARoomEscapeFPSPlayerState::OnRep_InventoryInfo()
 {
@@ -455,7 +472,7 @@ void ARoomEscapeFPSPlayerState::OnRep_InventoryInfo()
 			}
 			else if (batteryRemain <= 100u)
 			{
-				fFlashIntensity = 40000.0f;
+				fFlashIntensity = 20000.0f;
 			}
 			character->UpdateFlashIntensity(fFlashIntensity);
 		}

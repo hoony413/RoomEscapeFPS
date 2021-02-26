@@ -3,6 +3,9 @@
 
 #include "Helper/Helper.h"
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
+#include "GameFrameWork/RoomEscapeFPSPlayerState.h"
+#include "Gameplay/TypeInfoHeader.h"
+#include "Object/CharmProjectile.h"
 //#include "Paper2D/Classes/PaperSprite.h"
 
 namespace Helper
@@ -19,6 +22,7 @@ namespace Helper
 		{
 			return *it;
 		}
+
 		return nullptr;
 	}
 
@@ -50,6 +54,10 @@ namespace Helper
 			return EServerSolutionType::ESolution_1;
 		case EServerSolutionResultType::ESolutionResult_2:
 			return EServerSolutionType::ESolution_2;
+		case EServerSolutionResultType::ESolutionResult_3:
+			return EServerSolutionType::EGhostDeadCount_Target;
+		case EServerSolutionResultType::ESolutionResult_4:
+			return EServerSolutionType::EPipelineGame_Complete;
 		}
 		return EServerSolutionType::ENONE;
 	}
@@ -61,84 +69,48 @@ namespace Helper
 			return EServerSolutionResultType::ESolutionResult_1;
 		case EServerSolutionType::ESolution_2:
 			return EServerSolutionResultType::ESolutionResult_2;
+		case EServerSolutionType::EGhostDeadCount_Target:
+			return EServerSolutionResultType::ESolutionResult_3;
+		case EServerSolutionType::EPipelineGame_Complete:
+			return EServerSolutionResultType::ESolutionResult_4;
 		}
 		return EServerSolutionResultType::ENONE;
 	}
 
-	// Formula to convert a Euler angle in degrees to a quaternion rotation
-	ROOMESCAPEFPS_API FQuat Euler_To_Quaternion(FRotator& Current_Rotation)
+	ROOMESCAPEFPS_API ARoomEscapeFPSGameMode* GetGameMode(UWorld* world)
 	{
-		FQuat q;                                            // Declare output quaternion
-		float yaw = Current_Rotation.Yaw * PI / 180;        // Convert degrees to radians 
-		float roll = Current_Rotation.Roll * PI / 180;
-		float pitch = Current_Rotation.Pitch * PI / 180;
-
-		double cy = cos(yaw * 0.5);
-		double sy = sin(yaw * 0.5);
-		double cr = cos(roll * 0.5);
-		double sr = sin(roll * 0.5);
-		double cp = cos(pitch * 0.5);
-		double sp = sin(pitch * 0.5);
-
-		q.W = cy * cr * cp + sy * sr * sp;
-		q.X = cy * sr * cp - sy * cr * sp;
-		q.Y = cy * cr * sp + sy * sr * cp;
-		q.Z = sy * cr * cp - cy * sr * sp;
-
-		return q;                                           // Return the quaternion of the input Euler rotation
+		check(world->GetNetMode() == NM_DedicatedServer);
+		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
+		check(gm);
+		return gm;
+		
+	}
+	ROOMESCAPEFPS_API ARoomEscapeFPSGameState* GetGameState(UWorld* world)
+	{
+		ARoomEscapeFPSGameState* gs = world->GetGameState<ARoomEscapeFPSGameState>();
+		check(gs);
+		return gs;
 	}
 
-	// Set the scene component's world rotation to the input quaternion
-	ROOMESCAPEFPS_API void SetWorldRotationQuat(USceneComponent* SceneComponent, const FQuat& Desired_Rotation)
+	ROOMESCAPEFPS_API void UpdateNextUIInfo(UWorld* world, ENextInformationType curType, ENextInformationType nextType, int32 InCount)
 	{
-		if (SceneComponent)
+		check(world);
+		check(world->GetNetMode() == NM_DedicatedServer);
+		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
+		if (gm)
 		{
-			SceneComponent->SetWorldRotation(Desired_Rotation);
-		}
-	}
-
-	// Set the scene component's relative rotation to the input quaternion
-	ROOMESCAPEFPS_API void SetRelativeRotationQuat(USceneComponent* SceneComponent, const FQuat& Desired_Rotation)
-	{
-		if (SceneComponent)
-		{
-			SceneComponent->SetRelativeRotation(Desired_Rotation);
-		}
-	}
-
-	// Add the input delta rotation to the scene component's current local rotation
-	ROOMESCAPEFPS_API void AddLocalRotationQuat(USceneComponent* SceneComponent, const FQuat& Delta_Rotation)
-	{
-		if (SceneComponent)
-		{
-			SceneComponent->AddLocalRotation(Delta_Rotation);
-		}
-	}
-
-	// Set the Actor's world rotation to the input quaternion
-	ROOMESCAPEFPS_API void SetActorWorldRotationQuat(AActor* Actor, const FQuat& Desired_Rotation)
-	{
-		if (Actor)
-		{
-			Actor->SetActorRotation(Desired_Rotation);
-		}
-	}
-
-	// Set the Actor's relative rotation to the input quaternion
-	ROOMESCAPEFPS_API void SetActorRelativeRotationQuat(AActor* Actor, const FQuat& Desired_Rotation)
-	{
-		if (Actor)
-		{
-			Actor->SetActorRelativeRotation(Desired_Rotation);
-		}
-	}
-
-	// Add the input delta rotation to the Actor's current local rotation
-	ROOMESCAPEFPS_API void AddActorLocalRotationQuat(AActor* Actor, const FQuat& Delta_Rotation)
-	{
-		if (Actor)
-		{
-			Actor->AddActorLocalRotation(Delta_Rotation);
+			ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
+			if (gs)
+			{
+				for (auto& elem : gs->PlayerArray)
+				{
+					ARoomEscapeFPSPlayerState* ps = Cast<ARoomEscapeFPSPlayerState>(elem);
+					if (ps)
+					{
+						ps->ClientProcessHUDOnUpdateNextInfo(curType, nextType, InCount);
+					}
+				}
+			}
 		}
 	}
 }

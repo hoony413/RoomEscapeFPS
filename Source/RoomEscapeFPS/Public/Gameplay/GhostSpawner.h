@@ -36,7 +36,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UFreelist* GhostActorFreelist;
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 		bool bActive;
 
 	FTimerHandle SpawnTimer;

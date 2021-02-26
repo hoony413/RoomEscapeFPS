@@ -71,8 +71,8 @@ private:
 	TWeakObjectPtr<class AActor> Instigator;
 	TWeakObjectPtr<class AActor> Victim;
 
-	UPROPERTY(Replicated)
+	UPROPERTY()
 		float fLifeTime = 0.5f;
-	UPROPERTY(Replicated)
+	UPROPERTY()
 		float fLifeStartTime = 0.f;
 };

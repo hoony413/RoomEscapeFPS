@@ -45,11 +45,14 @@ public:
 	// 2번 단서의 답: 132(서 동 남)
 	bool CheckAnswer(const int32 answer, EServerSolutionType InType);
 
-	// 게임 목표 설정(모든 플레이어는 이 값을 참조하여 승리 조건을 알아야 한다)
+	// 유령잡기 미니게임 온/오프(AGhostSpawner Trigger 동작)
+	void SetActiveGhostSpawner(bool bActive);
+	
 
 protected:
 	int32 Clue_1_Answer = 170;
 	int32 Clue_2_Answer = 132;
+	int32 GhostDeadCount_Target = 10;
 };
 
 

@@ -103,8 +103,10 @@ public:
 
 	bool IsFirstGet(EItemType InType);
 
-	UFUNCTION(Client, Reliable)
+	UFUNCTION(Client, Unreliable)
 	void ClientProcessHUDOnFirstItemGet(class AGetableObject* InObj);
+	UFUNCTION(Client, Unreliable)
+		void ClientProcessHUDOnUpdateNextInfo(ENextInformationType curType, ENextInformationType nextType, int32 InCount);
 
 protected:
 	void UpdateBatteryRemainValue(int32 InDelta);
@@ -126,4 +128,7 @@ protected:
 	FTimerDelegate UpdateBatteryDele;
 
 //--------------------------------------- 아이템 관련
+
+//--------------------------------------- UI 업데이트 관련
+
 };

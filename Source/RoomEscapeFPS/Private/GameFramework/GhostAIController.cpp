@@ -4,6 +4,8 @@
 #include "GameFramework/GhostAIController.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/RoomEscapeFPSGameState.h"
+#include "Helper/Helper.h"
 #include "Object/GhostSoul.h"
 
 AGhostAIController::AGhostAIController()
@@ -34,6 +36,11 @@ void AGhostAIController::SetGhostState(EGhostStateMachine InState)
 		{	// TODO: 모든 클라이언트에게 Ghost Disappear 통지.
 			bActive = false;
 			fDelta = 0.f;
+			ARoomEscapeFPSGameState* gs = Helper::GetGameState(GetWorld());
+			if (gs)
+			{
+				gs->ServerIncreaseGhostDeadCount();
+			}
 			NetMulticastOnGhostDead();
 		}
 	}

@@ -80,6 +80,11 @@ bool AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* 
 			ps->AddItemToInventory(ItemType, DefaultGetCount);
 		};
 		Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
+
+		if (ItemType == EItemType::Flash)
+		{
+			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::EFindLantern, ENextInformationType::ESolveClue_1, 1);
+		}
 		Destroy();
 	}
 

@@ -72,7 +72,7 @@ namespace Helper
 	template<typename Functor>
 	ROOMESCAPEFPS_API void ServerImplementToClient(UWorld* world, int32 InPlayerID, Functor func)
 	{
-		//check(GetNetMode() == NM_DedicatedServer);
+		check(world->GetNetMode() == NM_DedicatedServer);
 		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
 		if (gm)
 		{
@@ -97,18 +97,8 @@ namespace Helper
 	ROOMESCAPEFPS_API EServerSolutionType GetSolutionType(EServerSolutionResultType InType);
 	ROOMESCAPEFPS_API EServerSolutionResultType GetSolutionResultType(EServerSolutionType InType);
 
-	// Convert Euler Rotations To Quaternions
-	ROOMESCAPEFPS_API FQuat Euler_To_Quaternion(FRotator& Current_Rotation);
-	// Function to set world rotation of scene component to input quaternion rotation
-	ROOMESCAPEFPS_API void SetWorldRotationQuat(USceneComponent* SceneComponent, const FQuat& Desired_Rotation);
-	// Function to set relative rotation of scene component to input quaternion rotation
-	ROOMESCAPEFPS_API void SetRelativeRotationQuat(USceneComponent* SceneComponent, const FQuat& Desired_Rotation);
-	// Function to add delta rotation to current local rotation of scene component
-	ROOMESCAPEFPS_API void AddLocalRotationQuat(USceneComponent* SceneComponent, const FQuat& Delta_Rotation);
-	// Function to set world rotation of Actor to input quaternion rotation
-	ROOMESCAPEFPS_API void SetActorWorldRotationQuat(AActor* Actor, const FQuat& Desired_Rotation);
-	// Function to set relative rotation of Actor to input quaternion rotation
-	ROOMESCAPEFPS_API void SetActorRelativeRotationQuat(AActor* Actor, const FQuat& Desired_Rotation);
-	// Function to add delta rotation to current local rotation of Actor
-	ROOMESCAPEFPS_API void AddActorLocalRotationQuat(AActor* Actor, const FQuat& Delta_Rotation);
+	ROOMESCAPEFPS_API ARoomEscapeFPSGameMode* GetGameMode(UWorld* world);
+	ROOMESCAPEFPS_API ARoomEscapeFPSGameState* GetGameState(UWorld* world);
+
+	ROOMESCAPEFPS_API void UpdateNextUIInfo(UWorld* world, ENextInformationType curType, ENextInformationType nextType, int32 InCount);
 }

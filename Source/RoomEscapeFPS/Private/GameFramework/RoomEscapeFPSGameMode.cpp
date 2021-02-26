@@ -26,6 +26,7 @@ void ARoomEscapeFPSGameMode::BeginPlay()
 
 	Clue_1_Answer = 170;
 	Clue_2_Answer = 132;
+	GhostDeadCount_Target = 10;
 }
 
 bool ARoomEscapeFPSGameMode::CheckAnswer(const int32 answer, EServerSolutionType InType)
@@ -38,10 +39,21 @@ bool ARoomEscapeFPSGameMode::CheckAnswer(const int32 answer, EServerSolutionType
 	{
 		return answer == Clue_2_Answer;
 	}
+	else if (InType == EServerSolutionType::EGhostDeadCount_Target)
+	{
+		return answer >= GhostDeadCount_Target;
+	}
 
 	return false;
 }
-
+void ARoomEscapeFPSGameMode::SetActiveGhostSpawner(bool bActive)
+{
+	ARoomEscapeFPSGameState* gs = GetGameState<ARoomEscapeFPSGameState>();
+	if (gs)
+	{
+		gs->SetActiveGhostSpawner(bActive);
+	}
+}
 void ARoomEscapeFPSGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);

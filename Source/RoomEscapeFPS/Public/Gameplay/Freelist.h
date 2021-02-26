@@ -59,19 +59,13 @@ public:
 		t->SetIsInFreeList(false);
 		return t;
 	}
-
 	template<typename T>
 	void ReturnElement(T* t)
 	{
 		t->SetIsInFreeList(true);
 	}
-
 	void ReleaseFreeList();
 
-	UPROPERTY(EditAnywhere)
-		TSoftClassPtr<class AActor> TargetObjectToPooling;
-
-public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -81,6 +75,9 @@ protected:
 	virtual void BeginDestroy() override;
 
 private:
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+		TSoftClassPtr<class AActor> TargetObjectToPooling;
+
 	UPROPERTY()
 	TArray<class AActor*> FreeList;
 

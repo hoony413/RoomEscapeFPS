@@ -5,6 +5,17 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
+#include "Components/Image.h"
+
+void UInventoryPanel::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
+{
+	Super::OnAnimationFinished_Implementation(Animation);
+	if (Animation == AnimArray[0])
+	{
+		PlayAnimation(AnimArray[1]);
+		UpdateNextInformation(CurrentType, CurrentType, 0);
+	}
+}
 
 void UInventoryPanel::SetFlashBatteryVisibility(bool bOnOff)
 {
@@ -43,5 +54,16 @@ void UInventoryPanel::UpdateCharmCount(int32 InCount)
 	{
 		FText txt = FText::FromString(FString::Printf(TEXT("x%d"), InCount));
 		CharmCountText->SetText(txt);
+	}
+}
+void UInventoryPanel::UpdateNextInformation(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
+{
+	TArray<FStringFormatArg> args;
+	args.Add(InCount);
+	NextInformationText->SetText(FText::FromString(FString::Format(*NextInformationStrArray[(uint8)curType], args)));
+	if (CurrentType != nextType)
+	{
+		CurrentType = nextType;
+		PlayAnimation(AnimArray[0]);
 	}
 }

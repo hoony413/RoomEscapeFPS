@@ -39,6 +39,7 @@ void AGhostSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AGhostSpawner, fSpawnTime);
+	DOREPLIFETIME(AGhostSpawner, bActive);
 }
 
 void AGhostSpawner::SpawnGhost()
@@ -66,9 +67,17 @@ void AGhostSpawner::DeactiveGhost(AGhostSoul* ghost)
 void AGhostSpawner::SetActive(bool bInActive)
 {
 	bActive = bInActive;
-	if (GetNetMode() == NM_DedicatedServer && bActive)
+	if (GetNetMode() == NM_DedicatedServer)
 	{
-		SpawnGhost();
+		if (bActive)
+		{
+			SpawnGhost();
+		}
+		else
+		{
+			GetWorld()->GetTimerManager().ClearTimer(SpawnTimer);
+			GhostActorFreelist->ReleaseFreeList();
+		}
 	}
 }
 // Called every frame

@@ -25,6 +25,12 @@ public:
 	void OnCorrectAnswer(EServerSolutionType InType);
 
 	void AddToSolutionResultObject(class AInteractiveObject* InObj);
+	void SetActiveGhostSpawner(bool bActive);
+
+	UFUNCTION(Server, Reliable)
+	void ServerIncreaseGhostDeadCount();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,4 +42,6 @@ protected:
 protected:
 	UPROPERTY()
 	TArray<class AInteractiveObject*> OnSolutionResultObject;
+	UPROPERTY(Replicated)
+		int32 GhostDeadCount = 0;
 };

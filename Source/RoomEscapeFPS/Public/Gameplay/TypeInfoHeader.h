@@ -19,6 +19,7 @@ enum class EItemType : uint8
 	BatteryPower,
 	Book,
 	Diary,
+	GhostNPC,
 };
 
 UENUM()
@@ -27,6 +28,8 @@ enum class EServerSolutionType : uint8
 	ENONE,
 	ESolution_1,
 	ESolution_2,
+	EGhostDeadCount_Target,
+	EPipelineGame_Complete,
 };
 
 UENUM()
@@ -35,4 +38,17 @@ enum class EServerSolutionResultType : uint8
 	ENONE,
 	ESolutionResult_1,
 	ESolutionResult_2,
+	ESolutionResult_3,
+	ESolutionResult_4,
+};
+
+UENUM()
+enum class ENextInformationType : uint8
+{
+	EFindLantern,		// interactive object
+	ESolveClue_1,		// solution wrapper
+	ESolveClue_2,		// solution wrapper
+	ECaptureGhost,		// ghostsoul
+	EPipelineComplete,  // playerstate
+	ERunaway,			// playerstate
 };

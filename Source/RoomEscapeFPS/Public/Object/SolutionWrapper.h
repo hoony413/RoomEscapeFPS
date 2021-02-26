@@ -15,6 +15,7 @@ class ROOMESCAPEFPS_API ASolutionWrapper : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ASolutionWrapper();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -36,4 +37,6 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, Category = "Solution Info", meta = (AllowPrivateAccess = "true"))
 		EServerSolutionType SolutionType;
+	UPROPERTY(Replicated)
+		bool bIsCleared;
 };

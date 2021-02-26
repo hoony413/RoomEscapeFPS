@@ -104,30 +104,30 @@ void ARoomEscapeFPSPlayerController::OnTestKey()
 }
 void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 {
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		ARoomEscapeFPSGameMode* gm = GetWorld()->GetAuthGameMode<ARoomEscapeFPSGameMode>();
-		if (gm)
-		{
-			ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
-			if (gs)
-			{
-				ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>();
-				if (ps)
-				{
-					int32 id = ps->GetPlayerId();
-					for (auto& elem : gs->PlayerArray)
-					{
-						ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
-						if (gsps->GetPlayerId() == id)
-						{
-							gsps->InitializePipeGame(5);
-						}
-					}
-				}
-			}
-		}
-	}
+	//if (GetNetMode() == NM_DedicatedServer)
+	//{
+	//	ARoomEscapeFPSGameMode* gm = GetWorld()->GetAuthGameMode<ARoomEscapeFPSGameMode>();
+	//	if (gm)
+	//	{
+	//		ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
+	//		if (gs)
+	//		{
+	//			ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>();
+	//			if (ps)
+	//			{
+	//				int32 id = ps->GetPlayerId();
+	//				for (auto& elem : gs->PlayerArray)
+	//				{
+	//					ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
+	//					if (gsps->GetPlayerId() == id)
+	//					{
+	//						gsps->InitializePipeGame(5);
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 }
 
 void ARoomEscapeFPSPlayerController::ClientOnTestKey_Implementation()

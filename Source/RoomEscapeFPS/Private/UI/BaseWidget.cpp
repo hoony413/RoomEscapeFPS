@@ -7,15 +7,15 @@
 void UBaseWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
-	//SetWidgetAnimation();
+	SetWidgetAnimation();
 }
 
 void UBaseWidget::SetWidgetAnimation()
 {
+	AnimArray.Empty();
 	UWidgetBlueprintGeneratedClass* WidgetClass = GetWidgetTreeOwningClass();
 	for (int32 i = 0; i < WidgetClass->Animations.Num(); i++) {
 
-		FString Name = WidgetClass->Animations[i]->GetName();
 		AnimArray.Add(WidgetClass->Animations[i]);
 	}
 }

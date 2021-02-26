@@ -30,6 +30,8 @@ public:
 	class UPipeGameUI* GetPipeGameUI();
 	FORCEINLINE void CachPipeGameUI(class UPipeGameUI* InUI) { cachedPipeGameUI = InUI; }
 
+	void UpdateNextInfo(ENextInformationType curType, ENextInformationType nextType, int32 InCount);
+
 protected:
 	void SetVisibleBatteryInfo(bool bOnOff);
 	void SetVisibleCharmInfo(bool bOnOff);
