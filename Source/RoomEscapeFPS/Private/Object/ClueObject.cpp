@@ -12,7 +12,6 @@ AClueObject::AClueObject()
 void AClueObject::BeginPlay()
 {
 	Super::BeginPlay();
-	InformationStr = TEXT("Press 'E' key to Check Clue");
 }
 
 bool AClueObject::OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp)
