@@ -66,16 +66,13 @@ public:
 	}
 	void ReleaseFreeList();
 
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 
 private:
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "Target BP", meta = (AllowPrivateAccess = "true"))
 		TSoftClassPtr<class AActor> TargetObjectToPooling;
 
 	UPROPERTY()

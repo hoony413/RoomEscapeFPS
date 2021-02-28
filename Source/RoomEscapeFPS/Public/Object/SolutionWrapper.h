@@ -7,6 +7,10 @@
 #include "Gameplay/TypeInfoHeader.h"
 #include "SolutionWrapper.generated.h"
 
+/*
+ * 문제 풀이 시, 차일드 액터들이 변화되었음을 통지 받아 서버에 정답 제출을 돕는 객체.
+ * 차일드 액터의 OnInteractionHappened 델리게이트에 ServerOnStateChanged()를 연결한다.
+ */
 UCLASS()
 class ROOMESCAPEFPS_API ASolutionWrapper : public AActor
 {

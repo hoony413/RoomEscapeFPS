@@ -8,6 +8,7 @@
 #include "Gameplay/TypeInfoHeader.h"
 #include "InteractiveObject.generated.h"
 
+
 class UBoxComponent;
 
 UENUM()
@@ -41,16 +42,6 @@ public:
 		fCurrentCurveValue = 0.f;
 		fTimelineDelta = 0.f;
 	}
-	//FTimelineInfo(int32 InIndex, ETimelineControlType InType, EInteractiveObjectState InState = EInteractiveObjectState::EState_Close_Or_Off, float InCurveWeightValue = 1.f)
-	//{
-	//	ControlType = InType;
-	//	CurrentState = InState;
-	//	fCurveWeightValue = InCurveWeightValue;
-	//
-	//	fCurrentCurveValue = 0.f;
-	//	fTimelineDelta = 0.f;
-	//}
-
 	
 	UPROPERTY(EditAnywhere)
 		EInteractiveObjectState CurrentState;
@@ -71,6 +62,13 @@ public:
 
 DECLARE_DELEGATE(FOnInteractionHappened);
 DECLARE_DELEGATE_RetVal_TwoParams(bool, FOnSolutionSuccessResult, APawn*, UPrimitiveComponent*)
+
+/*
+ * 상호작용 오브젝트의 최상위 클래스. 서버에서 호출되는 OnInteraction 함수를 재정의 가능하며, 
+ * StaticMesh들의 간단한 애니메이션을 위한 구조체인 FTimelineInfo 구조체를 소유한다.
+ * OnInteractionHappened 델리게이트를 통해 다른 객체에게 메시지를 전달할 수 있다.
+ * 상호작용 불가능 플래그, 상호작용 안내 메시지(UI) 스트링을 BP에서 설정할 수 있다.
+ */
 
 UCLASS(Blueprintable)
 class ROOMESCAPEFPS_API AInteractiveObject : public AActor
@@ -132,11 +130,13 @@ protected:
 	UPROPERTY(EditAnywhere)
 		class UStaticMeshComponent* DefaultMesh;
 
+	// 상호작용 가능 여부(단순히 장식용으로 월드에 배치된 경우 BP에서 설정)
 	UPROPERTY(Replicated, EditAnywhere)
 		bool bIsNonInteractable;
+	// 문제 풀이의 결과로 발동되는 오브젝트(Server Interactable Only인지. 기본값: NONE)
 	UPROPERTY(Replicated, EditAnywhere)
 		EServerSolutionResultType SolutionResultType;
-
+	// 타임라인 상태 동기화(문이 열렸는지, 닫혔는지가 동기화되어야 함)
 	UPROPERTY(Replicated, EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
 		TArray<FTimelineInfo> TimelineMeshes;
 

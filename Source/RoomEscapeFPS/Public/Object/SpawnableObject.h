@@ -7,7 +7,7 @@
 #include "SpawnableObject.generated.h"
 
 /**
- * 
+ * 배터리, 플래시, 열쇠, 부적 등의 액터를 내부에서 스폰 가능한 오브젝트.
  */
 UCLASS()
 class ROOMESCAPEFPS_API ASpawnableObject : public AInteractiveObject

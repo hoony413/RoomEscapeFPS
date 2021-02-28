@@ -14,6 +14,7 @@ ATriggerObject::ATriggerObject()
 void ATriggerObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ATriggerObject, bIsTriggered);
 }
 void ATriggerObject::BeginPlay()
 {

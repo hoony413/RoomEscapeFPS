@@ -254,7 +254,7 @@ EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 
 			check(targetNode);
 			if (targetNode->GetPipeLocation() == nodes[nodes.Num() - 1].GetPipeLocation())
-			{
+			{	// 루프 종료조건(Goal Node 도달했는지) 확인.
 				targetNode->SetLastAnswerNode(true);
 				return EReplicateState::ETrue;
 			}
@@ -266,7 +266,7 @@ EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 
 			if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight) &&
 				PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
-			{
+			{	// 오른쪽, 아래 모두 연결되어 있음. 우향 노드, 하향 모드 큐에 추가.
 				int32 index = targetNode->GetPipeLocation().X +
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
@@ -276,19 +276,19 @@ EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 			}
 			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight))
-			{
+			{	// 오른쪽 노드만 연결되어 있음. 우향 노드 큐에 추가.
 				int32 index = targetNode->GetPipeLocation().X +
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 			}
 			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
-			{
+			{	// 아래쪽 노드만 연결되어 있음. 하향 노드 큐에 추가.
 				int32 index = targetNode->GetPipeLocation().X +
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 			}
 			else
-			{
+			{	// 시작 노드인데 물이 흐를 수 없는 경우(모두 막힌 경우), 정답 플래그 해제 후 루프 탈출(Empty Queue)
 				if (PipeGameInfo.IsStartNode(*targetNode))
 				{
 					targetNode->SetAnswerNode(false);

@@ -96,7 +96,10 @@ private:
 public:
 	void AddItemToInventory(EItemType InType, int32 InCount);
 	const uint32 GetItemCount(EItemType InType);
+
 	uint32* GetItemCountRef(EItemType InType);
+	//uint32& GetItemCountRef(EItemType InType);
+	
 	bool AmIHaveItem(EItemType InType);
 
 	void ToggleBatteryReduceState(bool bOnOff);

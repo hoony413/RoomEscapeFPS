@@ -8,7 +8,7 @@
 #include "GetableObject.generated.h"
 
 /**
- * 획득 시 아이템 인벤토리에 추가되는 아이템.
+ * 획득 시 아이템 인벤토리에 추가되는 아이템(추가 여부는 override 가능).
  */
 UCLASS()
 class ROOMESCAPEFPS_API AGetableObject : public AInteractiveObject

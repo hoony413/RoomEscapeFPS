@@ -7,7 +7,7 @@
 #include "DynamicMtInteractiveObject.generated.h"
 
 /**
- * 
+ * Interaction과 함께 DynamicMaterial 제어를 위한 클래스.
  */
 UENUM()
 enum class EDynamicMtParamType : uint8

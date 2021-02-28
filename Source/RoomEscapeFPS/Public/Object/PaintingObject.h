@@ -7,7 +7,7 @@
 #include "PaintingObject.generated.h"
 
 /**
- * 
+ * 돌릴 수 있는 그림 오브젝트.
  */
 UENUM()
 enum class ERotateState : uint8

@@ -10,7 +10,7 @@
 /**
  * 생성: GhostSpawner->GhostFreelist 이후 GhostAIController에서 액터 제어
  * 소멸(Deactive): Ghost(피격 판정받음)->GhostAIController(사라짐 상태 변경)->
- *					Ghost(사라짐 연출 후 종료 델리게이트)->GhostSpawner(오브젝트 반납->GhostFreelist
+ *					Ghost(사라짐 연출 후 종료 델리게이트)->GhostSpawner(오브젝트 반납)->GhostFreelist
  */
 UCLASS()
 class ROOMESCAPEFPS_API AGhostSoul : public APawn, public IFreelistObjectInterface

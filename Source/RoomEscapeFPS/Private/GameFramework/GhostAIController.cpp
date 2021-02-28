@@ -19,6 +19,7 @@ void AGhostAIController::BeginPlay()
 	Super::BeginPlay();
 	//SetGhostState(EGhostStateMachine::EIdle);
 	bActive = true;
+	fDelta = 0.f;
 }
 
 void AGhostAIController::SetGhostState(EGhostStateMachine InState)
@@ -48,14 +49,10 @@ void AGhostAIController::SetGhostState(EGhostStateMachine InState)
 
 void AGhostAIController::NetMulticastOnGhostDead_Implementation()
 {
-	APawn* pawn = GetPawn();
-	if (pawn)
-	{
-		AGhostSoul* ghost = Cast<AGhostSoul>(pawn);
-		if (ghost)
-		{	// 사라짐 애니메이션.
-			ghost->SetAsDead();
-		}
+	AGhostSoul* ghost = Cast<AGhostSoul>(GetPawn());
+	if (ghost)
+	{	// 사라짐 애니메이션.
+		ghost->SetAsDead();
 	}
 }
 

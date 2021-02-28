@@ -8,13 +8,7 @@
 #include "UIManager.generated.h"
 
 /**
- 같은 타입으로 이미 인스턴스 된게 있으면 안의 내용만 바꿔준다.
- 없으면 새로 만들어서 뷰포트에 올려준다.
- UI오브젝트의 생명주기를 관리한다.
- 상태는 3가지로 관리한다
- 인스턴스되지 않음
- 인스턴스됨 + 화면에 없음(숨김처리)
- 인스턴스됨 + 화면에 있음(표시 중)
+ * UI를 편하게 생성/호출하기 위한 매니저 클래스.
  */
 UCLASS()
 class ROOMESCAPEFPS_API UUIManager : public UBaseManager
@@ -36,7 +30,6 @@ public:
 
 		// CDO로부터 BP경로 받기
 		FString path = Cast<UBaseWidget>(T::StaticClass()->ClassDefaultObject)->GetBPPath();
-		//const FString& path = GetPath(T::StaticClass()->ClassDefaultObject->GetFName());
 		check(!path.IsEmpty());
 
 		// 오브젝트 로드(위젯BP)

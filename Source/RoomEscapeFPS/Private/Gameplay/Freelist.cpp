@@ -18,12 +18,6 @@ void UFreelist::BeginPlay()
 
 	FreeList.Reserve(100);
 }
-
-// Called every frame
-void UFreelist::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
 void UFreelist::BeginDestroy()
 {
 	ReleaseFreeList();
