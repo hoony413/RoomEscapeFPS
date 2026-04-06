@@ -13,10 +13,12 @@
 UENUM()
 enum class EGhostStateMachine
 {
-	EIdle,
-	EMoveTo,
-	EMoveComplete,
-	EDead,
+	NONE = 0 UMETA(Hidden),
+	IDLE,
+	MOVE_TO,
+	MOVE_COMPLETE,
+	DEAD,
+	MAX UMETA(Hidden)
 };
 UCLASS()
 class ROOMESCAPEFPS_API AGhostAIController : public AAIController
@@ -26,18 +28,18 @@ class ROOMESCAPEFPS_API AGhostAIController : public AAIController
 public:
 	AGhostAIController();
 
-	virtual void Tick(float DeltaTime) override;
+	void Tick(float DeltaTime) override;
 
 	FORCEINLINE EGhostStateMachine GetGhostState() { return CurrentState; }
 	void SetGhostState(EGhostStateMachine InState);
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 		
 	void MoveToGhostInBoundingBoxRandomPos();
 
 	UFUNCTION(NetMulticast, Reliable)
-		void NetMulticastOnGhostDead();
+	void NetMulticastOnGhostDead();
 
 private:
 	FVector cachedMoveDirection;

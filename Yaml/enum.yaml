@@ -1,0 +1,7 @@
+enums:
+  - name: EnumTest
+    entries:
+      - TESTA
+      - TESTB
+      - TESTC
+

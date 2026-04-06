@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "GhostSpawner.generated.h"
 
+class AGhostSoul;
+class UBoxComponent;
+
 UCLASS()
 class ROOMESCAPEFPS_API AGhostSpawner : public AActor
 {
@@ -16,31 +19,33 @@ public:
 	AGhostSpawner();
 
 	void SpawnGhost();
-	void DeactiveGhost(class AGhostSoul* ghost);
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void Tick(float DeltaTime) override;
 
 	void SetActive(bool bInActive);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UBoxComponent* SpawnVolume;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UFreelist* GhostActorFreelist;
+	TObjectPtr<UBoxComponent> SpawnVolume;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TSoftClassPtr<AGhostSoul> GhostClass;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<AGhostSoul>> ActiveGhosts;
+	
 	UPROPERTY(Replicated)
-		bool bActive;
+	bool bActive;
 
 	FTimerHandle SpawnTimer;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		float fSpawnTime = 1.5f;
+	float fSpawnTime = 1.5f;
 };

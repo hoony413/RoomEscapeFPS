@@ -16,17 +16,17 @@ void ASwitchButtonObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 }
 bool ASwitchButtonObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
-		bSwitchPressed = !bSwitchPressed;
+		bSwitchPressed = not bSwitchPressed;
 	}
 	
-	if (Super::OnInteraction(requester, InComp) == false)
-	{	// ½ºÀ§Ä¡ º¯°æ ÈÄ, ºÎ¸ğ µı¿¡¼­ false ¸®ÅÏµÈ °æ¿ì ÇÃ·¡±×°ªÀ» ÃÊ±â »óÅÂ·Î ´Ù½Ã µÇµ¹¸°´Ù.
-		// TODO: µ¨¸®°ÔÀÌÆ®°¡ ºÎ¸ğ Å¬·¡½º¿¡ ÀÖ¾î ºÎµæÀÌ ÀÌ·± ±¸Á¶·Î µÇ¾ú´Âµ¥... °³¼±¹æ¹ı °í¹Î
-		if (GetNetMode() == NM_DedicatedServer)
+	if (not Super::OnInteraction(requester, InComp))
+	{	// ìŠ¤ìœ„ì¹˜ ë³€ê²½ í›„, ë¶€ëª¨ ë”´ì—ì„œ false ë¦¬í„´ëœ ê²½ìš° í”Œë˜ê·¸ê°’ì„ ì´ˆê¸° ìƒíƒœë¡œ ë‹¤ì‹œ ë˜ëŒë¦°ë‹¤.
+		// ë¸ë¦¬ê²Œì´íŠ¸ê°€ ë¶€ëª¨ í´ë˜ìŠ¤ì— ìˆì–´ OnInteraction ê²°ê³¼ë¥¼ í™•ì¸í•œ í›„ ë¡¤ë°±í•˜ëŠ” êµ¬ì¡°.
+		if (IsNetMode(NM_DedicatedServer))
 		{
-			bSwitchPressed = !bSwitchPressed;
+			bSwitchPressed = not bSwitchPressed;
 		}
 		return false;
 	}

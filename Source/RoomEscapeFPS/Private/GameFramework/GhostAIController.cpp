@@ -7,6 +7,7 @@
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Helper/Helper.h"
 #include "Object/GhostSoul.h"
+#include "Gameplay/GhostSpawner.h"
 
 AGhostAIController::AGhostAIController()
 {
@@ -17,7 +18,7 @@ AGhostAIController::AGhostAIController()
 void AGhostAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	//SetGhostState(EGhostStateMachine::EIdle);
+	//SetGhostState(EGhostStateMachine::IDLE);
 	bActive = true;
 	fDelta = 0.f;
 }
@@ -25,34 +26,25 @@ void AGhostAIController::BeginPlay()
 void AGhostAIController::SetGhostState(EGhostStateMachine InState)
 {
 	CurrentState = InState;
-	if (CurrentState == EGhostStateMachine::EIdle)
+	if (CurrentState == EGhostStateMachine::IDLE)
 	{
 		bActive = true;
 		fDelta = 0.f;
 	}
-	else if (CurrentState == EGhostStateMachine::EDead)
+	else if (CurrentState == EGhostStateMachine::DEAD)
 	{
-		APawn* pawn = GetPawn();
-		if (pawn)
-		{	// TODO: 모든 클라이언트에게 Ghost Disappear 통지.
+		AGhostSoul* ghost = Cast<AGhostSoul>(GetPawn());
+		if (ghost)
+		{
 			bActive = false;
 			fDelta = 0.f;
 			ARoomEscapeFPSGameState* gs = Helper::GetGameState(GetWorld());
 			if (gs)
 			{
-				gs->ServerIncreaseGhostDeadCount();
+				gs->IncreaseGhostDeadCount();
 			}
 			NetMulticastOnGhostDead();
 		}
-	}
-}
-
-void AGhostAIController::NetMulticastOnGhostDead_Implementation()
-{
-	AGhostSoul* ghost = Cast<AGhostSoul>(GetPawn());
-	if (ghost)
-	{	// 사라짐 애니메이션.
-		ghost->SetAsDead();
 	}
 }
 
@@ -67,7 +59,7 @@ void AGhostAIController::MoveToGhostInBoundingBoxRandomPos()
 			UBoxComponent* box = ghost->GetBoundingBox();
 			if (box)
 			{
-				CurrentState = EGhostStateMachine::EMoveTo;
+				CurrentState = EGhostStateMachine::MOVE_TO;
 				MoveFromPos = GetPawn()->GetActorLocation();
 				MoveToPos = UKismetMathLibrary::RandomPointInBoundingBox(
 					box->Bounds.Origin,
@@ -79,17 +71,33 @@ void AGhostAIController::MoveToGhostInBoundingBoxRandomPos()
 		}
 	}
 }
+void AGhostAIController::NetMulticastOnGhostDead_Implementation()
+{
+	AGhostSoul* ghost = Cast<AGhostSoul>(GetPawn());
+	if (not ghost)
+	{
+		return;
+	}
+
+	if (IsNetMode(NM_DedicatedServer))
+	{
+		ghost->Destroy();
+	}
+}
+
 void AGhostAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (bActive == false)
+	if (not bActive)
+	{
 		return;
+	}
 	
-	if (CurrentState == EGhostStateMachine::EIdle)
+	if (CurrentState == EGhostStateMachine::IDLE)
 	{
 		MoveToGhostInBoundingBoxRandomPos();
 	}
-	else if (CurrentState == EGhostStateMachine::EMoveTo)
+	else if (CurrentState == EGhostStateMachine::MOVE_TO)
 	{
 		fDelta += DeltaTime;
 		APawn* pawn = GetPawn();
@@ -98,17 +106,17 @@ void AGhostAIController::Tick(float DeltaTime)
 			pawn->AddMovementInput(cachedMoveDirection, 1.f, true);
 			if (FVector::Dist(pawn->GetActorLocation(), MoveToPos) < 100.f)
 			{
-				CurrentState = EGhostStateMachine::EMoveComplete;
+				CurrentState = EGhostStateMachine::MOVE_COMPLETE;
 			}
 			else if (fDelta > fLimitDelta)
 			{
-				CurrentState = EGhostStateMachine::EMoveComplete;
+				CurrentState = EGhostStateMachine::MOVE_COMPLETE;
 			}
 		}
 	}
-	else if (CurrentState == EGhostStateMachine::EMoveComplete)
+	else if (CurrentState == EGhostStateMachine::MOVE_COMPLETE)
 	{
 		fDelta = 0.f;
-		CurrentState = EGhostStateMachine::EIdle;
+		CurrentState = EGhostStateMachine::IDLE;
 	}
 }

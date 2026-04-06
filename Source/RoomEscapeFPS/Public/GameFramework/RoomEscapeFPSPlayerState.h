@@ -9,34 +9,32 @@
 #include "RoomEscapeFPSPlayerState.generated.h"
 
 /**
- * ÇÃ·¹ÀÌ¾î½ºÅ×ÀÌÆ®
- PlayerController°¡ ½ºÆùµÉ ¶§(ÇÃ·¹ÀÌ¾î Á¢¼Ó ¿Ï·á ½Ã) °°ÀÌ ½ºÆùµÈ´Ù.
- PlayerState´Â ¼­¹ö/Å¬¶óÀÌ¾ğÆ® ¸ğµÎ Á¸ÀçÇÏ´Âµ¥(¸®ÇÃ¸®ÄÉÀÌÆ®), ¼­¹öÀÇ °æ¿ì ¸ğµç ÇÃ·¹ÀÌ¾îÀÇ PlayerState¸¦
- ÂüÁ¶ °¡´ÉÇÏ¸ç, Å¬¶óÀÌ¾ğÆ®´Â ÀÚ±âÀÚ½ÅÀÇ PlayerState¸¸ ÂüÁ¶ °¡´ÉÇÏ´Ù.
+ * í”Œë ˆì´ì–´ìŠ¤í…Œì´íŠ¸
+ PlayerControllerê°€ ìŠ¤í°ë  ë•Œ(í”Œë ˆì´ì–´ ì ‘ì† ì™„ë£Œ ì‹œ) ê°™ì´ ìŠ¤í°ëœë‹¤.
+ PlayerStateëŠ” ì„œë²„/í´ë¼ì´ì–¸íŠ¸ ëª¨ë‘ ì¡´ì¬í•˜ëŠ”ë°(ë¦¬í”Œë¦¬ì¼€ì´íŠ¸), ì„œë²„ì˜ ê²½ìš° ëª¨ë“  í”Œë ˆì´ì–´ì˜ PlayerStateë¥¼
+ ì°¸ì¡° ê°€ëŠ¥í•˜ë©°, í´ë¼ì´ì–¸íŠ¸ëŠ” ìê¸°ìì‹ ì˜ PlayerStateë§Œ ì°¸ì¡° ê°€ëŠ¥í•˜ë‹¤.
  */
 UENUM()
 enum class EReplicateState : uint8
 {
-	EFalse = 0,
-	ETrue = 1,
-	EUnknown = 2,
+	NONE = 0 UMETA(Hidden),
+	NOT_YET,
+	COMPLETE,
+	UNKNOWN,
+	MAX UMETA(Hidden)
 };
 
 USTRUCT()
-struct ROOMESCAPEFPS_API FItemInfo
+struct ROOMESCAPEFPS_API FInventoryItemInfo
 {
 	GENERATED_BODY()
 
-public:
-	FItemInfo() {}
-	FItemInfo(EItemType InType, uint32 InCount)
-	{
-		ItemType = InType;
-		ItemCount = InCount;
-	}
+	FInventoryItemInfo() : ItemType(EItemType::NONE), ItemCount(0u) {}
+	FInventoryItemInfo(EItemType InType, int32 InCount) : ItemType(InType), ItemCount(InCount) {}
 
 	UPROPERTY()
 	EItemType ItemType;
+
 	UPROPERTY()
 	uint32 ItemCount;
 };
@@ -48,12 +46,12 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerState : public APlayerState
 	
 public:
 	//virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
-//--------------------------------------- ÆÄÀÌÇÁ°ÔÀÓ °ü·Ã
-	// ÆÄÀÌÇÁ°ÔÀÓ »ı¼º
+//--------------------------------------- íŒŒì´í”„ê²Œì„ ê´€ë ¨
+	// íŒŒì´í”„ê²Œì„ ìƒì„±
 	void InitializePipeGame(uint8 GridSize);
 	
 	UFUNCTION()
@@ -61,41 +59,35 @@ public:
 	UFUNCTION()
 		void OnRep_PipeGameSuccessInfo();
 
-	UFUNCTION(Server, Reliable)
-		void ServerRotatePipe(int32 Index);
+	FORCEINLINE FPipeGameInfo& GetPipeGameInfo() { return PipeGameInfo; }
+	FORCEINLINE FPipeGameInfo const& GetPipeGameInfo() const { return PipeGameInfo; }
 
-	UFUNCTION(Server, Reliable)
-		void ServerCheckCommittedAnswer();
-
-	UFUNCTION(Server, Reliable)
-		void ServerClearPipeGame();
-	//UFUNCTION(Client, Reliable)
-	//	void ClientClearPipeGame();
-
-	FORCEINLINE struct FPipeGameInfo& GetPipeGameInfo() { return PipeGameInfo; }
+	void RotatePipe(int32 Index);
+	void CheckAndApplyPipeAnswer();
+	void ClearPipeGame();
 
 private:
 	UFUNCTION()
-		EReplicateState CheckPipeAnswer();
+	EReplicateState CheckPipeAnswer();
 
 private:
 		
 	UPROPERTY(Replicated)
-		struct FPipeGameInfo PipeGameInfo;
+	FPipeGameInfo PipeGameInfo;
 
 	UPROPERTY(ReplicatedUsing = OnRep_InitializePipeGame)
-		bool bInitializePipeGame = false;
+	bool bInitializePipeGame = false;
 
 	UPROPERTY(ReplicatedUsing = OnRep_PipeGameSuccessInfo)
-		EReplicateState PipeGameSuccessInfo = EReplicateState::EUnknown;
+	EReplicateState PipeGameSuccessInfo = EReplicateState::UNKNOWN;
 
-//--------------------------------------- ÆÄÀÌÇÁ°ÔÀÓ °ü·Ã
+//--------------------------------------- íŒŒì´í”„ê²Œì„ ê´€ë ¨
 
-//--------------------------------------- ¾ÆÀÌÅÛ °ü·Ã
+//--------------------------------------- ì•„ì´í…œ ê´€ë ¨
 
 public:
 	void AddItemToInventory(EItemType InType, int32 InCount);
-	const uint32 GetItemCount(EItemType InType);
+	uint32 GetItemCount(EItemType InType);
 
 	uint32* GetItemCountRef(EItemType InType);
 	//uint32& GetItemCountRef(EItemType InType);
@@ -106,32 +98,28 @@ public:
 
 	bool IsFirstGet(EItemType InType);
 
-	UFUNCTION(Client, Unreliable)
-	void ClientProcessHUDOnFirstItemGet(class AGetableObject* InObj);
-	UFUNCTION(Client, Unreliable)
-		void ClientProcessHUDOnUpdateNextInfo(ENextInformationType curType, ENextInformationType nextType, int32 InCount);
-
 protected:
 	void UpdateBatteryRemainValue(int32 InDelta);
+	void UpdateFlashIntensityByBattery();
 
 	UFUNCTION()
 		void OnRep_InventoryInfo();
 
+	UFUNCTION()
+		void OnRep_FlashIntensity();
+
 	UPROPERTY(ReplicatedUsing = OnRep_InventoryInfo)
-	TArray<FItemInfo> InventoryInfo;
+	TArray<FInventoryItemInfo> InventoryInfo;
 
 	UPROPERTY(Replicated)
-		uint32 BatteryMaxValue;
+	uint32 BatteryMaxValue;
+
 	UPROPERTY(Replicated)
-		int32 BatteryUpdateValue;
-	UPROPERTY(Replicated)
-		float fFlashIntensity;
+	int32 BatteryUpdateValue;
+
+	UPROPERTY(ReplicatedUsing = OnRep_FlashIntensity)
+	float fFlashIntensity;
 
 	FTimerHandle FlashBatteryTimerHandle;
 	FTimerDelegate UpdateBatteryDele;
-
-//--------------------------------------- ¾ÆÀÌÅÛ °ü·Ã
-
-//--------------------------------------- UI ¾÷µ¥ÀÌÆ® °ü·Ã
-
 };

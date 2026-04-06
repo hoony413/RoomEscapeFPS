@@ -8,7 +8,7 @@
 #include "GetableObject.generated.h"
 
 /**
- * »πµÊ Ω√ æ∆¿Ã≈€ ¿Œ∫•≈‰∏Æø° √ﬂ∞°µ«¥¬ æ∆¿Ã≈€(√ﬂ∞° ø©∫Œ¥¬ override ∞°¥…).
+ * ÌöçÎìù Ïãú ÏïÑÏù¥ÌÖú Ïù∏Î≤§ÌÜ†Î¶¨Ïóê Ï∂îÍ∞ÄÎêòÎäî ÏïÑÏù¥ÌÖú(Ï∂îÍ∞Ä Ïó¨Î∂ÄÎäî override Í∞ÄÎä•).
  */
 UCLASS()
 class ROOMESCAPEFPS_API AGetableObject : public AInteractiveObject
@@ -17,9 +17,9 @@ class ROOMESCAPEFPS_API AGetableObject : public AInteractiveObject
 
 public:
 	AGetableObject();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual bool OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
+	bool OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
 	virtual void CaptureCurrentScene();
 
 	FORCEINLINE const FString& GetItemNameStr() { return ItemNameStr; }
@@ -30,26 +30,26 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
-		EItemType ItemType;
+	EItemType ItemType{};
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "1"))
-		int32 DefaultGetCount;
+	int32 DefaultGetCount{};
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
-		class USceneCaptureComponent2D* SceneCapturer;
+	TObjectPtr<USceneCaptureComponent2D> SceneCapturer;
 
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
-		EItemType AdditionalItemType = EItemType::NONE;
+	EItemType AdditionalItemType{};
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true", UIMin = "0"))
-		int32 AdditionalGetCount = 0;
+	int32 AdditionalGetCount{};
 
 	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
-		bool bNeedsUINotify;
+	bool bNeedsUINotify{};
 	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
-		FString ItemNameStr;
+	FString ItemNameStr;
 	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
-		FString ItemDescStr;
+	FString ItemDescStr;
 
 };

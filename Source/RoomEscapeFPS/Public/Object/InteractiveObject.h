@@ -14,19 +14,23 @@ class UBoxComponent;
 UENUM()
 enum class EInteractiveObjectState : uint8
 {
-	EState_Open_Or_On,
-	EState_Close_Or_Off,
+	NONE = 0 UMETA(Hidden),
+	STATE_OPEN_OR_ON,
+	STATE_CLOSE_OR_OFF,
+	MAX UMETA(Hidden)
 };
 
 UENUM()
 enum class ETimelineControlType : uint8
 {
-	ELocationX,
-	ELocationY,
-	ELocationZ,
-	ERotationX,
-	ERotationY,
-	ERotationZ,
+	NONE = 0 UMETA(Hidden),
+	LOCATION_X,
+	LOCATION_Y,
+	LOCATION_Z,
+	ROTATION_X,
+	ROTATION_Y,
+	ROTATION_Z,
+	MAX UMETA(Hidden)
 };
 
 USTRUCT()
@@ -37,7 +41,7 @@ struct ROOMESCAPEFPS_API FTimelineInfo
 public:
 	FTimelineInfo() 
 	{
-		CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
+		CurrentState = EInteractiveObjectState::STATE_CLOSE_OR_OFF;
 		StaticMeshComponent = nullptr;
 		fCurrentCurveValue = 0.f;
 		fTimelineDelta = 0.f;
@@ -64,10 +68,10 @@ DECLARE_DELEGATE(FOnInteractionHappened);
 DECLARE_DELEGATE_RetVal_TwoParams(bool, FOnSolutionSuccessResult, APawn*, UPrimitiveComponent*)
 
 /*
- * »óÈ£ÀÛ¿ë ¿ÀºêÁ§Æ®ÀÇ ÃÖ»óÀ§ Å¬·¡½º. ¼­¹ö¿¡¼­ È£ÃâµÇ´Â OnInteraction ÇÔ¼ö¸¦ ÀçÁ¤ÀÇ °¡´ÉÇÏ¸ç, 
- * StaticMeshµéÀÇ °£´ÜÇÑ ¾Ö´Ï¸ŞÀÌ¼ÇÀ» À§ÇÑ ±¸Á¶Ã¼ÀÎ FTimelineInfo ±¸Á¶Ã¼¸¦ ¼ÒÀ¯ÇÑ´Ù.
- * OnInteractionHappened µ¨¸®°ÔÀÌÆ®¸¦ ÅëÇØ ´Ù¸¥ °´Ã¼¿¡°Ô ¸Ş½ÃÁö¸¦ Àü´ŞÇÒ ¼ö ÀÖ´Ù.
- * »óÈ£ÀÛ¿ë ºÒ°¡´É ÇÃ·¡±×, »óÈ£ÀÛ¿ë ¾È³» ¸Ş½ÃÁö(UI) ½ºÆ®¸µÀ» BP¿¡¼­ ¼³Á¤ÇÒ ¼ö ÀÖ´Ù.
+ * ìƒí˜¸ì‘ìš© ì˜¤ë¸Œì íŠ¸ì˜ ìµœìƒìœ„ í´ë˜ìŠ¤. ì„œë²„ì—ì„œ í˜¸ì¶œë˜ëŠ” OnInteraction í•¨ìˆ˜ë¥¼ ì¬ì •ì˜ ê°€ëŠ¥í•˜ë©°, 
+ * StaticMeshë“¤ì˜ ê°„ë‹¨í•œ ì• ë‹ˆë©”ì´ì…˜ì„ ìœ„í•œ êµ¬ì¡°ì²´ì¸ FTimelineInfo êµ¬ì¡°ì²´ë¥¼ ì†Œìœ í•œë‹¤.
+ * OnInteractionHappened ë¸ë¦¬ê²Œì´íŠ¸ë¥¼ í†µí•´ ë‹¤ë¥¸ ê°ì²´ì—ê²Œ ë©”ì‹œì§€ë¥¼ ì „ë‹¬í•  ìˆ˜ ìˆë‹¤.
+ * ìƒí˜¸ì‘ìš© ë¶ˆê°€ëŠ¥ í”Œë˜ê·¸, ìƒí˜¸ì‘ìš© ì•ˆë‚´ ë©”ì‹œì§€(UI) ìŠ¤íŠ¸ë§ì„ BPì—ì„œ ì„¤ì •í•  ìˆ˜ ìˆë‹¤.
  */
 
 UCLASS(Blueprintable)
@@ -78,35 +82,32 @@ class ROOMESCAPEFPS_API AInteractiveObject : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AInteractiveObject();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void Tick(float DeltaTime) override;
 
 #if WITH_EDITOR
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	UFUNCTION()
-	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp);
+	virtual bool OnInteraction(APawn* requester, UPrimitiveComponent* InComp);
 
 	FORCEINLINE const FString& GetInformationMessage() const { return InformationStr; }
-	FORCEINLINE class UPrimitiveComponent* GetSolutionResultComp() { return cachedSolutionResultComp; }
+	FORCEINLINE UPrimitiveComponent* GetSolutionResultComp() const { return cachedSolutionResultComp; }
 
-	FORCEINLINE bool IsNonInteracable() { return bIsNonInteractable; }
+	FORCEINLINE bool IsNonInteractable() const { return bIsNonInteractable; }
 
-	FORCEINLINE EServerSolutionResultType GetSolutionResultType() { return SolutionResultType; }
+	FORCEINLINE EServerSolutionResultType GetSolutionResultType() const { return SolutionResultType; }
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
-	// Å¸ÀÓ¶óÀÎ ¾Ö´Ï¸ŞÀÌ¼Ç ¸ÖÆ¼Ä³½ºÆ®
-	UFUNCTION(NetMulticast, Unreliable)
-		virtual void NetMulticast_Timeline(int32 index, EInteractiveObjectState InState);
-
-protected:
+	// íƒ€ì„ë¼ì¸ ì• ë‹ˆë©”ì´ì…˜ ë©€í‹°ìºìŠ¤íŠ¸
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void NetMulticast_Timeline(int32 index, EInteractiveObjectState InState);
 	virtual void SetTimeline();
-	
 	FTimelineInfo* FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex);
 
 public:
@@ -115,33 +116,33 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere)
-		class USceneComponent* ParentComp;
+	TObjectPtr<USceneComponent> ParentComp;
 
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* LineTraceBox;
+	UBoxComponent* LineTraceBox;
 	UPROPERTY(EditAnywhere)
-		FVector LineTraceBoxOffset;
+	FVector LineTraceBoxOffset;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FVector LineTraceBoxSize;
+	FVector LineTraceBoxSize;
 
 	UPROPERTY(EditAnywhere, Category = "Information Message")
-		FString InformationStr;
+	FString InformationStr;
 
 	UPROPERTY(EditAnywhere)
-		class UStaticMeshComponent* DefaultMesh;
+	TObjectPtr<UStaticMeshComponent> DefaultMesh;
 
-	// »óÈ£ÀÛ¿ë °¡´É ¿©ºÎ(´Ü¼øÈ÷ Àå½Ä¿ëÀ¸·Î ¿ùµå¿¡ ¹èÄ¡µÈ °æ¿ì BP¿¡¼­ ¼³Á¤)
+	// ìƒí˜¸ì‘ìš© ê°€ëŠ¥ ì—¬ë¶€(ë‹¨ìˆœíˆ ì¥ì‹ìš©ìœ¼ë¡œ ì›”ë“œì— ë°°ì¹˜ëœ ê²½ìš° BPì—ì„œ ì„¤ì •)
 	UPROPERTY(Replicated, EditAnywhere)
-		bool bIsNonInteractable;
-	// ¹®Á¦ Ç®ÀÌÀÇ °á°ú·Î ¹ßµ¿µÇ´Â ¿ÀºêÁ§Æ®(Server Interactable OnlyÀÎÁö. ±âº»°ª: NONE)
+	bool bIsNonInteractable;
+	// ë¬¸ì œ í’€ì´ì˜ ê²°ê³¼ë¡œ ë°œë™ë˜ëŠ” ì˜¤ë¸Œì íŠ¸(Server Interactable Onlyì¸ì§€. ê¸°ë³¸ê°’: NONE)
 	UPROPERTY(Replicated, EditAnywhere)
-		EServerSolutionResultType SolutionResultType;
-	// Å¸ÀÓ¶óÀÎ »óÅÂ µ¿±âÈ­(¹®ÀÌ ¿­·È´ÂÁö, ´İÇû´ÂÁö°¡ µ¿±âÈ­µÇ¾î¾ß ÇÔ)
+	EServerSolutionResultType SolutionResultType;
+	// íƒ€ì„ë¼ì¸ ìƒíƒœ ë™ê¸°í™”(ë¬¸ì´ ì—´ë ¸ëŠ”ì§€, ë‹«í˜”ëŠ”ì§€ê°€ ë™ê¸°í™”ë˜ì–´ì•¼ í•¨)
 	UPROPERTY(Replicated, EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
-		TArray<FTimelineInfo> TimelineMeshes;
+	TArray<FTimelineInfo> TimelineMeshes;
 
 	UPROPERTY()
-		class UPrimitiveComponent* cachedSolutionResultComp;
+	TObjectPtr<UPrimitiveComponent> cachedSolutionResultComp;
 
 	float StartCurveValue = 0.f;
 
@@ -149,7 +150,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
 		bool IsUseTimeline = false;
 	UPROPERTY(EditAnywhere, Category = "Timeline Info", meta = (AllowPrivateAccess = "true"))
-		class UCurveFloat* TimelineCurve;
+	TObjectPtr<UCurveFloat> TimelineCurve;
 
 	float TimelineDelta = 0.f;
 	float CurveFloatValue = 0.f;

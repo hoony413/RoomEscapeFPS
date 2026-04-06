@@ -3,37 +3,36 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "ReplicateObject.h"
 #include "PipeGameInfo.generated.h"
 
 /**
  * 
  */
 
- /* ÆÄÀÌÇÁ°ÔÀÓ °ü·Ã */
- // Up, Left´Â Input Àü¿ëÀÌ°í Down, RightÀº Output Àü¿ë.
+ /* íŒŒì´í”„ê²Œì„ ê´€ë ¨ */
+ // Up, LeftëŠ” Input ì „ìš©ì´ê³  Down, Rightì€ Output ì „ìš©.
 UENUM()
 enum class EPipeDirection : uint8
 {
-	EUp = 0x01,
-	ERight = 0x02,
-	EDown = 0x04,
-	ELeft = 0x08,
-	EMAX = 0x10,
+	NONE = 0 UMETA(Hidden),
+	UP = 0x01,
+	RIGHT = 0x02,
+	DOWN = 0x04,
+	LEFT = 0x08,
+	MAX = 0x10 UMETA(Hidden)
 };
 
 UENUM()
 enum class EPipeType : uint8
 {
-	EStraight_Two = 0u,
-	ETwo = 1u,
-	EThree = 2u,
-	EFour = 3u,
-	EMAX = 4u,
+	STRAIGHT_TWO = 0u,
+	TWO = 1u,
+	THREE = 2u,
+	FOUR = 3u,
+	MAX UMETA(Hidden)
 };
 
-// ÆÄÀÌÇÁ ³ëµå Á¤º¸
+// íŒŒì´í”„ ë…¸ë“œ ì •ë³´
 USTRUCT()
 struct ROOMESCAPEFPS_API FPipeNode
 {
@@ -82,12 +81,12 @@ public:
 
 	uint8 RotatePipe()
 	{
-		// ºñÆ® È¸Àü ¿¬»ê
+		// ë¹„íŠ¸ íšŒì „ ì—°ì‚°
 		DirectionInfo = _rotl(DirectionInfo, 1);
-		if (DirectionInfo > (uint8)EPipeDirection::EMAX)
+		if (DirectionInfo > (uint8)EPipeDirection::MAX)
 		{
-			DirectionInfo -= (uint8)EPipeDirection::EMAX;
-			DirectionInfo |= (uint8)EPipeDirection::EUp;
+			DirectionInfo -= (uint8)EPipeDirection::MAX;
+			DirectionInfo |= (uint8)EPipeDirection::UP;
 		}
 
 		return DirectionInfo;
@@ -105,33 +104,37 @@ public:
 
 		if (dirCount == 2)
 		{
-			PipeType = DirectionInfo % 5u == 0 ? EPipeType::EStraight_Two : EPipeType::ETwo;
+			PipeType = DirectionInfo % 5u == 0 ? EPipeType::STRAIGHT_TWO : EPipeType::TWO;
 		}
 		else if (dirCount == 3)
 		{
-			PipeType = EPipeType::EThree;
+			PipeType = EPipeType::THREE;
 		}
 		else if (dirCount == 4)
 		{
-			PipeType = EPipeType::EFour;
+			PipeType = EPipeType::FOUR;
 		}
 	}
 
 private:
 	UPROPERTY()
 	FIntPoint PipeLocation;
+
 	UPROPERTY()
 	uint8 DirectionInfo = 0u;
+
 	UPROPERTY()
 	bool bAnswerNode = false;
-	// ÇÃ·¹ÀÌ¾î°¡ Á¦ÃâÇÑ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­, ¹°ÀÌ Èå¸¦ ¶§ ÃÖÁ¾ µµÂøÁö°¡ µÇ´Â ³ëµåÀÎÁö?
+	// í”Œë ˆì´ì–´ê°€ ì œì¶œí•œ íŒŒì´í”„ë¼ì¸ì—ì„œ, ë¬¼ì´ íë¥¼ ë•Œ ìµœì¢… ë„ì°©ì§€ê°€ ë˜ëŠ” ë…¸ë“œì¸ì§€?
+
 	UPROPERTY()
 	bool bLastAnswerNode = false;
+
 	UPROPERTY()
 	EPipeType PipeType;
 };
 
- // ÆÄÀÌÇÁ°ÔÀÓ¿¡ ÇÊ¿äÇÑ Á¤º¸
+ // íŒŒì´í”„ê²Œì„ì— í•„ìš”í•œ ì •ë³´
 USTRUCT()
 struct ROOMESCAPEFPS_API FPipeGameInfo
 {
@@ -156,52 +159,53 @@ public:
 	}
 
 	TArray<FPipeNode>& GetPipeNodes() { return PipeNodes; }
+	TArray<FPipeNode> const& GetPipeNodes() const { return PipeNodes; }
 	FORCEINLINE uint8 GetGridSize() const { return GridSize; }
 	FORCEINLINE void SetGridSize(uint8 InGridSize) { GridSize = InGridSize; }
 
-	// ÀÎÀÚ·Î µé¾î¿Â ³ëµå°¡ ÀÎÀÚ·Î µé¾î¿Â ¹æÇâÀ¸·Î ¿¬°áµÇ¾î ÀÖ´ÂÁö?
+	// ì¸ìë¡œ ë“¤ì–´ì˜¨ ë…¸ë“œê°€ ì¸ìë¡œ ë“¤ì–´ì˜¨ ë°©í–¥ìœ¼ë¡œ ì—°ê²°ë˜ì–´ ìˆëŠ”ì§€?
 	bool IsConnected(FPipeNode& InNode, EPipeDirection InDir)
 	{
 		bool bConnect = false;
 		uint8 reverseDir = _rotl((uint8)InDir, 2);
-		if (reverseDir >= (uint8)EPipeDirection::EMAX)
+		if (reverseDir >= (uint8)EPipeDirection::MAX)
 		{
-			reverseDir /= (uint8)EPipeDirection::EMAX;
+			reverseDir /= (uint8)EPipeDirection::MAX;
 		}
 
 		const FPipeNode& nearbyNode = GetNearbyNode(InNode, InDir);
 		if (IsStartNode(InNode))
 		{
-			return InNode.IsContainDirection(EPipeDirection::ELeft) && 
+			return InNode.IsContainDirection(EPipeDirection::LEFT) && 
 				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection((EPipeDirection)reverseDir);
 		}
 		else if (IsGoalNode(InNode))
 		{
-			return InNode.IsContainDirection(EPipeDirection::ERight) &&
+			return InNode.IsContainDirection(EPipeDirection::RIGHT) &&
 				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection((EPipeDirection)reverseDir);
 		}
 
-		// ÀÎÁ¢ ³ëµå°¡ ÀÚ±âÀÚ½ÅÀÌ´Ù(±×¸®µå ¹üÀ§¸¦ ¹ş¾î³²)
+		// ì¸ì ‘ ë…¸ë“œê°€ ìê¸°ìì‹ ì´ë‹¤(ê·¸ë¦¬ë“œ ë²”ìœ„ë¥¼ ë²—ì–´ë‚¨)
 		if (nearbyNode.GetPipeLocation() == InNode.GetPipeLocation())
 			return false;
 		switch(InDir)
 		{
-		case EPipeDirection::EUp:
-			bConnect = InNode.IsContainDirection(EPipeDirection::EUp)
-				&& nearbyNode.IsContainDirection(EPipeDirection::EDown);
+		case EPipeDirection::UP:
+			bConnect = InNode.IsContainDirection(EPipeDirection::UP)
+				&& nearbyNode.IsContainDirection(EPipeDirection::DOWN);
 			break;
-		case EPipeDirection::ERight:
-			bConnect = InNode.IsContainDirection(EPipeDirection::ERight)
-				&& nearbyNode.IsContainDirection(EPipeDirection::ELeft)
+		case EPipeDirection::RIGHT:
+			bConnect = InNode.IsContainDirection(EPipeDirection::RIGHT)
+				&& nearbyNode.IsContainDirection(EPipeDirection::LEFT)
 				&& !IsFarRightNode(InNode);
 			break;
-		case EPipeDirection::EDown:
-			bConnect = InNode.IsContainDirection(EPipeDirection::EDown)
-				&& nearbyNode.IsContainDirection(EPipeDirection::EUp);
+		case EPipeDirection::DOWN:
+			bConnect = InNode.IsContainDirection(EPipeDirection::DOWN)
+				&& nearbyNode.IsContainDirection(EPipeDirection::UP);
 			break;
-		case EPipeDirection::ELeft:
-			bConnect = InNode.IsContainDirection(EPipeDirection::ELeft)
-				&& nearbyNode.IsContainDirection(EPipeDirection::ERight)
+		case EPipeDirection::LEFT:
+			bConnect = InNode.IsContainDirection(EPipeDirection::LEFT)
+				&& nearbyNode.IsContainDirection(EPipeDirection::RIGHT)
 				&& !IsFarLeftNode(InNode);
 			break;
 		default: 
@@ -222,7 +226,7 @@ public:
 	}
 
 private:
-	// ÀÎÀÚ·Î µé¾î¿Â ³ëµåÀÇ ÀÎÁ¢ ³ëµå ±¸ÇÏ±â(³ëµå ±âÁØÀÇ ¹æÇâÀ¸·Î)
+	// ì¸ìë¡œ ë“¤ì–´ì˜¨ ë…¸ë“œì˜ ì¸ì ‘ ë…¸ë“œ êµ¬í•˜ê¸°(ë…¸ë“œ ê¸°ì¤€ì˜ ë°©í–¥ìœ¼ë¡œ)
 	FPipeNode& GetNearbyNode(FPipeNode& curNode, EPipeDirection nearbyDir)
 	{
 		const FIntPoint& pos = curNode.GetPipeLocation();
@@ -230,29 +234,29 @@ private:
 		int32 nearbyIndex = curIndex;
 		switch (nearbyDir)
 		{
-		case EPipeDirection::EUp:
+		case EPipeDirection::UP:
 			nearbyIndex = curIndex - GridSize;
 			break;
-		case EPipeDirection::ERight:
+		case EPipeDirection::RIGHT:
 			nearbyIndex = curIndex + 1;
 			break;
-		case EPipeDirection::EDown:
+		case EPipeDirection::DOWN:
 			nearbyIndex = curIndex + GridSize;
 			break;
-		case EPipeDirection::ELeft:
+		case EPipeDirection::LEFT:
 			nearbyIndex = curIndex - 1;
 			break;
 		default: break;
 		}
 
-		// ±×¸®µå ¹üÀ§¸¦ ¹ş¾î³­ °æ¿ì ÀÚ±âÀÚ½ÅÀ» ¸®ÅÏ.
+		// ê·¸ë¦¬ë“œ ë²”ìœ„ë¥¼ ë²—ì–´ë‚œ ê²½ìš° ìê¸°ìì‹ ì„ ë¦¬í„´.
 		if (nearbyIndex >= (GridSize * GridSize) || nearbyIndex < 0)
 			return curNode;
 		return PipeNodes[nearbyIndex];
 	}
 
-	// ±×¸®µå »ó¿¡¼­ °¡Àå ¿ŞÂÊ ³ëµå¿Í ¿À¸¥ÂÊ ³ëµå´Â º°µµ È®ÀÎÀÌ ÇÊ¿äÇÏ´Ù.
-	// ÀÎµ¦½º ±âÁØÀ¸·Î´Â -1, +1À» ÇÏ¸é µÇÁö¸¸, À§Ä¡»óÀ¸·Î´Â ´ÙÀ½ ¶óÀÎ¿¡ ±×·ÁÁö±â ¶§¹®.
+	// ê·¸ë¦¬ë“œ ìƒì—ì„œ ê°€ì¥ ì™¼ìª½ ë…¸ë“œì™€ ì˜¤ë¥¸ìª½ ë…¸ë“œëŠ” ë³„ë„ í™•ì¸ì´ í•„ìš”í•˜ë‹¤.
+	// ì¸ë±ìŠ¤ ê¸°ì¤€ìœ¼ë¡œëŠ” -1, +1ì„ í•˜ë©´ ë˜ì§€ë§Œ, ìœ„ì¹˜ìƒìœ¼ë¡œëŠ” ë‹¤ìŒ ë¼ì¸ì— ê·¸ë ¤ì§€ê¸° ë•Œë¬¸.
 	bool IsFarLeftNode(FPipeNode& InNode)
 	{
 		int32 index = InNode.GetPipeLocation().X + (InNode.GetPipeLocation().Y * GridSize);

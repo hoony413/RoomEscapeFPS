@@ -2,7 +2,6 @@
 
 
 #include "Gameplay/GhostSpawner.h"
-#include "Gameplay/Freelist.h"
 #include "Object/GhostSoul.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
@@ -19,8 +18,6 @@ AGhostSpawner::AGhostSpawner()
 
 	SpawnVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnVolume"));
 	SetRootComponent(SpawnVolume);
-
-	GhostActorFreelist = CreateDefaultSubobject<UFreelist>(TEXT("GhostFreelist"));
 }
 
 // Called when the game starts or when spawned
@@ -28,7 +25,7 @@ void AGhostSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		fSpawnTime = 1.5f;
 		SetActive(false);
@@ -44,30 +41,28 @@ void AGhostSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 void AGhostSpawner::SpawnGhost()
 {
-	if (GetNetMode() == NM_DedicatedServer && bActive)
+	if (IsNetMode(NM_DedicatedServer) && bActive)
 	{
-		AGhostSoul* ghost = GhostActorFreelist->GetElement<AGhostSoul>();
-
-		// TODO: actor의 위치 랜덤 설정 및 이동 처리.
-		ghost->SetActorLocation(UKismetMathLibrary::RandomPointInBoundingBox(
-			SpawnVolume->Bounds.Origin, SpawnVolume->Bounds.BoxExtent));
+		FActorSpawnParameters params;
+		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		AGhostSoul* ghost = GetWorld()->SpawnActor<AGhostSoul>(GhostClass.LoadSynchronous(), params);
+		if (ghost)
+		{
+			ghost->SetActorLocation(UKismetMathLibrary::RandomPointInBoundingBox(
+				SpawnVolume->Bounds.Origin, SpawnVolume->Bounds.BoxExtent));
+			ActiveGhosts.Add(ghost);
+		}
 
 		float fTime = FMath::RandRange(fSpawnTime - 1.f, fSpawnTime + 1.f);
 		GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
 			fTime, false);
 	}
 }
-void AGhostSpawner::DeactiveGhost(AGhostSoul* ghost)
-{
-	// TODO: Freelist에 오브젝트를 반납.
-	GhostActorFreelist->ReturnElement(ghost);
-	//GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AGhostSpawner::SpawnGhost,
-	//	1.5f, false);
-}
+
 void AGhostSpawner::SetActive(bool bInActive)
 {
 	bActive = bInActive;
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		if (bActive)
 		{
@@ -76,7 +71,14 @@ void AGhostSpawner::SetActive(bool bInActive)
 		else
 		{
 			GetWorld()->GetTimerManager().ClearTimer(SpawnTimer);
-			GhostActorFreelist->ReleaseFreeList();
+			for (AGhostSoul* ghost : ActiveGhosts)
+			{
+				if (IsValid(ghost))
+				{
+					ghost->Destroy();
+				}
+			}
+			ActiveGhosts.Empty();
 		}
 	}
 }

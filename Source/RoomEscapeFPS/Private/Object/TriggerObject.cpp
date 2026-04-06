@@ -3,8 +3,10 @@
 
 #include "Object/TriggerObject.h"
 #include "GameFramework/RoomEscapeFPSGameMode.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "Helper/Helper.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 ATriggerObject::ATriggerObject()
@@ -19,7 +21,7 @@ void ATriggerObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void ATriggerObject::BeginPlay()
 {
 	Super::BeginPlay();
-	if (OnTriggerEvent.IsBound() == false)
+	if (not OnTriggerEvent.IsBound())
 	{
 		OnTriggerEvent.BindUFunction(this, *DelegateName);
 	}
@@ -27,19 +29,25 @@ void ATriggerObject::BeginPlay()
 
 bool ATriggerObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
-	// ÀÌ¹Ì µ¿ÀÛÇÑ Æ®¸®°Å´Â ´Ù½Ã µ¿ÀÛÇÏÁö ¾ÊÀ½.
+	// ì´ë¯¸ ë™ìž‘í•œ íŠ¸ë¦¬ê±°ëŠ” ë‹¤ì‹œ ë™ìž‘í•˜ì§€ ì•ŠìŒ.
 	if (bIsTriggered)
+	{
 		return false;
+	}
 
 	if (bNeedsUINotify)
 	{
-		if (Super::OnInteraction(requester, InComp) == false)
+		if (not Super::OnInteraction(requester, InComp))
+		{
 			return false;
+		}
 	}
 	else
 	{
-		if (AInteractiveObject::OnInteraction(requester, InComp) == false)
+		if (not AInteractiveObject::OnInteraction(requester, InComp))
+		{
 			return false;
+		}
 	}
 	
 	
@@ -50,7 +58,7 @@ bool ATriggerObject::OnInteraction(APawn* requester, class UPrimitiveComponent* 
 
 void ATriggerObject::ServerActivateGhostSpawner_Implementation(APawn* requester)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
 		if (gm)
@@ -63,7 +71,7 @@ void ATriggerObject::ServerActivatePipeGame_Implementation(APawn* requester)
 {
 	ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
 	int32 id = ps->GetPlayerId();
-	auto OpenPipeGame = [this, &ps]()
+	auto const OpenPipeGame = [ps](ARoomEscapeFPSPlayerController*)
 	{
 		ps->InitializePipeGame(5);
 	};

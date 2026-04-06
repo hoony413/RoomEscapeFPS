@@ -6,11 +6,10 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Helper/Helper.h"
-#include "Gameplay/ProjectileHandler.h"
 #include "Object/GhostSoul.h"
 #include "GameFramework/GhostAIController.h"
-#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
-#include "Runtime/Engine/Classes/Particles/ParticleSystem.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Particles/ParticleSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -59,7 +58,7 @@ void ACharmProjectile::BeginPlay()
 
 	Instigator = owner;
 
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		fLifeTime = 0.5f;
 		fLifeStartTime = 0.f;
@@ -68,7 +67,7 @@ void ACharmProjectile::BeginPlay()
 
 void ACharmProjectile::Fire(const FVector& pos, const FVector& dir)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		NetMulticastFire(pos, dir);
 		fLifeStartTime = GetWorld()->GetTimeSeconds();
@@ -84,10 +83,14 @@ void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const
 
 void ACharmProjectile::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor == nullptr)
+	if (nullptr == OtherActor)
+	{
 		return;
+	}
 	if (Instigator.IsValid() && Instigator.Get() == OtherActor)
+	{
 		return;
+	}
 
 	if (OtherActor->IsA<AGhostSoul>())
 	{
@@ -97,73 +100,50 @@ void ACharmProjectile::OnComponentHit(UPrimitiveComponent* HitComponent, AActor*
 			AGhostAIController* ghostAI = Cast<AGhostAIController>(ghost->GetController());
 			if (ghostAI)
 			{
-				if (ghostAI->GetGhostState() != EGhostStateMachine::EDead)
-				{	
-					// ∞ÌΩ∫∆Æ∏¶ ∏¬√· ∞ÊøÏ∏∏ ∆¯πﬂ ¿Ã∆Â∆Æ∏¶ RPC«—¥Ÿ.
+				if (ghostAI->GetGhostState() != EGhostStateMachine::DEAD)
+				{
+					// Í≥†Ïä§Ìä∏Î•º ÎßûÏ∂ò Í≤ΩÏö∞Îßå Ìè≠Î∞ú Ïù¥ÌéôÌä∏Î•º RPCÌïúÎã§.
 					NetMulticastProjectileExplode();
 
-					// SetGhostState æ»ø°º≠ ªÁ∏¡ √≥∏Æ Multicast∞° º≠πˆ∑Œ∫Œ≈Õ »£√‚µ»¥Ÿ.
-					ghostAI->SetGhostState(EGhostStateMachine::EDead);
+					// SetGhostState ÏïàÏóêÏÑú ÏÇ¨Îßù Ï≤òÎ¶¨ MulticastÍ∞Ä ÏÑúÎ≤ÑÎ°úÎ∂ÄÌÑ∞ Ìò∏Ï∂úÎêúÎã§.
+					ghostAI->SetGhostState(EGhostStateMachine::DEAD);
 				}
 			}
 		}
 	}
 	else
 	{
-		if (GetNetMode() == NM_DedicatedServer)
+		if (IsNetMode(NM_DedicatedServer))
 		{
-			DeactiveCharm();
+			Destroy();
 		}
 	}
 }
 
 void ACharmProjectile::NetMulticastProjectileExplode_Implementation()
 {
-	if (GetNetMode() == NM_Client)
+	if (IsNetMode(NM_Client))
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
 			ExplosionParticle.LoadSynchronous(), GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
 	}
-	else if (GetNetMode() == NM_DedicatedServer)
+	else if (IsNetMode(NM_DedicatedServer))
 	{
-		DeactiveCharm();
+		Destroy();
 	}
 }
-void ACharmProjectile::DeactiveCharm()
-{
-	AProjectileHandler* handler = Helper::GetProjectileHandler(GetWorld());
-	if (handler)
-	{
-		handler->ReturnCharm(this);
-	}
-}
+
 // Called every frame
 void ACharmProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		if (fLifeStartTime + fLifeTime < GetWorld()->GetTimeSeconds())
 		{
-			DeactiveCharm();
+			Destroy();
 		}
 	}
-}
-
-bool ACharmProjectile::IsInFreeList()
-{
-	return bIsInFreeList;
-}
-void ACharmProjectile::SetIsInFreeList(bool bFreeList)
-{
-	bIsInFreeList = bFreeList;
-	Helper::SetActorActive(this, !bFreeList);
-
-	// ø¿πˆ∑¶ ¿Ã∫•∆Æ ≤Ù±‚
-	SphereCol->SetGenerateOverlapEvents(!bFreeList);
-
-	// ∏Æ«√∏Æƒ…¿Ã∆Æ ø…º« ≤Ù±‚
-	bReplicates = !bFreeList;
 }
 
 #if WITH_EDITOR

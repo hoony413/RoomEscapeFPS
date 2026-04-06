@@ -3,25 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/BaseWidget.h"
+#include "Base/BaseActivatableWidget.h"
 #include "FirstGetItemInfoPanel.generated.h"
 
+class UButton;
+class UTextBlock;
+class UImage;
 /**
  * 
  */
 UCLASS()
-class ROOMESCAPEFPS_API UFirstGetItemInfoPanel : public UBaseWidget
+class ROOMESCAPEFPS_API UFirstGetItemInfoPanel : public UBaseActivatableWidget
 {
 	GENERATED_BODY()
 
 public:
 
-	virtual void NativeOnInitialized() override;
-
-	virtual FString GetBPPath() override {
-		return TEXT(
-			"WidgetBlueprint'/Game/Resources/Widgets/InGame/FirstGetItemInfo_Widget.FirstGetItemInfo_Widget_C'");
-	}
+	void NativeOnInitialized() override;
 
 	void SetItemNameText(const FString& InStr);
 	void SetItemDescText(const FString& InStr);
@@ -32,12 +30,15 @@ protected:
 	
 protected:
 	UPROPERTY(meta = (BindWidget))
-		class UImage* RenderTargetImage;
+	TObjectPtr<UImage> RenderTargetImage;
+
 	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* ItemNameText;
+	TObjectPtr<UTextBlock> ItemNameText;
+
 	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* ItemDescText;
+	TObjectPtr<UTextBlock> ItemDescText;
+
 	UPROPERTY(meta = (BindWidget))
-		class UButton* CloseButton;
+	TObjectPtr<UButton> CloseButton;
 
 };

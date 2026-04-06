@@ -1,17 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Object/InteractiveObject.h"
-#include "Engine/Classes/Components/BoxComponent.h"
+#include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
-#include "Actor.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/GameplayStatics.h"
-#include "GameFrameWork/Character.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Components/StaticMeshComponent.h"
-#include "UI/InteractionPanel.h"
-#include "Helper/Helper.h"
-#include "Managers/UIManager.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -37,7 +30,7 @@ AInteractiveObject::AInteractiveObject()
 	//InformationStr = TEXT("Press 'E' key to use");
 
 	bIsNonInteractable = false;
-	SolutionResultType = EServerSolutionResultType::ENONE;
+	SolutionResultType = EServerSolutionResultType::NONE;
 }
 
 void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -78,17 +71,13 @@ void AInteractiveObject::BeginPlay()
 	
 	SetTimeline();
 
-	// TODO: 특수 타입 오브젝트로 지정된 경우 델리게이트 연결.
-	if (SolutionResultType != EServerSolutionResultType::ENONE)
+	if (EServerSolutionResultType::NONE != SolutionResultType && IsNetMode(NM_DedicatedServer))
 	{
 		OnSolutionSuccessResult.BindUObject(this, &AInteractiveObject::OnInteraction);
-		if (GetNetMode() == NM_DedicatedServer)
+		ARoomEscapeFPSGameState* gs = Cast<ARoomEscapeFPSGameState>(GetWorld()->GetGameState());
+		if (gs)
 		{
-			ARoomEscapeFPSGameState* gs = Cast<ARoomEscapeFPSGameState>(GetWorld()->GetGameState());
-			if (gs)
-			{
-				gs->AddToSolutionResultObject(this);
-			}
+			gs->AddToSolutionResultObject(this);
 		}
 	}
 
@@ -111,28 +100,28 @@ void AInteractiveObject::SetTimeline()
 					CurveFloatValue = elem.fCurveWeightValue * TimelineCurve->GetFloatValue(TimelineDelta);
 					switch (elem.ControlType)
 					{
-					case ETimelineControlType::ELocationX:
+					case ETimelineControlType::LOCATION_X:
 					{
 						FVector NewLocation(elem.StaticMeshComponent->GetRelativeLocation());
 						NewLocation.X = StartCurveValue + CurveFloatValue;
 						elem.StaticMeshComponent->SetRelativeLocation(NewLocation);
 					}
 					break;
-					case ETimelineControlType::ELocationY:
+					case ETimelineControlType::LOCATION_Y:
 					{
 						FVector NewLocation(elem.StaticMeshComponent->GetRelativeLocation());
 						NewLocation.Y = StartCurveValue + CurveFloatValue;
 						elem.StaticMeshComponent->SetRelativeLocation(NewLocation);
 					}
 					break;
-					case ETimelineControlType::ELocationZ:
+					case ETimelineControlType::LOCATION_Z:
 					{
 						FVector NewLocation(elem.StaticMeshComponent->GetRelativeLocation());
 						NewLocation.Z = StartCurveValue + CurveFloatValue;
 						elem.StaticMeshComponent->SetRelativeLocation(NewLocation);
 					}
 					break;
-					case ETimelineControlType::ERotationX: // Roll
+					case ETimelineControlType::ROTATION_X: // Roll
 					{
 						//FRotator NewRotation(elem.StaticMeshComponent->GetRelativeRotation());
 						//NewRotation.Roll = StartCurveValue + CurveFloatValue;
@@ -142,17 +131,17 @@ void AInteractiveObject::SetTimeline()
 						elem.StaticMeshComponent->SetRelativeRotation(NewRotation);
 					}
 					break;
-					case ETimelineControlType::ERotationY: // Pitch
+					case ETimelineControlType::ROTATION_Y: // Pitch
 					{
 						//FRotator NewRotation(elem.StaticMeshComponent->GetRelativeRotation());
 						//NewRotation.Pitch = StartCurveValue + CurveFloatValue;
 						//elem.StaticMeshComponent->SetRelativeRotation(NewRotation);
-						
+
 						FRotator NewRotation(StartCurveValue + CurveFloatValue, 0.f, 0.f);
 						elem.StaticMeshComponent->SetRelativeRotation(NewRotation);
 					}
 					break;
-					case ETimelineControlType::ERotationZ: // Yaw
+					case ETimelineControlType::ROTATION_Z: // Yaw
 					{
 						//FRotator NewRotation(elem.StaticMeshComponent->GetRelativeRotation());
 						//NewRotation.Yaw = StartCurveValue + CurveFloatValue;
@@ -205,15 +194,17 @@ bool AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveCompone
 	if (find)
 	{
 		if (IsUseTimeline && find->Timeline.IsPlaying())
+		{
 			return false;
-
-		if (find->CurrentState == EInteractiveObjectState::EState_Open_Or_On)
-		{
-			find->CurrentState = EInteractiveObjectState::EState_Close_Or_Off;
 		}
-		else if(find->CurrentState == EInteractiveObjectState::EState_Close_Or_Off)
+
+		if (find->CurrentState == EInteractiveObjectState::STATE_OPEN_OR_ON)
 		{
-			find->CurrentState = EInteractiveObjectState::EState_Open_Or_On;
+			find->CurrentState = EInteractiveObjectState::STATE_CLOSE_OR_OFF;
+		}
+		else if(find->CurrentState == EInteractiveObjectState::STATE_CLOSE_OR_OFF)
+		{
+			find->CurrentState = EInteractiveObjectState::STATE_OPEN_OR_ON;
 		}
 	}
 
@@ -227,35 +218,35 @@ bool AInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveCompone
 }
 void AInteractiveObject::NetMulticast_Timeline_Implementation(int32 index, EInteractiveObjectState InState)
 {
-	if (InState == EInteractiveObjectState::EState_Close_Or_Off)
+	if (InState == EInteractiveObjectState::STATE_CLOSE_OR_OFF)
 	{
 		TimelineMeshes[index].Timeline.ReverseFromEnd();
 	}
-	else if (InState == EInteractiveObjectState::EState_Open_Or_On)
+	else if (InState == EInteractiveObjectState::STATE_OPEN_OR_ON)
 	{
 		switch (TimelineMeshes[index].ControlType)
 		{
-		case ETimelineControlType::ELocationX:
+		case ETimelineControlType::LOCATION_X:
 			StartCurveValue =
 				TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().X;
 			break;
-		case ETimelineControlType::ELocationY:
+		case ETimelineControlType::LOCATION_Y:
 			StartCurveValue =
 				TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Y;
 			break;
-		case ETimelineControlType::ELocationZ:
+		case ETimelineControlType::LOCATION_Z:
 			StartCurveValue =
 				TimelineMeshes[index].StaticMeshComponent->GetRelativeLocation().Z;
 			break;
-		case ETimelineControlType::ERotationX:
+		case ETimelineControlType::ROTATION_X:
 			StartCurveValue =
 				TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
 			break;
-		case ETimelineControlType::ERotationY:
+		case ETimelineControlType::ROTATION_Y:
 			StartCurveValue =
 				TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
 			break;
-		case ETimelineControlType::ERotationZ:
+		case ETimelineControlType::ROTATION_Z:
 			StartCurveValue =
 				TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
 			break;

@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{84E85766-4FD8-D3CF-7D43-5692FC64F5AD}",
+	"EngineAssociation": "{A7BB6D14-4145-514F-DEFD-DB88AE7A711A}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -22,7 +22,11 @@
 			"Enabled": true
 		},
 		{
-			"Name": "StaticMeshEditorExtension",
+			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModelPreview",
 			"Enabled": true
 		}
 	]

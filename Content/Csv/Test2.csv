@@ -1,0 +1,4 @@
+﻿Index,No,Name,Count,OnOff
+id,(_value=id),FName,int32,bool
+1001,(_value=1001),uidname,4,True
+1002,(_value=1002),nextName,13,True

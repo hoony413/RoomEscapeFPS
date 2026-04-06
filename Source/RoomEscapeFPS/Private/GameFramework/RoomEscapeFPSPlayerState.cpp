@@ -3,18 +3,16 @@
 
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
-#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
 #include "Character/RoomEscapeFPSCharacter.h"
 #include "Gameplay/PipeGameInfo.h"
 #include "Helper/Helper.h"
-#include "Managers/UIManager.h"
-#include "UI/PipeGameUI.h"
+#include "Managers/UISubsystem.h"
+#include "UI/PipeGamePanel.h"
 #include "UI/InventoryPanel.h"
 #include "UI/FirstGetItemInfoPanel.h"
 #include "Kismet/GameplayStatics.h"
 #include "Object/GetableObject.h"
-#include "Components/SceneCaptureComponent2D.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -35,56 +33,56 @@
 void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameInfo);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, bInitializePipeGame);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, PipeGameSuccessInfo);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, InventoryInfo);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, BatteryMaxValue);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, BatteryUpdateValue);
-	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fFlashIntensity);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, PipeGameInfo, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, bInitializePipeGame, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, PipeGameSuccessInfo, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, InventoryInfo, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, BatteryMaxValue, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, BatteryUpdateValue, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, fFlashIntensity, COND_OwnerOnly);
 }
 void ARoomEscapeFPSPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		BatteryUpdateValue = 1;
 		BatteryMaxValue = 300u;
 	}
-	//bInitializePipeGame = EReplicateState::EUnknown;
-	//PipeGameSuccessInfo = EReplicateState::EUnknown;
+	//bInitializePipeGame = EReplicateState::UNKNOWN;
+	//PipeGameSuccessInfo = EReplicateState::UNKNOWN;
 }
 /*
-ÆÄÀÌÇÁ °ÔÀÓ:
-ÃÖ¼Ò 2x2, ÃÖ´ë nxn±îÁö ÀÖ´Â Å¥ºê ÇüÅÂÀÇ ÆÛÁñ °ÔÀÓÀ¸·Î,
-°¢ ³ëµå(ÆÄÀÌÇÁ Å¸ÀÏ)ÀÇ ¹æÇâÀ» µ¹·Á ¹°À» Èå¸£°Ô ÇÑ´Ù.
-¹°Àº ¿ŞÂÊ¿¡¼­ ¿À¸¥ÂÊ, À§¿¡¼­ ¾Æ·¡·Î¸¸ Èå¸£¸ç, ¸Ê Å¸ÀÏ »ı¼º ·ÎÁ÷Àº ¾Æ·¡¿Í °°´Ù.
+íŒŒì´í”„ ê²Œì„:
+ìµœì†Œ 2x2, ìµœëŒ€ nxnê¹Œì§€ ìˆëŠ” íë¸Œ í˜•íƒœì˜ í¼ì¦ ê²Œì„ìœ¼ë¡œ,
+ê° ë…¸ë“œ(íŒŒì´í”„ íƒ€ì¼)ì˜ ë°©í–¥ì„ ëŒë ¤ ë¬¼ì„ íë¥´ê²Œ í•œë‹¤.
+ë¬¼ì€ ì™¼ìª½ì—ì„œ ì˜¤ë¥¸ìª½, ìœ„ì—ì„œ ì•„ë˜ë¡œë§Œ íë¥´ë©°, ë§µ íƒ€ì¼ ìƒì„± ë¡œì§ì€ ì•„ë˜ì™€ ê°™ë‹¤.
 
-1. Á¤´ä °æ·Î ·£´ı »ı¼º
-2. Á¤´ä °æ·ÎÀÇ Å¸ÀÏ ·£´ı È¸Àü + ¹æÇâ Ãß°¡
-3. 3¹ø¿¡¼­ ÃßÃâÇÑ Á¤´ä ³ëµåµé¿¡ ·£´ıÇÑ È¸Àü°ª ºÎ¿©.
-4. Å¬¶óÀÌ¾ğÆ®·Î Àü´Ş, UI Ç¥½Ã Ã³¸®
+1. ì •ë‹µ ê²½ë¡œ ëœë¤ ìƒì„±
+2. ì •ë‹µ ê²½ë¡œì˜ íƒ€ì¼ ëœë¤ íšŒì „ + ë°©í–¥ ì¶”ê°€
+3. 3ë²ˆì—ì„œ ì¶”ì¶œí•œ ì •ë‹µ ë…¸ë“œë“¤ì— ëœë¤í•œ íšŒì „ê°’ ë¶€ì—¬.
+4. í´ë¼ì´ì–¸íŠ¸ë¡œ ì „ë‹¬, UI í‘œì‹œ ì²˜ë¦¬
 */
 
 void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 {
-	/* °¡²û ÆË¾÷ÀÌ ´İÈ÷±âµµ Àü¿¡ °ÔÀÓ Àç»ı¼ºÀ» ¿äÃ»ÇÒ °æ¿ì bool°ªÀÌ ²¿¿©¹ö·Á °è¼Ó trueÀÎ °æ¿ì°¡
-	»ı°Ü ÀÌ·¯ÇÑ °æ¿ì(ÀÌ¹Ì trueÀÎµ¥ Àç»ı¼º ¿äÃ»ÀÌ ¿Â °æ¿ì) ÇÃ·¡±×¸¦ Á÷Á¢ º¯°æÇØÁØ´Ù. */
-	if (bInitializePipeGame == true)
+	/* ê°€ë” íŒì—…ì´ ë‹«íˆê¸°ë„ ì „ì— ê²Œì„ ì¬ìƒì„±ì„ ìš”ì²­í•  ê²½ìš° boolê°’ì´ ê¼¬ì—¬ë²„ë ¤ ê³„ì† trueì¸ ê²½ìš°ê°€
+	ìƒê²¨ ì´ëŸ¬í•œ ê²½ìš°(ì´ë¯¸ trueì¸ë° ì¬ìƒì„± ìš”ì²­ì´ ì˜¨ ê²½ìš°) í”Œë˜ê·¸ë¥¼ ì§ì ‘ ë³€ê²½í•´ì¤€ë‹¤. */
+	if (bInitializePipeGame)
 	{
 		bInitializePipeGame = false;
-		PipeGameSuccessInfo = EReplicateState::EUnknown;
+		PipeGameSuccessInfo = EReplicateState::UNKNOWN;
 	}
 
-	// ÆÄÀÌÇÁ°ÔÀÓ »ı¼º(¼­¹ö)
-	if (GetNetMode() == NM_DedicatedServer)
+	// íŒŒì´í”„ê²Œì„ ìƒì„±(ì„œë²„)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		PipeGameInfo.InitializeNodes(InGridSize);
 		PipeGameInfo.SetGridSize(InGridSize);
 
 		TArray<FPipeNode>& nodeInfo = PipeGameInfo.GetPipeNodes();
-		// Å¬¶óÀÌ¾ğÆ®ÀÇ ¾îµò°¡¿¡¼­ Server_Replicated·Î È£ÃâµÇ¾î ÆÄÀÌÇÁ°ÔÀÓ »ı¼º ½ÃÀÛ.
-		// Çà + ¿­ - 1 °³¼öÀÇ Á¤´ä ³ëµå¸¦ »ı¼ºÇÑ´Ù.
+		// í´ë¼ì´ì–¸íŠ¸ì˜ ì–´ë”˜ê°€ì—ì„œ Server_Replicatedë¡œ í˜¸ì¶œë˜ì–´ íŒŒì´í”„ê²Œì„ ìƒì„± ì‹œì‘.
+		// í–‰ + ì—´ - 1 ê°œìˆ˜ì˜ ì •ë‹µ ë…¸ë“œë¥¼ ìƒì„±í•œë‹¤.
 		int32 NeedNodeCount = (InGridSize * 2) - 1;
 		int32 TotalNodeCount = InGridSize * InGridSize;
 		FIntPoint currentPos(0, 0);
@@ -93,7 +91,7 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 		{
 			nodeInfo[i].SetAnswerNode(true);
 			if (currentPos.X >= InGridSize - 1 && currentPos.Y >= InGridSize - 1)
-			{	// Goal³ëµå¿¡ µµÂøÇß´ÂÁö Ã¼Å©
+			{	// Goalë…¸ë“œì— ë„ì°©í–ˆëŠ”ì§€ ì²´í¬
 				break;
 			}
 
@@ -104,27 +102,27 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 				IsRight = !IsRight;
 			}
 
-			// Output ¼³Á¤ ÈÄ ±× ´ÙÀ½³ëµåÀÇ InputÀ¸·Î ¿¬°á.
+			// Output ì„¤ì • í›„ ê·¸ ë‹¤ìŒë…¸ë“œì˜ Inputìœ¼ë¡œ ì—°ê²°.
 			if (IsRight)
 			{
-				nodeInfo[i].AddDirection(EPipeDirection::ERight);
+				nodeInfo[i].AddDirection(EPipeDirection::RIGHT);
 				currentPos.X += 1;
 				i += 1;
-				nodeInfo[i].AddDirection(EPipeDirection::ELeft);
+				nodeInfo[i].AddDirection(EPipeDirection::LEFT);
 			}
 			else
 			{
-				nodeInfo[i].AddDirection(EPipeDirection::EDown);
+				nodeInfo[i].AddDirection(EPipeDirection::DOWN);
 				currentPos.Y += 1;
 				i += InGridSize;
-				nodeInfo[i].AddDirection(EPipeDirection::EUp);
+				nodeInfo[i].AddDirection(EPipeDirection::UP);
 			}
 		}
-		// ½ÃÀÛ ³ëµåÀÇ Input°ú °ñ ³ëµåÀÇ OutputÀº Á÷Á¢ Ãß°¡ÇÑ´Ù.
-		nodeInfo[0].AddDirection(EPipeDirection::ELeft);
-		nodeInfo[TotalNodeCount - 1].AddDirection(EPipeDirection::ERight);
+		// ì‹œì‘ ë…¸ë“œì˜ Inputê³¼ ê³¨ ë…¸ë“œì˜ Outputì€ ì§ì ‘ ì¶”ê°€í•œë‹¤.
+		nodeInfo[0].AddDirection(EPipeDirection::LEFT);
+		nodeInfo[TotalNodeCount - 1].AddDirection(EPipeDirection::RIGHT);
 
-		// Á¤´ä »ı¼ºÀÌ ¿Ï·áµÇ¾úÀ¸¸é ÀÌµéÀ» µÚ¼¯°í, ³ª¸ÓÁö Å¸ÀÏÀ» ·£´ı »ı¼ºÇÑ´Ù.
+		// ì •ë‹µ ìƒì„±ì´ ì™„ë£Œë˜ì—ˆìœ¼ë©´ ì´ë“¤ì„ ë’¤ì„ê³ , ë‚˜ë¨¸ì§€ íƒ€ì¼ì„ ëœë¤ ìƒì„±í•œë‹¤.
 		int32 nodePos = 0;
 		for (auto& elem : nodeInfo)
 		{
@@ -132,15 +130,15 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 			currentPos.Y = nodePos / 5;
 			elem.SetPipeLocation(currentPos);
 
-			// Á¤´ä ³ëµå ¹«ÀÛÀ§ È¸Àü½ÃÅ°±â + ¹æÇâ Ãß°¡ÇÏ±â(È®·ü¼º)
+			// ì •ë‹µ ë…¸ë“œ ë¬´ì‘ìœ„ íšŒì „ì‹œí‚¤ê¸° + ë°©í–¥ ì¶”ê°€í•˜ê¸°(í™•ë¥ ì„±)
 			if (elem.IsAnswerNode())
 			{
-				// 0 ~ 2°³ÀÇ ¹æÇâÀ» Ãß°¡
+				// 0 ~ 2ê°œì˜ ë°©í–¥ì„ ì¶”ê°€
 				if (FMath::RandBool())
 				{
 					elem.SetRandomDir(FMath::RandRange((int32)0, (int32)2));
 				}
-				// ÆÄÀÌÇÁ È¸Àü
+				// íŒŒì´í”„ íšŒì „
 				int32 count = FMath::RandRange((int32)1, (int32)3);
 				for (int32 i = 0; i < count; ++i)
 				{
@@ -149,7 +147,7 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 			}
 			else
 			{
-				// 2¹æÇâ(Á÷¼± Æ÷ÇÔ) 90% / 3¹æÇâ 9% / 4¹æÇâ 1%
+				// 2ë°©í–¥(ì§ì„  í¬í•¨) 90% / 3ë°©í–¥ 9% / 4ë°©í–¥ 1%
 				float f = FMath::RandRange(0.f, 1.f);
 				if (f < 0.7f)
 				{
@@ -165,7 +163,7 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 				}
 			}
 
-			// Á¤´ä ÇÃ·¡±× ÃÊ±âÈ­
+			// ì •ë‹µ í”Œë˜ê·¸ ì´ˆê¸°í™”
 			elem.SetAnswerNode(false);
 			elem.SetPipeType();
 			++nodePos;
@@ -176,69 +174,72 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 }
 void ARoomEscapeFPSPlayerState::OnRep_InitializePipeGame()
 {
-	if (bInitializePipeGame == true)
+	if (bInitializePipeGame)
 	{
 		APawn* pawn = GetPawn();
-		if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
+		if (pawn && pawn->IsLocallyControlled() && IsNetMode(NM_Client))
 		{
-			UPipeGameUI* pipe = GetUIMgr()->GetWidget<UPipeGameUI>();
-			if (pipe)
+			UUISubsystem* uiSubsystem = Helper::GetSubsystem<UUISubsystem>(GetWorld());
+			if (not uiSubsystem)
+			{
+				return;
+			}
+
+			if (UPipeGamePanel* pipe = uiSubsystem->OpenWidget<UPipeGamePanel>(EActivatableWidgetType::PIPE_GAME))
 			{
 				pipe->InitializeGrid(PipeGameInfo.GetPipeNodes(), PipeGameInfo.GetGridSize());
-				pipe->AddToPlayerScreen();
 			}
 		}
 	}
 	
 }
-void ARoomEscapeFPSPlayerState::ServerRotatePipe_Implementation(int32 Index)
+void ARoomEscapeFPSPlayerState::RotatePipe(int32 Index)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	TArray<FPipeNode>& nodeInfo = PipeGameInfo.GetPipeNodes();
+	if (0 > Index || Index >= nodeInfo.Num())
 	{
-		TArray<FPipeNode>& nodeInfo = PipeGameInfo.GetPipeNodes();
-		check(nodeInfo.Num() > Index);
-		nodeInfo[Index].RotatePipe();
+		return;
 	}
+	nodeInfo[Index].RotatePipe();
 }
-void ARoomEscapeFPSPlayerState::ServerCheckCommittedAnswer_Implementation()
+void ARoomEscapeFPSPlayerState::CheckAndApplyPipeAnswer()
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	PipeGameSuccessInfo = CheckPipeAnswer();
+	if (PipeGameSuccessInfo == EReplicateState::COMPLETE)
 	{
-		PipeGameSuccessInfo = CheckPipeAnswer();
-		if (PipeGameSuccessInfo == EReplicateState::ETrue)
+		if (ARoomEscapeFPSGameState* gs = Helper::GetGameState(GetWorld()))
 		{
-			ARoomEscapeFPSGameState* gs = Helper::GetGameState(GetWorld());
-			if (gs)
-			{
-				gs->OnCorrectAnswer(EServerSolutionType::EPipelineGame_Complete);
-			}
-			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::EPipelineComplete, ENextInformationType::ERunaway, 1);
+			gs->OnCorrectAnswer(EServerSolutionType::PIPELINE_GAME_COMPLETE);
 		}
+		Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::PIPELINE_COMPLETE, ENextInformationType::RUNAWAY, 1);
 	}
 }
 void ARoomEscapeFPSPlayerState::OnRep_PipeGameSuccessInfo()
 {
-	if (PipeGameSuccessInfo == EReplicateState::EUnknown)
-		return;
-	
-	if (GetNetMode() == NM_Client)
+	if (PipeGameSuccessInfo == EReplicateState::UNKNOWN)
 	{
-		ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-		if (hud)
+		return;
+	}
+
+	APawn* pawn = GetPawn();
+	if (not pawn || not pawn->IsLocallyControlled() || not IsNetMode(NM_Client))
+	{
+		return;
+	}
+
+	if (UUISubsystem* uiSubsystem = Helper::GetSubsystem<UUISubsystem>(GetWorld()))
+	{
+		if (UPipeGamePanel* gameUI = uiSubsystem->GetActiveWidget<UPipeGamePanel>(EActivatableWidgetType::PIPE_GAME))
 		{
-			UPipeGameUI* gameUI = hud->GetPipeGameUI();
-			if (gameUI)
-			{
-				gameUI->CheckCommittedAnswerAnimation(PipeGameSuccessInfo == EReplicateState::ETrue ? true : false);
-			}
+			gameUI->CheckCommittedAnswerAnimation(EReplicateState::COMPLETE == PipeGameSuccessInfo);
 		}
 	}
 }
 
 EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 {
-	// ³Êºñ ¿ì¼± Å½»ö.
-	if (GetNetMode() == NM_DedicatedServer)
+	// ë„ˆë¹„ ìš°ì„  íƒìƒ‰.
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		const TArray<FPipeNode>& nodes = PipeGameInfo.GetPipeNodes();
 		int32 endPosIndex = (PipeGameInfo.GetGridSize() * PipeGameInfo.GetGridSize()) - 1;
@@ -254,19 +255,19 @@ EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 
 			check(targetNode);
 			if (targetNode->GetPipeLocation() == nodes[nodes.Num() - 1].GetPipeLocation())
-			{	// ·çÇÁ Á¾·áÁ¶°Ç(Goal Node µµ´ŞÇß´ÂÁö) È®ÀÎ.
+			{	// ë£¨í”„ ì¢…ë£Œì¡°ê±´(Goal Node ë„ë‹¬í–ˆëŠ”ì§€) í™•ì¸.
 				targetNode->SetLastAnswerNode(true);
-				return EReplicateState::ETrue;
+				return EReplicateState::COMPLETE;
 			}
 
-			// ¹«ÇÑ·çÇÁ ¹æÁö¸¦ À§ÇØ¼­ Å½»öÀÌ ³¡³­ ÆÄÀÌÇÁ ³ëµå¸¦ µû·Î ÀúÀå/Ã¼Å©ÇÑ´Ù.
+			// ë¬´í•œë£¨í”„ ë°©ì§€ë¥¼ ìœ„í•´ì„œ íƒìƒ‰ì´ ëë‚œ íŒŒì´í”„ ë…¸ë“œë¥¼ ë”°ë¡œ ì €ì¥/ì²´í¬í•œë‹¤.
 			if (closeNodes.Contains(targetNode->GetPipeLocation()))
 				continue;
 			closeNodes.Add(targetNode->GetPipeLocation());
 
-			if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight) &&
-				PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
-			{	// ¿À¸¥ÂÊ, ¾Æ·¡ ¸ğµÎ ¿¬°áµÇ¾î ÀÖÀ½. ¿ìÇâ ³ëµå, ÇÏÇâ ¸ğµå Å¥¿¡ Ãß°¡.
+			if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::RIGHT) &&
+				PipeGameInfo.IsConnected(*targetNode, EPipeDirection::DOWN))
+			{	// ì˜¤ë¥¸ìª½, ì•„ë˜ ëª¨ë‘ ì—°ê²°ë˜ì–´ ìˆìŒ. ìš°í–¥ ë…¸ë“œ, í•˜í–¥ ëª¨ë“œ íì— ì¶”ê°€.
 				int32 index = targetNode->GetPipeLocation().X +
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
@@ -275,20 +276,20 @@ EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 			}
-			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::ERight))
-			{	// ¿À¸¥ÂÊ ³ëµå¸¸ ¿¬°áµÇ¾î ÀÖÀ½. ¿ìÇâ ³ëµå Å¥¿¡ Ãß°¡.
+			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::RIGHT))
+			{	// ì˜¤ë¥¸ìª½ ë…¸ë“œë§Œ ì—°ê²°ë˜ì–´ ìˆìŒ. ìš°í–¥ ë…¸ë“œ íì— ì¶”ê°€.
 				int32 index = targetNode->GetPipeLocation().X +
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + 1;
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 			}
-			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::EDown))
-			{	// ¾Æ·¡ÂÊ ³ëµå¸¸ ¿¬°áµÇ¾î ÀÖÀ½. ÇÏÇâ ³ëµå Å¥¿¡ Ãß°¡.
+			else if (PipeGameInfo.IsConnected(*targetNode, EPipeDirection::DOWN))
+			{	// ì•„ë˜ìª½ ë…¸ë“œë§Œ ì—°ê²°ë˜ì–´ ìˆìŒ. í•˜í–¥ ë…¸ë“œ íì— ì¶”ê°€.
 				int32 index = targetNode->GetPipeLocation().X +
 					(targetNode->GetPipeLocation().Y * PipeGameInfo.GetGridSize()) + PipeGameInfo.GetGridSize();
 				answerNodes.Enqueue(const_cast<FPipeNode*>(&nodes[index]));
 			}
 			else
-			{	// ½ÃÀÛ ³ëµåÀÎµ¥ ¹°ÀÌ Èå¸¦ ¼ö ¾ø´Â °æ¿ì(¸ğµÎ ¸·Èù °æ¿ì), Á¤´ä ÇÃ·¡±× ÇØÁ¦ ÈÄ ·çÇÁ Å»Ãâ(Empty Queue)
+			{	// ì‹œì‘ ë…¸ë“œì¸ë° ë¬¼ì´ íë¥¼ ìˆ˜ ì—†ëŠ” ê²½ìš°(ëª¨ë‘ ë§‰íŒ ê²½ìš°), ì •ë‹µ í”Œë˜ê·¸ í•´ì œ í›„ ë£¨í”„ íƒˆì¶œ(Empty Queue)
 				if (PipeGameInfo.IsStartNode(*targetNode))
 				{
 					targetNode->SetAnswerNode(false);
@@ -302,30 +303,14 @@ EReplicateState ARoomEscapeFPSPlayerState::CheckPipeAnswer()
 		}
 	}
 	
-	return EReplicateState::EFalse;
+	return EReplicateState::NOT_YET;
 }
 
-void ARoomEscapeFPSPlayerState::ServerClearPipeGame_Implementation()
+void ARoomEscapeFPSPlayerState::ClearPipeGame()
 {
-	if (GetNetMode() == NM_DedicatedServer)
-	{
-		bInitializePipeGame = false;
-		PipeGameSuccessInfo = EReplicateState::EUnknown;
-		//ClientClearPipeGame();
-	}
+	bInitializePipeGame = false;
+	PipeGameSuccessInfo = EReplicateState::UNKNOWN;
 }
-//void ARoomEscapeFPSPlayerState::ClientClearPipeGame_Implementation()
-//{
-//	APawn* pawn = GetPawn();
-//	if (pawn && pawn->IsLocallyControlled() && GetNetMode() == NM_Client)
-//	{
-//		UPipeGameUI* pipeUI = GetUIMgr()->GetPipeGameUI();
-//		if (pipeUI)
-//		{
-//			pipeUI->CloseUI();
-//		}
-//	}
-//}
 
 void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, int32 InCount)
 {
@@ -340,12 +325,12 @@ void ARoomEscapeFPSPlayerState::AddItemToInventory(EItemType InType, int32 InCou
 		}
 	}
 
-	if (bFind == false)
+	if (not bFind)
 	{
-		InventoryInfo.Add(FItemInfo(InType, InCount));
+		InventoryInfo.Add(FInventoryItemInfo(InType, InCount));
 	}
 }
-const uint32 ARoomEscapeFPSPlayerState::GetItemCount(EItemType InType)
+uint32 ARoomEscapeFPSPlayerState::GetItemCount(EItemType InType)
 {
 	for (int32 i = 0; i < InventoryInfo.Num(); ++i)
 	{
@@ -370,11 +355,11 @@ bool ARoomEscapeFPSPlayerState::AmIHaveItem(EItemType InType)
 }
 void ARoomEscapeFPSPlayerState::ToggleBatteryReduceState(bool bOnOff)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		if (bOnOff)
 		{
-			if (UpdateBatteryDele.IsBound() == false)
+			if (not UpdateBatteryDele.IsBound())
 			{
 				UpdateBatteryDele.BindUObject(this, &ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue, -BatteryUpdateValue);
 			}
@@ -400,12 +385,24 @@ uint32* ARoomEscapeFPSPlayerState::GetItemCountRef(EItemType InType)
 }
 void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(int32 InDelta)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
-		uint32* batteryRemain = GetItemCountRef(EItemType::BatteryPower);
-		
-		*batteryRemain += InDelta;
-		if (*batteryRemain <= 0u)
+		uint32* batteryRemain = GetItemCountRef(EItemType::BATTERY_POWER);
+		if (not batteryRemain)
+		{
+			return;
+		}
+
+		if (0 > InDelta && static_cast<uint32>(-InDelta) > *batteryRemain)
+		{
+			*batteryRemain = 0u;
+		}
+		else
+		{
+			*batteryRemain += InDelta;
+		}
+
+		if (0u >= *batteryRemain)
 		{
 			*batteryRemain = 0u;
 			ToggleBatteryReduceState(false);
@@ -414,6 +411,32 @@ void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(int32 InDelta)
 		{
 			*batteryRemain = BatteryMaxValue;
 		}
+		UpdateFlashIntensityByBattery();
+	}
+}
+void ARoomEscapeFPSPlayerState::UpdateFlashIntensityByBattery()
+{
+	uint32 batteryRemain = GetItemCount(EItemType::BATTERY_POWER);
+	fFlashIntensity = 100000.0f;
+	if (0u >= batteryRemain)
+	{
+		fFlashIntensity = 0.f;
+	}
+	else if (100u >= batteryRemain)
+	{
+		fFlashIntensity = 20000.0f;
+	}
+}
+void ARoomEscapeFPSPlayerState::OnRep_FlashIntensity()
+{
+	APawn* pawn = GetPawn();
+	if (not pawn || not pawn->IsLocallyControlled())
+	{
+		return;
+	}
+	if (ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(pawn))
+	{
+		character->UpdateFlashIntensity(fFlashIntensity);
 	}
 }
 
@@ -426,55 +449,26 @@ bool ARoomEscapeFPSPlayerState::IsFirstGet(EItemType InType)
 	}
 	return true;
 }
-void ARoomEscapeFPSPlayerState::ClientProcessHUDOnFirstItemGet_Implementation(class AGetableObject* InObj)
-{
-	UFirstGetItemInfoPanel* ItemInfoUI = GetUIMgr()->OpenWidget<UFirstGetItemInfoPanel>();
-	if (ItemInfoUI)
-	{
-		ItemInfoUI->SetItemNameText(InObj->GetItemNameStr());
-		ItemInfoUI->SetItemDescText(InObj->GetItemDescStr());
-	}
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	if (hud && InObj)
-	{
-		hud->SetVisibleOnHUD(InObj->GetItemType(), true);
-	}
-}
-void ARoomEscapeFPSPlayerState::ClientProcessHUDOnUpdateNextInfo_Implementation(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
-{
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	if (hud)
-	{
-		hud->UpdateNextInfo(curType, nextType, InCount);
-	}
-}
 
 void ARoomEscapeFPSPlayerState::OnRep_InventoryInfo()
 {
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	if (hud)
-	{	// ºÎÀû Ä«¿îÆ® ¾÷µ¥ÀÌÆ®(UI)
-		hud->GetInventoryPanel()->UpdateCharmCount(GetItemCount(EItemType::Charm));
-		
-		// ¹èÅÍ¸® ÀÜ·® ¾÷µ¥ÀÌÆ®(UI)
-		uint32 batteryRemain = GetItemCount(EItemType::BatteryPower);
-		float fPercent = (float)batteryRemain / BatteryMaxValue;
-		hud->GetInventoryPanel()->UpdateBatteryPower(fPercent);
-
-		// ¹èÅÍ¸® ÀÜ·®¿¡ µû¸¥ ±¤·® ¾÷µ¥ÀÌÆ®
-		ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetPawn());
-		if (character)
-		{
-			fFlashIntensity = 100000.0f;
-			if (batteryRemain <= 0u)
-			{
-				fFlashIntensity = 0.f;
-			}
-			else if (batteryRemain <= 100u)
-			{
-				fFlashIntensity = 20000.0f;
-			}
-			character->UpdateFlashIntensity(fFlashIntensity);
-		}
+	APawn* pawn = GetPawn();
+	if (not pawn || not pawn->IsLocallyControlled() || not IsNetMode(NM_Client))
+	{
+		return;
 	}
+
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+	if (not hud)
+	{
+		return;
+	}
+
+	// ë¶€ì  ì¹´ìš´íŠ¸ ì—…ë°ì´íŠ¸(UI)
+	hud->GetInventoryPanel()->UpdateCharmCount(GetItemCount(EItemType::CHARM));
+
+	// ë°°í„°ë¦¬ ì”ëŸ‰ ì—…ë°ì´íŠ¸(UI)
+	uint32 batteryRemain = GetItemCount(EItemType::BATTERY_POWER);
+	float fPercent = (float)batteryRemain / BatteryMaxValue;
+	hud->GetInventoryPanel()->UpdateBatteryPower(fPercent);
 }

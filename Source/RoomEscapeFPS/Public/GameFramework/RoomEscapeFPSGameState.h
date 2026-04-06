@@ -7,12 +7,14 @@
 #include "Gameplay/TypeInfoHeader.h"
 #include "RoomEscapeFPSGameState.generated.h"
 
+class AInteractiveObject;
+
 /**
- * GameState: ÇÃ·¹ÀÌ¾î°¡ Á¢¼ÓÇÏ¸é GameState°¡ ÀÎ½ºÅÏ½ºÇÑ´Ù.
- GameState´Â Å¬¶óÀÌ¾ğÆ®/¼­¹ö ¸ğµÎ Á¢±Ù °¡´ÉÇÏ¸ç, µû¶ó¼­ °ÔÀÓÀÇ ÇöÀç »óÅÂ(¸»±×´ë·Î GameState)
- ¸¦ ¾÷µ¥ÀÌÆ®ÇÏ´Â ¸ñÀûÀ» °¡Áø Å¬·¡½ºÀÌ´Ù.
- GameStateÀÇ °ªÀ» ÂüÁ¶ÇÏ¿© °¢ ÇÃ·¹ÀÌ¾î(Client)°¡ ÇöÀçÀÇ °ÔÀÓ»óÅÂ¿¡ ¸Â°Ô µ¿ÀÛÀ» ¼öÇàÇÒ ¼ö
- ÀÖµµ·Ï µ½´Â´Ù.
+ * GameState: í”Œë ˆì´ì–´ê°€ ì ‘ì†í•˜ë©´ GameStateê°€ ì¸ìŠ¤í„´ìŠ¤í•œë‹¤.
+ GameStateëŠ” í´ë¼ì´ì–¸íŠ¸/ì„œë²„ ëª¨ë‘ ì ‘ê·¼ ê°€ëŠ¥í•˜ë©°, ë”°ë¼ì„œ ê²Œì„ì˜ í˜„ì¬ ìƒíƒœ(ë§ê·¸ëŒ€ë¡œ GameState)
+ ë¥¼ ì—…ë°ì´íŠ¸í•˜ëŠ” ëª©ì ì„ ê°€ì§„ í´ë˜ìŠ¤ì´ë‹¤.
+ GameStateì˜ ê°’ì„ ì°¸ì¡°í•˜ì—¬ ê° í”Œë ˆì´ì–´(Client)ê°€ í˜„ì¬ì˜ ê²Œì„ìƒíƒœì— ë§ê²Œ ë™ì‘ì„ ìˆ˜í–‰í•  ìˆ˜
+ ìˆë„ë¡ ë•ëŠ”ë‹¤.
  */
 
 UCLASS()
@@ -24,24 +26,24 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSGameState : public AGameStateBase
 public:
 	void OnCorrectAnswer(EServerSolutionType InType);
 
-	void AddToSolutionResultObject(class AInteractiveObject* InObj);
+	void AddToSolutionResultObject(AInteractiveObject* InObj);
 	void SetActiveGhostSpawner(bool bActive);
 
-	UFUNCTION(Server, Reliable)
-	void ServerIncreaseGhostDeadCount();
+	void IncreaseGhostDeadCount();
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-protected:
-	virtual void BeginPlay() override;
-	class AInteractiveObject* FindResultActor(EServerSolutionResultType InType);
-
-	UFUNCTION(NetMulticast, Unreliable)
-		void NetMulticastOpenDoorNotice();
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	UPROPERTY()
-	TArray<class AInteractiveObject*> OnSolutionResultObject;
+	void BeginPlay() override;
+	AInteractiveObject* FindResultActor(EServerSolutionResultType InType);
+
+	UFUNCTION(NetMulticast, Reliable)
+void NetMulticastOpenDoorNotice();
+
+protected:
+	UPROPERTY(Transient)
+TArray<TObjectPtr<AInteractiveObject>> OnSolutionResultObject;
+
 	UPROPERTY(Replicated)
-		int32 GhostDeadCount = 0;
+int32 GhostDeadCount = 0;
 };

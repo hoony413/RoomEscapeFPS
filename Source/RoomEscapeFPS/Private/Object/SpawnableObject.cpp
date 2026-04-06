@@ -13,7 +13,7 @@ void ASpawnableObject::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		TArray<UStaticMeshComponent*> meshes;
 		GetComponents<UStaticMeshComponent>(meshes);

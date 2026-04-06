@@ -5,25 +5,23 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
-#include "GameFramework/GameUserSettings.h"
-#include "Managers/RoomEscapeFPSGameInstance.h"
-#include "GameFramework/RoomEscapeFPSHUD.h"
+#include "Helper/Helper.h"
+#include "Managers/UISubsystem.h"
 #if WITH_EDITOR
-#include "Kismet/KismetSystemLibrary.h"
 #endif
 
 void UStartMainMenuPage::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
-	if (StartButton && StartButton->OnClicked.IsBound() == false)
+	if (StartButton && not StartButton->OnClicked.IsBound())
 	{
 		StartButton->OnClicked.AddDynamic(this, &UStartMainMenuPage::OnClickedStartButton);
 	}
-	if (OptionButton && OptionButton->OnClicked.IsBound() == false)
+	if (OptionButton && not OptionButton->OnClicked.IsBound())
 	{
 		OptionButton->OnClicked.AddDynamic(this, &UStartMainMenuPage::OnClickedOptionButton);
 	}
-	if (ExitButton && ExitButton->OnClicked.IsBound() == false)
+	if (ExitButton && not ExitButton->OnClicked.IsBound())
 	{
 		ExitButton->OnClicked.AddDynamic(this, &UStartMainMenuPage::OnClickedExitButton);
 	}
@@ -34,31 +32,21 @@ void UStartMainMenuPage::NativeOnInitialized()
 
 void UStartMainMenuPage::OnClickedStartButton()
 {
-	// TODO: 로딩 화면으로 전환 / 레벨 전환 / 접속 완료 시 화면 표시.
-	UGameplayStatics::OpenLevel(this, TEXT("127.0.0.1"));
-	GetOwningPlayer()->SetShowMouseCursor(false);
-
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetOwningPlayer()->GetHUD());
-	if (hud)
+	UUISubsystem* uiSubsystem = Helper::GetSubsystem<UUISubsystem>(GetWorld());
+	if (uiSubsystem)
 	{
-		hud->SetVisibilityLoadingScreen(true);
+		uiSubsystem->ShowLoadingScreen();
 	}
+
+	GetOwningPlayer()->SetShowMouseCursor(false);
+	UGameplayStatics::OpenLevel(this, TEXT("127.0.0.1"));
 	RemoveFromParent();
 }
 void UStartMainMenuPage::OnClickedOptionButton()
 {
-	// TODO: 창모드 / 밝기 / 소리 조절 따위의 옵션 UI 생성(우선순위 낮음)
-	// 아래 식으로 해상도 조절 가능.
-	//UGameUserSettings* MyGameSettings = GEngine->GetGameUserSettings();
-	//MyGameSettings->SetScreenResolution(FIntPoint(1024, 768));
-	//MyGameSettings->SetFullscreenMode(EWindowMode::Windowed);
 }
 void UStartMainMenuPage::OnClickedExitButton()
 {
-	// TODO: 게임 끄기.
-	URoomEscapeFPSGameInstance* gi = Cast<URoomEscapeFPSGameInstance>(GetWorld()->GetGameInstance());
-	gi->Shutdown();
-	
 #if WITH_EDITOR
 	UKismetSystemLibrary::QuitGame(GetWorld(), UGameplayStatics::GetPlayerController(GetWorld(), 0), EQuitPreference::Quit, false);
 #else

@@ -7,7 +7,7 @@
 #include "SpawnableObject.generated.h"
 
 /**
- * ¹èÅÍ¸®, ÇÃ·¡½Ã, ¿­¼è, ºÎÀû µîÀÇ ¾×ÅÍ¸¦ ³»ºÎ¿¡¼­ ½ºÆù °¡´ÉÇÑ ¿ÀºêÁ§Æ®.
+ * ë°°í„°ë¦¬, í”Œë˜ì‹œ, ì—´ì‡ , ë¶€ì  ë“±ì˜ ì•¡í„°ë¥¼ ë‚´ë¶€ì—ì„œ ìŠ¤í° ê°€ëŠ¥í•œ ì˜¤ë¸Œì íŠ¸.
  */
 UCLASS()
 class ROOMESCAPEFPS_API ASpawnableObject : public AInteractiveObject

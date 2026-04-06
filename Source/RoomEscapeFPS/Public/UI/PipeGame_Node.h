@@ -3,23 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/BaseWidget.h"
+#include "UI/Base/BaseWidget.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
-#include "UI/PipeGameUI.h"
 #include "PipeGame_Node.generated.h"
 
 /**
- * ∆ƒ¿Ã«¡ ≥ÎµÂ UI ≈¨∑°Ω∫
+ * ÌååÏù¥ÌîÑ ÎÖ∏Îìú UI ÌÅ¥ÎûòÏä§
  */
+
+class UPaperSprite;
+class UButton;
+class UImage;
 
 UENUM()
 enum class EAnimationIndex
 {
-	ERotate_90,
-	ERotate_180,
-	ERotate_270,
-	ERotate_360,
-	EResult,
+	NONE = 0 UMETA(Hidden),
+	ROTATE_90,
+	ROTATE_180,
+	ROTATE_270,
+	ROTATE_360,
+	RESULT,
+	MAX UMETA(Hidden)
 };
 
 UCLASS()
@@ -30,11 +35,9 @@ class ROOMESCAPEFPS_API UPipeGame_Node : public UBaseWidget
 public:
 	void InitializePipeNode(FPipeNode& InNode, uint8 InGridSize);
 
-	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/PipeGame_Node_Widget.PipeGame_Node_Widget_C'"); }
-	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
+	void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
 	void PlayResultAnimation();
-
 	FPipeNode& GetPipeNodeRef() { return PipeNodeRef; }
 
 protected:
@@ -42,11 +45,11 @@ protected:
 		void OnClickedPipeButton();
 
 private:
-	// ¿ß¡¨ πˆ∆∞
+	// ÏúÑÏ†Ø Î≤ÑÌäº
 	UPROPERTY(meta = (BindWidget))
-		class UButton* PipeButton;
+	TObjectPtr<UButton> PipeButton;
 	UPROPERTY(meta = (BindWidget))
-		class UImage* PipeImage;
+	TObjectPtr<UImage> PipeImage;
 
 	UPROPERTY()
 	FPipeNode PipeNodeRef;
@@ -54,13 +57,15 @@ private:
 	uint8 RotationInfo = 0u;
 	uint8 GridSize = 0u;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
+	TSoftObjectPtr<UPaperSprite> Straight_Two;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
-		TSoftObjectPtr<class UPaperSprite> Straight_Two;
+	TSoftObjectPtr<UPaperSprite> Two;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
-		TSoftObjectPtr<class UPaperSprite> Two;
+	TSoftObjectPtr<UPaperSprite> Three;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
-		TSoftObjectPtr<class UPaperSprite> Three;
-	UPROPERTY(EditDefaultsOnly, Category = "Sprite Assets")
-		TSoftObjectPtr<class UPaperSprite> Four;
+	TSoftObjectPtr<UPaperSprite> Four;
 };

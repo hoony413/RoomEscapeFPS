@@ -4,6 +4,7 @@
 #include "Object/ClueObject.h"
 #include "Helper/Helper.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 
 AClueObject::AClueObject()
 {
@@ -14,20 +15,17 @@ void AClueObject::BeginPlay()
 	Super::BeginPlay();
 }
 
-bool AClueObject::OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp)
+bool AClueObject::OnInteraction(APawn* requester, UPrimitiveComponent* InComp)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		check(requester);
 		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
 		int32 id = ps->GetPlayerId();
-		auto ShowClue = [this, &ps]()
+		auto const ShowClue = [this](ARoomEscapeFPSPlayerController* pc)
 		{
-			// ´Ü¼­ Á¤º¸ Ç¥½Ã
-			if (ps)
-			{
-				ps->ClientProcessHUDOnFirstItemGet(this);
-			}
+			// ë‹¨ì„œ ì •ë³´ í‘œì‹œ
+			pc->ClientProcessHUDOnFirstItemGet(this);
 		};
 		Helper::ServerImplementToClient(GetWorld(), id, ShowClue);
 	}

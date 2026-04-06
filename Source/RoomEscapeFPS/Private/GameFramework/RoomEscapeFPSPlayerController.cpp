@@ -6,102 +6,185 @@
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Character/RoomEscapeFPSCharacter.h"
+#include "Object/GetableObject.h"
 #include "Net/UnrealNetwork.h"
 
 #include "Helper/Helper.h"
-#include "Managers/UIManager.h"
-#include "UI/PipeGameUI.h"
-#include "UI/InteractionPanel.h"
+#include "Managers/UISubsystem.h"
+#include "UI/PipeGamePanel.h"
+#include "UI/FirstGetItemInfoPanel.h"
+
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 
 void ARoomEscapeFPSPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
+	UEnhancedInputComponent* enhancedInput = Cast<UEnhancedInputComponent>(InputComponent);
+	if (not enhancedInput)
+	{
+		return;
+	}
 
-	InputComponent->BindAction("Jump", IE_Pressed, this, &ARoomEscapeFPSPlayerController::Jump);
-	InputComponent->BindAction("Jump", IE_Released, this, &ARoomEscapeFPSPlayerController::StopJumping);
-
-	// Bind Flash event
-	InputComponent->BindAction("Flash", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnFlash);
-
-	// Bind Use event
-	InputComponent->BindAction("Use", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnUse);
-
-	// Bind Fire event
-	InputComponent->BindAction("Fire", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnFire);
-
-	InputComponent->BindAction("TestKey", IE_Pressed, this, &ARoomEscapeFPSPlayerController::OnTestKey);
-	
-	// Bind movement events
-	InputComponent->BindAxis("MoveForward", this, &ARoomEscapeFPSPlayerController::MoveForward);
-	InputComponent->BindAxis("MoveRight", this, &ARoomEscapeFPSPlayerController::MoveRight);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	InputComponent->BindAxis("Turn", this, &ARoomEscapeFPSPlayerController::AddControllerYawInput);
-	InputComponent->BindAxis("TurnRate", this, &ARoomEscapeFPSPlayerController::TurnAtRate);
-	InputComponent->BindAxis("LookUp", this, &ARoomEscapeFPSPlayerController::AddControllerPitchInput);
-	InputComponent->BindAxis("LookUpRate", this, &ARoomEscapeFPSPlayerController::LookUpAtRate);
+	enhancedInput->BindAction(_jumpAction,    ETriggerEvent::Started,   this, &ThisClass::HandleJump);
+	enhancedInput->BindAction(_jumpAction,    ETriggerEvent::Completed, this, &ThisClass::HandleStopJumping);
+	enhancedInput->BindAction(_flashAction,   ETriggerEvent::Started,   this, &ThisClass::HandleFlash);
+	enhancedInput->BindAction(_useAction,     ETriggerEvent::Started,   this, &ThisClass::HandleUse);
+	enhancedInput->BindAction(_fireAction,    ETriggerEvent::Started,   this, &ThisClass::HandleFire);
+	enhancedInput->BindAction(_testKeyAction, ETriggerEvent::Started,   this, &ThisClass::HandleTestKey);
+	enhancedInput->BindAction(_moveAction,    ETriggerEvent::Triggered,  this, &ThisClass::HandleMove);
+	enhancedInput->BindAction(_lookAction,    ETriggerEvent::Triggered,  this, &ThisClass::HandleLook);
 }
+
+void ARoomEscapeFPSPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+}
+
+void ARoomEscapeFPSPlayerController::AcknowledgePossession(APawn* P)
+{
+	Super::AcknowledgePossession(P);
+
+	ULocalPlayer const* localPlayer = GetLocalPlayer();
+	if (not localPlayer)
+	{
+		return;
+	}
+
+	if (UEnhancedInputLocalPlayerSubsystem* subsystem =
+		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(localPlayer))
+	{
+		if (_defaultMappingContext)
+		{
+			subsystem->AddMappingContext(_defaultMappingContext, 0);
+		}
+	}
+}
+
+void ARoomEscapeFPSPlayerController::OnUnPossess()
+{
+	if (ULocalPlayer const* localPlayer = GetLocalPlayer())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(localPlayer))
+		{
+			if (_defaultMappingContext)
+			{
+				subsystem->RemoveMappingContext(_defaultMappingContext);
+			}
+		}
+	}
+
+	Super::OnUnPossess();
+}
+
 void ARoomEscapeFPSPlayerController::ClientSetupHUD_Implementation()
 {
-	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetHUD());
-	if (hud)
+	if (UUISubsystem* uiSubsystem = Helper::GetSubsystem<UUISubsystem>(GetWorld()))
 	{
-		hud->SetVisibilityLoadingScreen(false);
+		uiSubsystem->HideLoadingScreen();
+	}
+
+	if (ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetHUD()))
+	{
 		hud->InitializeHUD();
 	}
 }
-void ARoomEscapeFPSPlayerController::Jump()
+
+void ARoomEscapeFPSPlayerController::HandleJump(FInputActionValue const& value)
 {
-	ACharacter* character = GetCharacter();
-	if (character)
+	if (ACharacter* character = GetCharacter())
 	{
 		character->Jump();
 	}
 }
-void ARoomEscapeFPSPlayerController::StopJumping()
+
+void ARoomEscapeFPSPlayerController::HandleStopJumping(FInputActionValue const& value)
 {
-	ACharacter* character = GetCharacter();
-	if (character)
+	if (ACharacter* character = GetCharacter())
 	{
 		character->StopJumping();
 	}
 }
 
-void ARoomEscapeFPSPlayerController::OnFlash()
+void ARoomEscapeFPSPlayerController::HandleFlash(FInputActionValue const& value)
 {
-	ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter());
-	if (character)
+	if (ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter()))
 	{
 		character->OnFlash();
 	}
 }
-void ARoomEscapeFPSPlayerController::OnUse()
+
+void ARoomEscapeFPSPlayerController::HandleUse(FInputActionValue const& value)
 {
-	ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter());
-	if (character)
+	if (ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter()))
 	{
 		character->OnUse();
 	}
 }
-void ARoomEscapeFPSPlayerController::OnFire()
+
+void ARoomEscapeFPSPlayerController::HandleFire(FInputActionValue const& value)
 {
-	ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter());
-	if (character)
+	if (ARoomEscapeFPSCharacter* character = Cast<ARoomEscapeFPSCharacter>(GetCharacter()))
 	{
 		character->OnFire();
 	}
 }
+
+void ARoomEscapeFPSPlayerController::HandleTestKey(FInputActionValue const& value)
+{
+}
+
+void ARoomEscapeFPSPlayerController::HandleMove(FInputActionValue const& value)
+{
+	APawn* pawn = GetPawn();
+	if (not pawn)
+	{
+		return;
+	}
+
+	FVector2D const moveVector = value.Get<FVector2D>();
+
+	if (0.0f != moveVector.Y)
+	{
+		pawn->AddMovementInput(pawn->GetActorForwardVector(), moveVector.Y);
+	}
+
+	if (0.0f != moveVector.X)
+	{
+		pawn->AddMovementInput(pawn->GetActorRightVector(), moveVector.X);
+	}
+}
+
+void ARoomEscapeFPSPlayerController::HandleLook(FInputActionValue const& value)
+{
+	APawn* pawn = GetPawn();
+	if (not pawn)
+	{
+		return;
+	}
+
+	FVector2D const lookVector = value.Get<FVector2D>();
+
+	if (0.0f != lookVector.X)
+	{
+		pawn->AddControllerYawInput(lookVector.X);
+	}
+
+	if (0.0f != lookVector.Y)
+	{
+		pawn->AddControllerPitchInput(lookVector.Y);
+	}
+}
+
 void ARoomEscapeFPSPlayerController::OnTestKey()
 {
-	// ∞≥¿Œ UI ¡∂¿€ Ω√ ¿Ã∑±Ωƒ¿∏∑Œ »£√‚«œ∏È µ»¥Ÿ.
+	// Í∞úÏù∏ UI Ï°∞Ïûë Ïãú Ïù¥Îü∞ÏãùÏúºÎ°ú Ìò∏Ï∂úÌïòÎ©¥ ÎêúÎã§.
 	//ServerOnTestKey();
 }
+
 void ARoomEscapeFPSPlayerController::ServerOnTestKey_Implementation()
 {
 	//if (GetNetMode() == NM_DedicatedServer)
@@ -134,56 +217,57 @@ void ARoomEscapeFPSPlayerController::ClientOnTestKey_Implementation()
 {
 }
 
-void ARoomEscapeFPSPlayerController::AddControllerYawInput(float Value)
+bool ARoomEscapeFPSPlayerController::ServerRotatePipe_Validate(int32 Index)
 {
-	APawn* character = GetPawn();
-	if (character)
+	if (ARoomEscapeFPSPlayerState const* ps = GetPlayerState<ARoomEscapeFPSPlayerState>())
 	{
-		character->AddControllerYawInput(Value);
+		return 0 <= Index && Index < ps->GetPipeGameInfo().GetPipeNodes().Num();
+	}
+	return false;
+}
+void ARoomEscapeFPSPlayerController::ServerRotatePipe_Implementation(int32 Index)
+{
+	if (ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>())
+	{
+		ps->RotatePipe(Index);
 	}
 }
-void ARoomEscapeFPSPlayerController::AddControllerPitchInput(float Value)
+void ARoomEscapeFPSPlayerController::ServerCheckCommittedAnswer_Implementation()
 {
-	APawn* character = GetPawn();
-	if (character)
+	if (ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>())
 	{
-		character->AddControllerPitchInput(Value);
+		ps->CheckAndApplyPipeAnswer();
 	}
 }
-void ARoomEscapeFPSPlayerController::MoveForward(float Value)
+void ARoomEscapeFPSPlayerController::ServerClearPipeGame_Implementation()
 {
-	APawn* pawn = GetPawn();
-	if (pawn && Value != 0.0f)
+	if (ARoomEscapeFPSPlayerState* ps = GetPlayerState<ARoomEscapeFPSPlayerState>())
 	{
-		// add movement in that direction
-		pawn->AddMovementInput(pawn->GetActorForwardVector(), Value);
+		ps->ClearPipeGame();
 	}
 }
-void ARoomEscapeFPSPlayerController::MoveRight(float Value)
+void ARoomEscapeFPSPlayerController::ClientProcessHUDOnFirstItemGet_Implementation(AGetableObject* InObj)
 {
-	APawn* pawn = GetPawn();
-	if (pawn && Value != 0.0f)
+	UUISubsystem* uiSubsystem = Helper::GetSubsystem<UUISubsystem>(GetWorld());
+	if (not uiSubsystem)
 	{
-		// add movement in that direction
-		pawn->AddMovementInput(pawn->GetActorRightVector(), Value);
+		return;
+	}
+	if (UFirstGetItemInfoPanel* ItemInfoUI = uiSubsystem->OpenWidget<UFirstGetItemInfoPanel>(EActivatableWidgetType::FIRST_GET_ITEM_INFO))
+	{
+		ItemInfoUI->SetItemNameText(InObj->GetItemNameStr());
+		ItemInfoUI->SetItemDescText(InObj->GetItemDescStr());
+	}
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetHUD());
+	if (hud && InObj)
+	{
+		hud->SetVisibleOnHUD(InObj->GetItemType(), true);
 	}
 }
-void ARoomEscapeFPSPlayerController::TurnAtRate(float Rate)
+void ARoomEscapeFPSPlayerController::ClientProcessHUDOnUpdateNextInfo_Implementation(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
 {
-	APawn* pawn = GetPawn();
-	if (pawn)
+	if (ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetHUD()))
 	{
-		// calculate delta for this frame from the rate information
-		pawn->AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+		hud->UpdateNextInfo(curType, nextType, InCount);
 	}
-}
-void ARoomEscapeFPSPlayerController::LookUpAtRate(float Rate)
-{
-	APawn* pawn = GetPawn();
-	if (pawn)
-	{
-		// calculate delta for this frame from the rate information
-		pawn->AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-	}
-	
 }

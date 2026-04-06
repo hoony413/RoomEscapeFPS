@@ -1,26 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GameFramework/RoomEscapeFPSHUD.h"
-#include "Engine/Canvas.h"
 #include "Engine/Texture2D.h"
 #include "TextureResource.h"
-#include "CanvasItem.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Helper/Helper.h"
-#include "Managers/UIManager.h"
 #include "Gameplay/TypeInfoHeader.h"
 #include "UI/InventoryPanel.h"
-#include "Managers/UIManager.h"
-#include "Helper/Helper.h"
-#include "UI/LoadingScreen.h"
-#include "UI/PipeGameUI.h"
-
-ARoomEscapeFPSHUD::ARoomEscapeFPSHUD()
-{
-	// Set the crosshair texture
-	//static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("/Game/Resources/Textures/FirstPersonCrosshair"));
-	//CrosshairTex = CrosshairTexObj.Object;
-}
+#include "Managers/UISettings.h"
+#include "UI/BaseHUDWidget.h"
 
 void ARoomEscapeFPSHUD::DrawHUD()
 {
@@ -29,16 +16,33 @@ void ARoomEscapeFPSHUD::DrawHUD()
 }
 void ARoomEscapeFPSHUD::InitializeHUD()
 {
-	// GameMode에서 JoinSession 완료되면 PlayerController에서 호출됨
-	cachedPanel = GetUIMgr()->OpenWidget<UInventoryPanel>();
-
-	// 후레쉬, 부적 획득할 때 Visibility를 true로 설정하고, 초기값은 false.
-	SetVisibleBatteryInfo(false);
-	SetVisibleCharmInfo(false);
-	SetVisibleCrossHair(true);
-	if (cachedPanel.IsValid())
+	if (_hudWidget)
 	{
-		cachedPanel->UpdateNextInformation(ENextInformationType::EFindLantern, ENextInformationType::EFindLantern, 0);
+		return;
+	}
+
+	const UUISettings* settings = UUISettings::Get();
+	if (not settings)
+	{
+		return;
+	}
+	UClass* hudClass = settings->HUDWidgetClass.LoadSynchronous();
+	if (not hudClass)
+	{
+		return;
+	}
+	
+	_hudWidget = CreateWidget<UBaseHUDWidget>(GetOwningPlayerController(), hudClass);
+	if (_hudWidget)
+	{
+		_hudWidget->AddToPlayerScreen();
+		if (UInventoryPanel* panel = _hudWidget->GetInventoryPanel())
+		{
+			panel->SetFlashBatteryVisibility(false);
+			panel->SetCharmVisibility(false);
+			panel->SetCrossHairVisibility(true);
+			panel->UpdateNextInformation(ENextInformationType::FIND_LANTERN, ENextInformationType::FIND_LANTERN, 0);
+		}
 	}
 }
 void ARoomEscapeFPSHUD::BeginPlay()
@@ -48,66 +52,45 @@ void ARoomEscapeFPSHUD::BeginPlay()
 
 UInventoryPanel* ARoomEscapeFPSHUD::GetInventoryPanel()
 {
-	if (cachedPanel.IsValid())
-	{
-		return cachedPanel.Get();
-	}
-	return nullptr;
-}
-class UPipeGameUI* ARoomEscapeFPSHUD::GetPipeGameUI()
-{
-	if (cachedPipeGameUI.IsValid())
-	{
-		return cachedPipeGameUI.Get();
-	}
-	return nullptr;
+	return _hudWidget ? _hudWidget->GetInventoryPanel() : nullptr;
 }
 void ARoomEscapeFPSHUD::UpdateNextInfo(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
 {
-	if (cachedPanel.IsValid())
+	if (UInventoryPanel* panel = GetInventoryPanel())
 	{
-		cachedPanel->UpdateNextInformation(curType, nextType, InCount);
+		panel->UpdateNextInformation(curType, nextType, InCount);
 	}
 }
 void ARoomEscapeFPSHUD::SetVisibleOnHUD(EItemType InType, bool bOnOff)
 {
 	switch (InType)
 	{
-	case EItemType::Flash:
+	case EItemType::FLASH:
 		SetVisibleBatteryInfo(bOnOff);
 		break;
-	case EItemType::Charm:
+	case EItemType::CHARM:
 		SetVisibleCharmInfo(bOnOff);
 		break;
 	}
 }
-void ARoomEscapeFPSHUD::SetVisibilityLoadingScreen(bool bOpen)
-{
-	if (bOpen)
-	{
-		cachedLoading = GetUIMgr()->OpenWidget<ULoadingScreen>();
-	}
-	else
-	{
-		if (cachedLoading.IsValid())
-		{
-			cachedLoading->RemoveFromParent();
-		}
-		cachedLoading = nullptr;
-	}
-}
 void ARoomEscapeFPSHUD::SetVisibleBatteryInfo(bool bOnOff)
 {
-	check(cachedPanel.IsValid());
-	cachedPanel->SetFlashBatteryVisibility(bOnOff);
+	if (UInventoryPanel* panel = GetInventoryPanel())
+	{
+		panel->SetFlashBatteryVisibility(bOnOff);
+	}
 }
 void ARoomEscapeFPSHUD::SetVisibleCharmInfo(bool bOnOff)
 {
-	check(cachedPanel.IsValid());
-	cachedPanel->SetCharmVisibility(bOnOff);
+	if (UInventoryPanel* panel = GetInventoryPanel())
+	{
+		panel->SetCharmVisibility(bOnOff);
+	}
 }
 void ARoomEscapeFPSHUD::SetVisibleCrossHair(bool bOnOff)
 {
-	check(cachedPanel.IsValid());
-	cachedPanel->SetCrossHairVisibility(bOnOff);
+	if (UInventoryPanel* panel = GetInventoryPanel())
+	{
+		panel->SetCrossHairVisibility(bOnOff);
+	}
 }

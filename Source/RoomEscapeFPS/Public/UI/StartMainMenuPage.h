@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/BaseWidget.h"
+#include "Base/BaseWidget.h"
 #include "StartMainMenuPage.generated.h"
 
+class UButton;
 /**
  * 
  */
@@ -15,8 +16,7 @@ class ROOMESCAPEFPS_API UStartMainMenuPage : public UBaseWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void NativeOnInitialized() override;
-	virtual FString GetBPPath() override { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/OutGame/StartMainMenu_Widget.StartMainMenu_Widget_C'"); }
+	void NativeOnInitialized() override;
 
 protected:
 	UFUNCTION()
@@ -28,9 +28,9 @@ protected:
 
 private:
 	UPROPERTY(meta = (BindWidget))
-		class UButton* StartButton;
+	TObjectPtr<UButton> StartButton;
 	UPROPERTY(meta = (BindWidget))
-		class UButton* OptionButton;
+	TObjectPtr<UButton> OptionButton;
 	UPROPERTY(meta = (BindWidget))
-		class UButton* ExitButton;
+	TObjectPtr<UButton> ExitButton;
 };

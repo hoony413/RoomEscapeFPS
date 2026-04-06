@@ -3,20 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Managers/UIManager.h"
-#include "Kismet/GameplayStatics.h"
-#include "GameFramework/RoomEscapeFPSPlayerController.h"
-#include "Managers/RoomEscapeFPSGameInstance.h"
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
-#include "Gameplay/ProjectileHandler.h"
 #include "GameFramework/RoomEscapeFPSGameMode.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 //#include "Paper2D/Classes/PaperSprite.h"
 
 /**
- * ¿Ø∆ø∏Æ∆º «‘ºˆ ∏¿Ω.
+ * Ïú†Ìã∏Î¶¨Ìã∞ Ìï®Ïàò Î™®Ïùå.
  */
 
 #define DEBUG_TEXT_RED(text) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 1.5, FColor::Red,text)
@@ -28,31 +24,16 @@
 namespace Helper
 {
 	template<typename T>
-	ROOMESCAPEFPS_API T* GetManager(UWorld* world)
+	ROOMESCAPEFPS_API T* GetSubsystem(UWorld* world)
 	{
-		URoomEscapeFPSGameInstance* gi = Cast<URoomEscapeFPSGameInstance>(world->GetGameInstance());
-		return gi != nullptr ? gi->GetManager<T>() : nullptr;
+		UGameInstance* gi = world->GetGameInstance();
+		return gi != nullptr ? gi->GetSubsystem<T>() : nullptr;
 	}
 
-	template <typename T>
-	ROOMESCAPEFPS_API FORCEINLINE T* SyncLoadResource(const FString& path)
-	{
-		check(!path.IsEmpty());
-		return LoadObject<T>(NULL, *path);
-	}
-	
-	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda);
-
-	//ROOMESCAPEFPS_API FORCEINLINE void SetSprite(UPaperSprite* InSprite, FSlateBrush& InBrush)
-	//{
-	//	check(InSprite);
-	//	InBrush.SetResourceObject(InSprite);
-	//}
-
-	// worldø°º≠ pred ¡∂∞«ø° ∏¬¥¬ actor∏¶ √£æ∆¡ÿ¥Ÿ.
-	// 1. pred¥¬ æ∆∑°øÕ ∞∞¿∫ «¸Ωƒ¿« lambda «‘ºˆ∏¶ ªÁøÎ«œ∞Ì
+	// worldÏóêÏÑú pred Ï°∞Í±¥Ïóê ÎßûÎäî actorÎ•º Ï∞æÏïÑÏ§ÄÎã§.
+	// 1. predÎäî ÏïÑÎûòÏôÄ Í∞ôÏùÄ ÌòïÌÉúÏùò lambda Ìï®ÏàòÎ•º ÏÇ¨Ïö©ÌïòÍ≥†
 	//		auto functor = [&](T* e)->bool { return true/false; };
-	// 2. »£√‚¿∫ æ∆∑°øÕ ∞∞¿Ã
+	// 2. Ìò∏Ï∂úÏùÄ ÏïÑÎûòÏôÄ Í∞ôÏù¥
 	//		T* e = Helper::FindActor<T>(GetWorld(), functor);
 	template <typename T, typename Functor>
 	T* FindActor(UWorld* world, Functor functor)
@@ -69,29 +50,35 @@ namespace Helper
 		return nullptr;
 	}
 
-	template<typename Functor>
-	ROOMESCAPEFPS_API void ServerImplementToClient(UWorld* world, int32 InPlayerID, Functor func)
+	template<typename Functor, typename... Args>
+	ROOMESCAPEFPS_API void ServerImplementToClient(UWorld* world, int32 InPlayerID, Functor func, Args&&... args)
 	{
 		check(world->GetNetMode() == NM_DedicatedServer);
 		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
-		if (gm)
+		if (not gm)
 		{
-			ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
-			if (gs)
+			return;
+		}
+
+		ARoomEscapeFPSGameState* gs = gm->GetGameState<ARoomEscapeFPSGameState>();
+		if (not gs)
+		{
+			return;
+		}
+
+		for (auto& elem : gs->PlayerArray)
+		{
+			ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
+			if (gsps->GetPlayerId() == InPlayerID)
 			{
-				for (auto& elem : gs->PlayerArray)
+				if (ARoomEscapeFPSPlayerController* pc = Cast<ARoomEscapeFPSPlayerController>(gsps->GetPlayerController()))
 				{
-					ARoomEscapeFPSPlayerState* gsps = Cast<ARoomEscapeFPSPlayerState>(elem);
-					if (gsps->GetPlayerId() == InPlayerID)
-					{
-						func();
-					}
+					func(pc, Forward<Args>(args)...);
 				}
 			}
 		}
 	}
 
-	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world);
 	ROOMESCAPEFPS_API void SetActorActive(class AActor* InActor, bool bActive);
 
 	ROOMESCAPEFPS_API EServerSolutionType GetSolutionType(EServerSolutionResultType InType);

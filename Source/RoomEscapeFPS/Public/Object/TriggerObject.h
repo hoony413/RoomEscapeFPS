@@ -19,12 +19,12 @@ class ROOMESCAPEFPS_API ATriggerObject : public AClueObject
 	
 public:
 	ATriggerObject();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
+	void BeginPlay() override;
+	bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
 
 	UFUNCTION(Server, Reliable)
 		void ServerActivateGhostSpawner(APawn* requester);
@@ -37,8 +37,9 @@ protected:
 	FOnTriggerEvent OnTriggerEvent;
 
 	UPROPERTY(EditAnywhere)
-		FString DelegateName;
+	FString DelegateName;
+
 	UPROPERTY(Replicated)
-		bool bIsTriggered;
+	bool bIsTriggered;
 
 };

@@ -7,15 +7,17 @@
 #include "PaintingObject.generated.h"
 
 /**
- * µ¹¸± ¼ö ÀÖ´Â ±×¸² ¿ÀºêÁ§Æ®.
+ * ëŒë¦´ ìˆ˜ ìˆëŠ” ê·¸ë¦¼ ì˜¤ë¸Œì íŠ¸.
  */
 UENUM()
 enum class ERotateState : uint8
 {
-	ERotate_0,
-	ERotate_90,
-	ERotate_180,
-	ERotate_270,
+	NONE = 0 UMETA(Hidden),
+	ROTATE_0,
+	ROTATE_90,
+	ROTATE_180,
+	ROTATE_270,
+	MAX UMETA(Hidden)
 };
 
 UCLASS()

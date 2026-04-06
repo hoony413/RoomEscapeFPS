@@ -1,0 +1,3 @@
+﻿Index,No,Name,Rate,OnOff
+id,(_value=id),enum.EnumTest,float,bool
+1001,(_value=1001),TESTA,0.5,False

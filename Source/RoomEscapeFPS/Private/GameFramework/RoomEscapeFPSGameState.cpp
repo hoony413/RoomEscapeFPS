@@ -9,7 +9,7 @@
 #include "Object/InteractiveObject.h"
 #include "Gameplay/GhostSpawner.h"
 #include "Helper/Helper.h"
-#include "Managers/UIManager.h"
+#include "Managers/UISubsystem.h"
 #include "UI/NoticePanel.h"
 #include "Net/UnrealNetwork.h"
 
@@ -22,23 +22,23 @@ void ARoomEscapeFPSGameState::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ARoomEscapeFPSGameState, GhostDeadCount);
 }
-void ARoomEscapeFPSGameState::ServerIncreaseGhostDeadCount_Implementation()
+void ARoomEscapeFPSGameState::IncreaseGhostDeadCount()
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		++GhostDeadCount;
 		ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
 		if (gm)
 		{
-			if (gm->CheckAnswer(GhostDeadCount, EServerSolutionType::EGhostDeadCount_Target))
+			if (gm->CheckAnswer(GhostDeadCount, EServerSolutionType::GHOST_DEAD_COUNT_TARGET))
 			{
 				gm->SetActiveGhostSpawner(false);
-				OnCorrectAnswer(EServerSolutionType::EGhostDeadCount_Target);
-				Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::ECaptureGhost, ENextInformationType::EPipelineComplete, GhostDeadCount);
+				OnCorrectAnswer(EServerSolutionType::GHOST_DEAD_COUNT_TARGET);
+				Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::CAPTURE_GHOST, ENextInformationType::PIPELINE_COMPLETE, GhostDeadCount);
 			}
 			else
 			{
-				Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::ECaptureGhost, ENextInformationType::ECaptureGhost, GhostDeadCount);
+				Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::CAPTURE_GHOST, ENextInformationType::CAPTURE_GHOST, GhostDeadCount);
 			}
 		}
 	}
@@ -52,29 +52,36 @@ void ARoomEscapeFPSGameState::OnCorrectAnswer(EServerSolutionType InType)
 {
 	AInteractiveObject* obj = FindResultActor(Helper::GetSolutionResultType(InType));
 	if (obj)
-	{	// TODO: °á°ú·Î µî·ÏµÈ µ¨¸®°ÔÀÌÆ® ½ÇÇà.
+	{
 		if (obj->OnSolutionSuccessResult.IsBound())
 		{
 			obj->OnSolutionSuccessResult.Execute(nullptr, obj->GetSolutionResultComp());
 		}
 	}
 
-	if (InType != EServerSolutionType::EPipelineGame_Complete)
+	if (InType != EServerSolutionType::PIPELINE_GAME_COMPLETE)
 	{
-		// ÆÄÀÌÇÁ¶óÀÎ °ÔÀÓÀº º°µµÀÇ ¿¬Ãâ ÀÌÈÄ º°µµ·Î ÆË¾÷ÀÌ »ý¼ºµÇ¹Ç·Î ¿©±â¼­ ÇÒ ÇÊ¿ä°¡ ¾ø´Ù.
+		// íŒŒì´í”„ë¼ì¸ ê²Œìž„ì€ ë³„ë„ì˜ ì—°ì¶œ ì´í›„ ë³„ë„ë¡œ íŒì—…ì´ ìƒì„±ë˜ë¯€ë¡œ ì—¬ê¸°ì„œ í•  í•„ìš”ê°€ ì—†ë‹¤.
 		NetMulticastOpenDoorNotice();
 	}
 }
 
 void ARoomEscapeFPSGameState::NetMulticastOpenDoorNotice_Implementation()
 {
-	if (GetNetMode() == NM_Client)
+	if (not IsNetMode(NM_Client))
 	{
-		UNoticePanel* notice = GetUIMgr()->GetWidget<UNoticePanel>();
-		if (notice)
-		{
-			notice->OpenNotice(ENoticeType::EOpenNextDoor);
-		}
+		return;
+	}
+	
+	UUISubsystem* uiSubsystem = Helper::GetSubsystem<UUISubsystem>(GetWorld());
+	if (not uiSubsystem)
+	{
+		return;
+	}
+	
+	if (UNoticePanel* notice = uiSubsystem->OpenWidget<UNoticePanel>(EActivatableWidgetType::NOTICE))
+	{
+		notice->OpenNotice(ENoticeType::OPEN_NEXT_DOOR);
 	}
 }
 
@@ -82,12 +89,14 @@ void ARoomEscapeFPSGameState::SetActiveGhostSpawner(bool bActive)
 {
 	auto FindGhostSpawner = [&](AGhostSpawner* spawner) -> bool
 	{
-		if(spawner != nullptr)
+		if (nullptr != spawner)
+		{
 			return true;
+		}
 		return false;
 	};
-	AGhostSpawner* spn = Helper::FindActor<AGhostSpawner>(GetWorld(), FindGhostSpawner);
-	if (spn)
+	
+	if (AGhostSpawner* spn = Helper::FindActor<AGhostSpawner>(GetWorld(), FindGhostSpawner))
 	{
 		spn->SetActive(bActive);
 	}
@@ -95,9 +104,8 @@ void ARoomEscapeFPSGameState::SetActiveGhostSpawner(bool bActive)
 
 AInteractiveObject* ARoomEscapeFPSGameState::FindResultActor(EServerSolutionResultType InType)
 {
-	for (auto& elem : OnSolutionResultObject)
+	for (auto const& elem : OnSolutionResultObject)
 	{
-		// TODO: ¿ÀºêÁ§Æ®ÀÇ ÇöÀç Å¸ÀÔÀ» Ã¼Å©ÇÏ¿© ¸®ÅÏ.
 		if (InType == elem->GetSolutionResultType())
 		{
 			return elem;

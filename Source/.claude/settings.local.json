@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(reg query:*)",
+      "Read(//d/UnrealEngine/Engine/Plugins/Runtime/XRBase/Source/**)",
+      "Read(//d/UnrealEngine/Engine/Source/Runtime/HeadMountedDisplay/**)",
+      "Read(//d/UnrealEngine/Engine/Plugins/2D/Paper2D/Source/**)",
+      "Bash(D:/UnrealEngine/Engine/Build/BatchFiles/GenerateProjectFiles.bat:*)",
+      "Read(//d/UnrealEngine/Engine/Source/**)",
+      "Read(//d/UnrealEngine/Engine/Plugins/**)",
+      "Bash(xargs grep:*)",
+      "Bash(python Tools/EnumGenerator/enum_generator.py Yaml/enum.yaml)",
+      "Bash(python:*)",
+      "Bash(grep -E \"\\\\.\\(h|cpp\\)$\")",
+      "Bash(xargs cat:*)",
+      "Bash(find D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Public\\\\UI:*)",
+      "Bash(ls -d Content/*/)",
+      "Bash(python3:*)"
+    ]
+  }
+}

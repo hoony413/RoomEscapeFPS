@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/BaseWidget.h"
+#include "UI/Base/BaseWidget.h"
 #include "InteractionPanel.generated.h"
+
+class UImage;
+class UTextBlock;
 
 /**
  * C++ Code(UInteractionPanel)
@@ -15,15 +18,14 @@ class ROOMESCAPEFPS_API UInteractionPanel : public UBaseWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void NativeOnInitialized() override;
-	virtual FString GetBPPath() override { return TEXT(
-"WidgetBlueprint'/Game/Resources/Widgets/InGame/InteractionPanel_Widget.InteractionPanel_Widget_C'"); }
+	void NativeOnInitialized() override;
 	void SetText(const FText& txt);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-		class UImage* BackgroundImage;
+	TObjectPtr<UImage> BackgroundImage;
+
 	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* InfoText;
+	TObjectPtr<UTextBlock> InfoText;
 
 };

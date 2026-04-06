@@ -3,34 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/BaseWidget.h"
+#include "UI/Base/BaseActivatableWidget.h"
 #include "NoticePanel.generated.h"
 
+class UTextBlock;
 /**
  * 
  */
 UENUM()
 enum class ENoticeType
 {
-	ESuccess,
-	EFailed,
-	EOpenNextDoor,
-	EDoorLocked,
+	NONE = 0 UMETA(Hidden),
+	SUCCESS,
+	FAILED,
+	OPEN_NEXT_DOOR,
+	DOOR_LOCKED,
+	MAX UMETA(Hidden)
 };
+
 UCLASS()
-class ROOMESCAPEFPS_API UNoticePanel : public UBaseWidget
+class ROOMESCAPEFPS_API UNoticePanel : public UBaseActivatableWidget
 {
 	GENERATED_BODY()
 	
 public:
-	virtual FString GetBPPath() { return TEXT("WidgetBlueprint'/Game/Resources/Widgets/InGame/NoticePanel_Widget.NoticePanel_Widget_C'"); }
-	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
+	void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
 	void OpenNotice(ENoticeType InType);
 
 private:
 	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* NoticeTextBox;
+	TObjectPtr<UTextBlock> NoticeTextBox;
 
 	bool bReverseAnim = false;
 };

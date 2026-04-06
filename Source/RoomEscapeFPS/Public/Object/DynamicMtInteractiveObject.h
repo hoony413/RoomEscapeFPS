@@ -7,13 +7,15 @@
 #include "DynamicMtInteractiveObject.generated.h"
 
 /**
- * Interaction°ú ÇÔ²² DynamicMaterial Á¦¾î¸¦ À§ÇÑ Å¬·¡½º.
+ * Interactionê³¼ í•¨ê»˜ DynamicMaterial ì œì–´ë¥¼ ìœ„í•œ í´ë˜ìŠ¤.
  */
 UENUM()
 enum class EDynamicMtParamType : uint8
 {
-	EScalar,
-	EVector,
+	NONE = 0 UMETA(Hidden),
+	SCALAR,
+	VECTOR,
+	MAX UMETA(Hidden)
 };
 
 USTRUCT()

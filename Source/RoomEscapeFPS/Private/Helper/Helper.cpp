@@ -2,41 +2,24 @@
 
 
 #include "Helper/Helper.h"
-#include "Runtime/Engine/Classes/Engine/AssetManager.h"
+#include "Engine/AssetManager.h"
 #include "GameFrameWork/RoomEscapeFPSPlayerState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Gameplay/TypeInfoHeader.h"
-#include "Object/CharmProjectile.h"
-//#include "Paper2D/Classes/PaperSprite.h"
 
 namespace Helper
 {
-	ROOMESCAPEFPS_API TSharedPtr<FStreamableHandle> AsyncLoadResource(const FSoftObjectPath& assetRef, TFunction<void()>&& lambda)
-	{
-		FStreamableManager& assetLoader = UAssetManager::GetStreamableManager();
-		return assetLoader.RequestAsyncLoad(TArray<FSoftObjectPath>{ assetRef }, FStreamableDelegate::CreateLambda(MoveTemp(lambda)));
-	}
-
-	ROOMESCAPEFPS_API AProjectileHandler* GetProjectileHandler(UWorld* world)
-	{	// TODO: ¸Ê¿¡ ÇÏ³ª¸¸ Á¸ÀçÇÏ¹Ç·Î ÀÏ´Ü ÀÌ·¸°Ô Ã³¸®. ÃßÈÄ ¿¹¿ÜÃ³¸®´Â °í¹Î.
-		for (TActorIterator<AProjectileHandler> it(world); it; ++it)
-		{
-			return *it;
-		}
-
-		return nullptr;
-	}
-
 	ROOMESCAPEFPS_API void SetActorActive(class AActor* InActor, bool bActive)
 	{
 		ensure(InActor);
 
-		// ¾×ÅÍ¸¦ Hidden Ã³¸®
+		// ì•¡í„°ë¥¼ Hidden ì²˜ë¦¬
 		InActor->SetActorHiddenInGame(!bActive);
 		
-		// ¾×ÅÍÀÇ Ãæµ¹ °ËÃâ ²ô±â
+		// ì•¡í„°ì˜ ì¶©ëŒ ê²€ì¶œ ë„ê¸°
 		InActor->SetActorEnableCollision(bActive);
 		
-		// ¾×ÅÍ Æ½ ²ô±â
+		// ì•¡í„° í‹± ë„ê¸°
 		InActor->SetActorTickEnabled(bActive);
 		TArray<UActorComponent*> components;
 		InActor->GetComponents(components);
@@ -50,36 +33,36 @@ namespace Helper
 	{
 		switch (InType)
 		{
-		case EServerSolutionResultType::ESolutionResult_1:
-			return EServerSolutionType::ESolution_1;
-		case EServerSolutionResultType::ESolutionResult_2:
-			return EServerSolutionType::ESolution_2;
-		case EServerSolutionResultType::ESolutionResult_3:
-			return EServerSolutionType::EGhostDeadCount_Target;
-		case EServerSolutionResultType::ESolutionResult_4:
-			return EServerSolutionType::EPipelineGame_Complete;
+		case EServerSolutionResultType::SOLUTION_RESULT_1:
+			return EServerSolutionType::SOLUTION_1;
+		case EServerSolutionResultType::SOLUTION_RESULT_2:
+			return EServerSolutionType::SOLUTION_2;
+		case EServerSolutionResultType::SOLUTION_RESULT_3:
+			return EServerSolutionType::GHOST_DEAD_COUNT_TARGET;
+		case EServerSolutionResultType::SOLUTION_RESULT_4:
+			return EServerSolutionType::PIPELINE_GAME_COMPLETE;
 		}
-		return EServerSolutionType::ENONE;
+		return EServerSolutionType::NONE;
 	}
 	ROOMESCAPEFPS_API EServerSolutionResultType GetSolutionResultType(EServerSolutionType InType)
 	{
 		switch (InType)
 		{
-		case EServerSolutionType::ESolution_1:
-			return EServerSolutionResultType::ESolutionResult_1;
-		case EServerSolutionType::ESolution_2:
-			return EServerSolutionResultType::ESolutionResult_2;
-		case EServerSolutionType::EGhostDeadCount_Target:
-			return EServerSolutionResultType::ESolutionResult_3;
-		case EServerSolutionType::EPipelineGame_Complete:
-			return EServerSolutionResultType::ESolutionResult_4;
+		case EServerSolutionType::SOLUTION_1:
+			return EServerSolutionResultType::SOLUTION_RESULT_1;
+		case EServerSolutionType::SOLUTION_2:
+			return EServerSolutionResultType::SOLUTION_RESULT_2;
+		case EServerSolutionType::GHOST_DEAD_COUNT_TARGET:
+			return EServerSolutionResultType::SOLUTION_RESULT_3;
+		case EServerSolutionType::PIPELINE_GAME_COMPLETE:
+			return EServerSolutionResultType::SOLUTION_RESULT_4;
 		}
-		return EServerSolutionResultType::ENONE;
+		return EServerSolutionResultType::NONE;
 	}
 
 	ROOMESCAPEFPS_API ARoomEscapeFPSGameMode* GetGameMode(UWorld* world)
 	{
-		check(world->GetNetMode() == NM_DedicatedServer);
+		check(world->IsNetMode(NM_DedicatedServer));
 		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
 		check(gm);
 		return gm;
@@ -95,7 +78,7 @@ namespace Helper
 	ROOMESCAPEFPS_API void UpdateNextUIInfo(UWorld* world, ENextInformationType curType, ENextInformationType nextType, int32 InCount)
 	{
 		check(world);
-		check(world->GetNetMode() == NM_DedicatedServer);
+		check(world->IsNetMode(NM_DedicatedServer));
 		ARoomEscapeFPSGameMode* gm = world->GetAuthGameMode<ARoomEscapeFPSGameMode>();
 		if (gm)
 		{
@@ -107,7 +90,11 @@ namespace Helper
 					ARoomEscapeFPSPlayerState* ps = Cast<ARoomEscapeFPSPlayerState>(elem);
 					if (ps)
 					{
-						ps->ClientProcessHUDOnUpdateNextInfo(curType, nextType, InCount);
+						ARoomEscapeFPSPlayerController* pc = Cast<ARoomEscapeFPSPlayerController>(ps->GetPlayerController());
+						if (pc)
+						{
+							pc->ClientProcessHUDOnUpdateNextInfo(curType, nextType, InCount);
+						}
 					}
 				}
 			}

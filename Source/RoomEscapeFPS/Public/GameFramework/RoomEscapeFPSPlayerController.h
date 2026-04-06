@@ -4,10 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Gameplay/TypeInfoHeader.h"
+#include "InputActionValue.h"
 #include "RoomEscapeFPSPlayerController.generated.h"
 
+class UInputMappingContext;
+class UInputAction;
+class AGetableObject;
+
 /**
- * 
+ *
  */
 
 UCLASS()
@@ -16,60 +22,72 @@ class ROOMESCAPEFPS_API ARoomEscapeFPSPlayerController : public APlayerControlle
 	GENERATED_BODY()
 
 public:
-	virtual void SetupInputComponent() override;
+	void SetupInputComponent() override;
 
 	UFUNCTION()
-		void OnTestKey();
+void OnTestKey();
 
 	UFUNCTION(Client, Reliable)
-		void ClientSetupHUD();
+void ClientSetupHUD();
 
 protected:
-	UFUNCTION()
-	void Jump();
-	UFUNCTION()
-	void StopJumping();
-	UFUNCTION()
-	void OnFlash();
-	UFUNCTION()
-	void OnUse();
-	UFUNCTION()
-	void OnFire();
+	void OnPossess(APawn* InPawn) override;
+	void OnUnPossess() override;
+	void AcknowledgePossession(APawn* P) override;
 
-	/** Handles moving forward/backward */
-	void MoveForward(float Val);
-
-	/** Handles stafing movement, left and right */
-	void MoveRight(float Val);
-
-	void AddControllerYawInput(float Val);
-	void AddControllerPitchInput(float Val);
-
-	/**
-	 * Called via input to turn at a given rate.
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void TurnAtRate(float Rate);
-
-	/**
-	 * Called via input to turn look up/down at a given rate.
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void LookUpAtRate(float Rate);
+	void HandleJump(FInputActionValue const& value);
+	void HandleStopJumping(FInputActionValue const& value);
+	void HandleFlash(FInputActionValue const& value);
+	void HandleUse(FInputActionValue const& value);
+	void HandleFire(FInputActionValue const& value);
+	void HandleMove(FInputActionValue const& value);
+	void HandleLook(FInputActionValue const& value);
+	void HandleTestKey(FInputActionValue const& value);
 
 	UFUNCTION(Server, Reliable)
-		void ServerOnTestKey();
+void ServerOnTestKey();
 
 	UFUNCTION(Client, Reliable)
-		void ClientOnTestKey();
+	void ClientOnTestKey();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputMappingContext> _defaultMappingContext;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _jumpAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _flashAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _useAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _fireAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _testKeyAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _moveAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> _lookAction;
 
 public:
-	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		float BaseTurnRate;
+	// 파이프 게임 RPC
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerRotatePipe(int32 Index);
 
-	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		float BaseLookUpRate;
+	UFUNCTION(Server, Reliable)
+	void ServerCheckCommittedAnswer();
 
+	UFUNCTION(Server, Reliable)
+	void ServerClearPipeGame();
+
+	UFUNCTION(Client, Reliable)
+	void ClientProcessHUDOnFirstItemGet(AGetableObject* InObj);
+
+	UFUNCTION(Client, Reliable)
+	void ClientProcessHUDOnUpdateNextInfo(ENextInformationType curType, ENextInformationType nextType, int32 InCount);
 };

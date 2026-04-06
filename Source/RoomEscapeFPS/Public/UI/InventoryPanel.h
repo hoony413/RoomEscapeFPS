@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/BaseWidget.h"
+#include "Base/BaseActivatableWidget.h"
 #include "Gameplay/TypeInfoHeader.h"
 #include "InventoryPanel.generated.h"
 
@@ -11,18 +11,18 @@
  * 
  */
 
+class UImage;
+class UTextBlock;
+class UCanvasPanel;
+class UProgressBar;
+
 UCLASS()
-class ROOMESCAPEFPS_API UInventoryPanel : public UBaseWidget
+class ROOMESCAPEFPS_API UInventoryPanel : public UBaseActivatableWidget
 {
 	GENERATED_BODY()
 
 public:
-	virtual FString GetBPPath() override {
-		return TEXT(
-			"WidgetBlueprint'/Game/Resources/Widgets/InGame/InventoryPanel_Widget.InventoryPanel_Widget_C'");
-	}
-
-	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
+	void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
 	void SetFlashBatteryVisibility(bool bOnOff);
 	void SetCharmVisibility(bool bOnOff);
@@ -34,19 +34,23 @@ public:
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-		class UProgressBar* FlashProgressBar;
+	TObjectPtr<UProgressBar> FlashProgressBar;
+	
 	UPROPERTY(meta = (BindWidget))
-		class UCanvasPanel* CharmCanvasPanel;
+	TObjectPtr<UCanvasPanel> CharmCanvasPanel;
+	
 	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* CharmCountText;
+	TObjectPtr<UTextBlock> CharmCountText;
+	
 	UPROPERTY(meta = (BindWidget))
-		class UImage* CrossHairImage;
+	TObjectPtr<UImage> CrossHairImage;
+	
 	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* NextInformationText;
+	TObjectPtr<UTextBlock> NextInformationText;
 
 	UPROPERTY(EditAnywhere)
-		TArray<FString> NextInformationStrArray;
+	TArray<FString> NextInformationStrArray;
 
-	ENextInformationType CurrentType;
-	int32 CurrentCount = 0;
+	ENextInformationType CurrentType{};
+	int32 CurrentCount{};
 };

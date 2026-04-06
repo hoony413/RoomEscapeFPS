@@ -3,12 +3,14 @@
 
 #include "Object/DynamicMtInteractiveObject.h"
 #include "Components/StaticMeshComponent.h"
-#include "Runtime/Engine/Classes/Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 bool ADynamicMtInteractiveObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
-	if (Super::OnInteraction(requester, InComp) == false)
+	if (not Super::OnInteraction(requester, InComp))
+	{
 		return false;
+	}
 
 	int32 index = 0;
 	int32 NotUseDummy = 0;
@@ -19,19 +21,19 @@ bool ADynamicMtInteractiveObject::OnInteraction(APawn* requester, class UPrimiti
 }
 void ADynamicMtInteractiveObject::NetMulticast_DynamicMaterial_Implementation(int32 index, EInteractiveObjectState InState)
 {
-	if (GetNetMode() == NM_Client)
+	if (IsNetMode(NM_Client))
 	{
 		if (DynamicMtArray[index].DynamicMt)
 		{
-			if (DynamicMtArray[index].ParameterType == EDynamicMtParamType::EScalar)
+			if (DynamicMtArray[index].ParameterType == EDynamicMtParamType::SCALAR)
 			{
-				DynamicMtArray[index].DynamicMt->SetScalarParameterValue(DynamicMtArray[index].ParameterName, 
-					InState == EInteractiveObjectState::EState_Close_Or_Off ? DynamicMtArray[index].ParameterValue.Min : DynamicMtArray[index].ParameterValue.Max);
+				DynamicMtArray[index].DynamicMt->SetScalarParameterValue(DynamicMtArray[index].ParameterName,
+					InState == EInteractiveObjectState::STATE_CLOSE_OR_OFF ? DynamicMtArray[index].ParameterValue.Min : DynamicMtArray[index].ParameterValue.Max);
 			}
-			else if (DynamicMtArray[index].ParameterType == EDynamicMtParamType::EVector)
+			else if (DynamicMtArray[index].ParameterType == EDynamicMtParamType::VECTOR)
 			{
-				DynamicMtArray[index].DynamicMt->SetVectorParameterValue(DynamicMtArray[index].ParameterName, 
-					InState == EInteractiveObjectState::EState_Close_Or_Off ? DynamicMtArray[index].ParameterVector.v1 : DynamicMtArray[index].ParameterVector.v2);
+				DynamicMtArray[index].DynamicMt->SetVectorParameterValue(DynamicMtArray[index].ParameterName,
+					InState == EInteractiveObjectState::STATE_CLOSE_OR_OFF ? DynamicMtArray[index].ParameterVector.v1 : DynamicMtArray[index].ParameterVector.v2);
 			}
 		}
 	}
@@ -53,7 +55,7 @@ const FName DynamicMtTag = FName(TEXT("DynamicMt"));
 void ADynamicMtInteractiveObject::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GetNetMode() == NM_Client)
+	if (IsNetMode(NM_Client))
 	{
 		TArray<UStaticMeshComponent*> meshes;
 		GetComponents<UStaticMeshComponent>(meshes);

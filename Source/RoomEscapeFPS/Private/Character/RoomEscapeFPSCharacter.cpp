@@ -10,21 +10,20 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "MotionControllerComponent.h"
-#include "Engine/Classes/Components/SpotLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "TimerManager.h"
 #include "Components/SphereComponent.h"
 #include "Components/PrimitiveComponent.h"
-#include "UI/InteractionPanel.h"
 #include "Object/InteractiveObject.h"
 #include "Object/GetableObject.h"
 #include "Helper/Helper.h"
-#include "Managers/UIManager.h"
-#include "Gameplay/ProjectileHandler.h"
+#include "UI/InteractionPanel.h"
 #include "Object/CharmProjectile.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
 #include "UI/InventoryPanel.h"
 #include "Net/UnrealNetwork.h"
+#include "UI/BaseHUDWidget.h"
 
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
@@ -38,11 +37,7 @@ ARoomEscapeFPSCharacter::ARoomEscapeFPSCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 100.0f);
 
-	// set our turn rates for input
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
-
-	// Create a CameraComponent	
+	// Create a CameraComponent
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
@@ -83,7 +78,7 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		SphereRadius = ArmRange;
 		IsFlash = false;
@@ -106,7 +101,6 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 void ARoomEscapeFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ARoomEscapeFPSCharacter, SphereRadius);
 	DOREPLIFETIME(ARoomEscapeFPSCharacter, IsFlash);
 }
 
@@ -128,22 +122,22 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (GetNetMode() == NM_Client)
+	if (IsNetMode(NM_Client))
 	{
 		FHitResult result;
-		pos = FirstPersonCameraComponent->GetComponentLocation();
-		dir = FirstPersonCameraComponent->GetForwardVector();
-		end = pos + (dir * ArmRange);
+		FVector pos = FirstPersonCameraComponent->GetComponentLocation();
+		FVector dir = FirstPersonCameraComponent->GetForwardVector();
+		FVector end = pos + (dir * ArmRange);
 
 		UWorld* world = GetWorld();
-		IsLooking = world->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel2);
+		IsLooking = world->LineTraceSingleByChannel(result, pos, end, ECC_GameTraceChannel2);
 
-		AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
+		AInteractiveObject* obj = Cast<AInteractiveObject>(result.GetActor());
 		TurnOnOffWidget(obj, IsLooking);
 
 		if (IsLooking)
 		{
-			AGetableObject* gObj = Cast<AGetableObject>(result.Actor.Get());
+			AGetableObject* gObj = Cast<AGetableObject>(result.GetActor());
 			if (gObj && gObj->IsNeedUINotify())
 			{
 				gObj->CaptureCurrentScene();
@@ -153,8 +147,10 @@ void ARoomEscapeFPSCharacter::Tick(float DeltaTime)
 }
 void ARoomEscapeFPSCharacter::OnUse()
 {
-	if (!IsLooking)
+	if (not IsLooking)
+	{
 		return;
+	}
 
 	ServerOnUse();
 }
@@ -164,110 +160,78 @@ bool ARoomEscapeFPSCharacter::ServerOnUse_Validate()
 }
 void ARoomEscapeFPSCharacter::ServerOnUse_Implementation()
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	UWorld const* world = GetWorld();
+	if (not world)
 	{
-		// ¼­¹öµµ ¹Ù¶óº¸°í ÀÖ´Â ¹°Ã¼·Î ÆÇ´ÜÇÑ´Ù.
-		FHitResult result;
-		pos = FirstPersonCameraComponent->GetComponentLocation();
-		dir = GetControlRotation().Vector();
-		end = pos + (dir * ArmRange);
-
-		bool bNowLookingActor = GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel3);
-		if (bNowLookingActor)
-		{
-			AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
-			if (obj && obj->IsNonInteracable() == false)
-			{
-				obj->OnInteraction(this, result.Component.Get());
-			}
-		}
-		//else
-		//{
-		//	bNowLookingActor = GetWorld()->LineTraceSingleByChannel(result, pos, end, ECollisionChannel::ECC_GameTraceChannel3);
-		//	if (bNowLookingActor)
-		//	{
-		//		AInteractiveObject* obj = Cast<AInteractiveObject>(result.Actor.Get());
-		//		if (obj->IsNotInteractive() == false)
-		//		{
-		//			obj->OnInteraction(this, result.Component.Get());
-		//		}
-		//	}
-		//}
-
-		// ¹üÀ§ ¾È¿¡ ÀÖ´ÂÁö Ã¼Å©
-		//TSet<AActor*> Actors;
-		//if (InteractableObject != nullptr && bNowLookingActor)
-		//{
-		//	InteractSphere->GetOverlappingActors(Actors, InteractableObject);
-		//	AActor* actor = result.Actor.Get();
-		//	for (const auto& elem : Actors)
-		//	{	
-		//		if (elem == actor)
-		//		{
-		//			AInteractiveObject* obj = Cast<AInteractiveObject>(elem);
-		//			if (obj->IsNotInteractive() == false)
-		//			{
-		//				obj->OnInteraction(this, result.Component.Get());
-		//				return;
-		//			}
-		//		}
-		//	}
-		//}
-	}
-}
-void ARoomEscapeFPSCharacter::ChangeInteractText(const FString& str)
-{
-	if (InteractWidget == nullptr)
 		return;
+	}
 
-	if (InteractWidget)
+	// ì„œë²„ë„ ë°”ë¼ë³´ê³  ìžˆëŠ” ë¬¼ì²´ë¡œ íŒë‹¨í•œë‹¤.
+	FHitResult result;
+	FVector pos = FirstPersonCameraComponent->GetComponentLocation();
+	FVector dir = GetControlRotation().Vector();
+	FVector end = pos + (dir * ArmRange);
+
+	if (world->LineTraceSingleByChannel(result, pos, end, ECC_GameTraceChannel3))
 	{
-		FText txt = FText::FromString(str);
-		InteractWidget->SetText(txt);
+		AInteractiveObject* obj = Cast<AInteractiveObject>(result.GetActor());
+		if (obj && obj->IsNonInteractable() == false)
+		{
+			obj->OnInteraction(this, result.Component.Get());
+		}
 	}
 }
 void ARoomEscapeFPSCharacter::TurnOnOffWidget(AInteractiveObject* InObj, bool bOnOff)
 {
-	if (!IsLocallyControlled() || GetNetMode() != NM_Client)
-		return;
-
-	if (InObj == nullptr || bOnOff == false)
+	if (not IsLocallyControlled() || not IsNetMode(NM_Client))
 	{
-		if (InteractWidget != nullptr)
-			InteractWidget->SetVisibility(ESlateVisibility::Collapsed);
-		return;
-	}
-	else if (InObj->IsNonInteracable())
-	{
-		if (InteractWidget)
-		{
-			InteractWidget->SetVisibility(ESlateVisibility::Collapsed);
-		}
 		return;
 	}
 
-	if (InteractWidget == nullptr)
+	APlayerController* pc = Cast<APlayerController>(GetController());
+	if (nullptr == pc)
 	{
-		InteractWidget = GetUIMgr()->OpenWidget<UInteractionPanel>();
+		return;
 	}
-	if (InteractWidget)
-	{
-		InteractWidget->SetVisibility(bOnOff ?
-			ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
-		ChangeInteractText(InObj->GetInformationMessage());
+	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(pc->GetHUD());
+	if (nullptr == hud || nullptr == hud->GetHUDWidget())
+	{
+		return;
 	}
+
+	UInteractionPanel* interactionPanel = hud->GetHUDWidget()->GetInteractionPanel();
+	if (nullptr == interactionPanel)
+	{
+		return;
+	}
+
+	if (nullptr == InObj || not bOnOff)
+	{
+		interactionPanel->SetVisibility(ESlateVisibility::Collapsed);
+		return;
+	}
+
+	if (InObj->IsNonInteractable())
+	{
+		interactionPanel->SetVisibility(ESlateVisibility::Collapsed);
+		return;
+	}
+
+	interactionPanel->SetVisibility(ESlateVisibility::HitTestInvisible);
+	interactionPanel->SetText(FText::FromString(InObj->GetInformationMessage()));
 }
 
 void ARoomEscapeFPSCharacter::OnFlash()
 {
-	if (GetNetMode() == NM_Client)
+	if (IsNetMode(NM_Client))
 	{
-		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		if (ps)
+		if (ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>())
 		{
-			if (!ps->AmIHaveItem(EItemType::Flash))
+			if (not ps->AmIHaveItem(EItemType::FLASH))
+			{
 				return;
+			}
 		}
 
 		ServerOnFlash();
@@ -275,22 +239,18 @@ void ARoomEscapeFPSCharacter::OnFlash()
 }
 bool ARoomEscapeFPSCharacter::ServerOnFlash_Validate()
 {
-	return true;
+	if (ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>())
+	{
+		return ps->AmIHaveItem(EItemType::FLASH);
+	}
+	return false;
 }
 void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>())
 	{
-		// TODO: ÈÄ·¹½¬¸¦ °¡Áö°í ÀÖÁö ¾ÊÀº °æ¿ì ¸®ÅÏ.
-		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		if (ps)
-		{
-			if (ps->AmIHaveItem(EItemType::Flash))
-			{
-				IsFlash = !IsFlash;
-				ps->ToggleBatteryReduceState(IsFlash);
-			}
-		}
+		IsFlash = !IsFlash;
+		ps->ToggleBatteryReduceState(IsFlash);
 	}
 }
 void ARoomEscapeFPSCharacter::OnRep_IsFlash()
@@ -315,16 +275,17 @@ void ARoomEscapeFPSCharacter::UpdateFlashIntensity(float InIntensity)
 
 void ARoomEscapeFPSCharacter::OnFire()
 {
-	if (GetNetMode() == NM_Client)
+	if (IsNetMode(NM_Client))
 	{
 		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		if (!ps->AmIHaveItem(EItemType::Charm))
+		if (not ps)
+		{
 			return;
-
-		ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-		if (hud)
-		{	// ºÎÀû Ä«¿îÆ® ¾÷µ¥ÀÌÆ®(UI)
-			hud->GetInventoryPanel()->UpdateCharmCount(ps->GetItemCount(EItemType::Charm) - 1);
+		}
+		
+		if (not ps->AmIHaveItem(EItemType::CHARM))
+		{
+			return;
 		}
 
 		ServerOnFire();
@@ -332,46 +293,37 @@ void ARoomEscapeFPSCharacter::OnFire()
 }
 bool ARoomEscapeFPSCharacter::ServerOnFire_Validate()
 {
-	return true;
+	if (ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>())
+	{
+		return ps->AmIHaveItem(EItemType::CHARM);
+	}
+	return false;
 }
 void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
+	if (not ps || not ps->AmIHaveItem(EItemType::CHARM))
 	{
-		// TODO: ºÎÀûÀ» °¡Áö°í ÀÖÁö ¾ÊÀº °æ¿ì ¸®ÅÏ.
-		ARoomEscapeFPSPlayerState* ps = GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		if (ps)
-		{
-			if (!ps->AmIHaveItem(EItemType::Charm))
-				return;
+		return;
+	}
 
-			ps->AddItemToInventory(EItemType::Charm, -1);
-		}
-		// TODO: ºÎÀû ÅºÃ¼ »ý¼º, ÇÃ·¹ÀÌ¾î·ÎºÎÅÍ ¹ß»ç Ã³¸®.
-		if (!cachedProjectileHandlerPtr.IsValid())
-		{
-			cachedProjectileHandlerPtr = Helper::GetProjectileHandler(GetWorld());
-		}
-		
-		check(cachedProjectileHandlerPtr.IsValid());
+	ps->AddItemToInventory(EItemType::CHARM, -1);
 
-		ACharmProjectile* proj = cachedProjectileHandlerPtr.Get()->GetCharm(this);
-		if (proj)
-		{
-			const FRotator SpawnRotation = GetControlRotation();
-			////Set Spawn Collision Handling Override
-			//FActorSpawnParameters ActorSpawnParams;
-			//ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	FActorSpawnParameters spawnParams;
+	spawnParams.Owner = this;
+	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	if (ACharmProjectile* proj = GetWorld()->SpawnActor<ACharmProjectile>(CharmClass.LoadSynchronous(), spawnParams))
+	{
+		FRotator const SpawnRotation = GetControlRotation();
 
-			// ÅºÃ¼ ½ÃÀÛÀ§Ä¡: Ä³¸¯ÅÍ ¹ß À§Ä¡ + Ä³¸¯ÅÍ ¹æÇâº¤ÅÍ * ½ºÄ®¶ó °ª(50) 
-			FVector FirePosition = 
-				GetCharacterMovement()->GetActorFeetLocation() + 
-				(GetActorForwardVector() * 50);
-			FirePosition.Z += 120.f;
+		// íƒ„ì²´ ì‹œìž‘ìœ„ì¹˜: ìºë¦­í„° ë°œ ìœ„ì¹˜ + ìºë¦­í„° ë°©í–¥ë²¡í„° * ìŠ¤ì¹¼ë¼ ê°’(50)
+		FVector FirePosition =
+			GetCharacterMovement()->GetActorFeetLocation() +
+			(GetActorForwardVector() * 50);
+		FirePosition.Z += 120.f;
 
-			// °Ý¹ßÀº Netmulticast·Î.
-			proj->Fire(FirePosition, SpawnRotation.Vector());
-		}
+		// ê²©ë°œì€ NetMulticastë¡œ.
+		proj->Fire(FirePosition, SpawnRotation.Vector());
 	}
 }
 void ARoomEscapeFPSCharacter::FlashToggleAnimation()
@@ -381,7 +333,7 @@ void ARoomEscapeFPSCharacter::FlashToggleAnimation()
 		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
 		if (AnimInstance != nullptr)
 		{
-			if (IsFlash == false)
+			if (not IsFlash)
 			{
 				AnimInstance->Montage_JumpToSection("End");
 				GetWorld()->GetTimerManager().ClearTimer(FlashTimer);

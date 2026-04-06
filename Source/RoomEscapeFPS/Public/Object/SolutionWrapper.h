@@ -8,8 +8,8 @@
 #include "SolutionWrapper.generated.h"
 
 /*
- * ¹®Á¦ Ç®ÀÌ ½Ã, Â÷ÀÏµå ¾×ÅÍµéÀÌ º¯È­µÇ¾úÀ½À» ÅëÁö ¹Ş¾Æ ¼­¹ö¿¡ Á¤´ä Á¦ÃâÀ» µ½´Â °´Ã¼.
- * Â÷ÀÏµå ¾×ÅÍÀÇ OnInteractionHappened µ¨¸®°ÔÀÌÆ®¿¡ ServerOnStateChanged()¸¦ ¿¬°áÇÑ´Ù.
+ * ë¬¸ì œ í’€ì´ ì‹œ, ì°¨ì¼ë“œ ì•¡í„°ë“¤ì´ ë³€í™”ë˜ì—ˆìŒì„ í†µì§€ ë°›ì•„ ì„œë²„ì— ì •ë‹µ ì œì¶œì„ ë•ëŠ” ê°ì²´.
+ * ì°¨ì¼ë“œ ì•¡í„°ì˜ OnInteractionHappened ë¸ë¦¬ê²Œì´íŠ¸ì— ServerOnStateChanged()ë¥¼ ì—°ê²°í•œë‹¤.
  */
 UCLASS()
 class ROOMESCAPEFPS_API ASolutionWrapper : public AActor

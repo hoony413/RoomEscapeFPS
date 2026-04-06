@@ -2,11 +2,11 @@
 
 
 #include "UI/PipeGame_Node.h"
-#include "GameFramework/RoomEscapeFPSPlayerState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Paper2D/Classes/PaperSprite.h"
-#include "UI/PipeGameUI.h"
+#include "UI/PipeGamePanel.h"
 #include "Helper/Helper.h"
 
 void UPipeGame_Node::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
@@ -21,59 +21,57 @@ void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize)
 
 	SetWidgetAnimation();
 	
-	// È¸Àü ¹öÆ° ¹ÙÀÎµù
+	// íšŒì „ ë²„íŠ¼ ë°”ì¸ë”©
 	PipeButton->OnClicked.AddDynamic(this, &UPipeGame_Node::OnClickedPipeButton);
 
-	// Àü¼ÛµÈ ³ëµå µ¥ÀÌÅÍ ±âÁØÀ¸·Î ÀÌ¹ÌÁö »ı¼º ¹× È¸Àü
+	// ì „ì†¡ëœ ë…¸ë“œ ë°ì´í„° ê¸°ì¤€ìœ¼ë¡œ ì´ë¯¸ì§€ ìƒì„± ë° íšŒì „
 	EPipeType type = PipeNodeRef.GetPipeType();
 	UPaperSprite* spr = nullptr;
-	if (type == EPipeType::EStraight_Two)
+	if (type == EPipeType::STRAIGHT_TWO)
 	{
 		spr = Straight_Two.LoadSynchronous();
-		
-		// »ó-ÇÏ ÀÌ°Å³ª ÁÂ-¿ìÀÎÁö¸¸ È®ÀÎÇÏ¸é µÊ.
-		if (PipeNodeRef.IsContainDirection(EPipeDirection::ELeft))
+
+		// ìƒ-í•˜ ì´ê±°ë‚˜ ì¢Œ-ìš°ì¸ì§€ë§Œ í™•ì¸í•˜ë©´ ë¨.
+		if (PipeNodeRef.IsContainDirection(EPipeDirection::LEFT))
 		{
 			RotationInfo = 1u;
 			PipeButton->SetRenderTransformAngle(90.f);
 		}
 	}
-	else if (type == EPipeType::ETwo)
+	else if (type == EPipeType::TWO)
 	{
 		spr = Two.LoadSynchronous();
 		uint8 i = 0u;
-		
+
 		while (true)
 		{
 			uint8 a = 1 << i;
 			uint8 b = 1 << (i + 1);
-			if (i + 1 >= (uint8)EPipeType::EMAX)
+			if (i + 1 >= (uint8)EPipeType::MAX)
 			{
 				b = 1 << 0;
 			}
 			if (PipeNodeRef.IsContainDirection((EPipeDirection)a) &&
 				PipeNodeRef.IsContainDirection((EPipeDirection)b))
 			{
-				RotationInfo = i % (uint8)EPipeType::EMAX;
+				RotationInfo = i % (uint8)EPipeType::MAX;
 				PipeButton->SetRenderTransformAngle(90u * i);
 				break;
 			}
-			else
-			{
-				i++;
-			}
+
+			i++;
 		}
 	}
-	else if (type == EPipeType::EThree)
+	else if (type == EPipeType::THREE)
 	{
 		spr = Three.LoadSynchronous();
 		uint8 i = 0u;
-		
+
 		while (true)
 		{
 			if (!PipeNodeRef.IsContainDirection((EPipeDirection)(1 << i)))
 			{
-				RotationInfo = i % (uint8)EPipeType::EMAX;
+				RotationInfo = i % (uint8)EPipeType::MAX;
 				PipeButton->SetRenderTransformAngle(90u * i);
 				break;
 			}
@@ -83,36 +81,41 @@ void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize)
 			}
 		}
 	}
-	else if (type == EPipeType::EFour)
+	else if (type == EPipeType::FOUR)
 	{
-		// È¸Àü ÇÊ¿ä ¾øÀ½.
 		spr = Four.LoadSynchronous();
+		// íšŒì „ í•„ìš” ì—†ìŒ.
 		RotationInfo = 0u;
 	}
 
-	PipeImage->Brush.SetResourceObject(spr);
+	if (spr)
+	{
+		FSlateBrush NewBrush = PipeImage->GetBrush();
+		NewBrush.SetResourceObject(spr);
+		PipeImage->SetBrush(NewBrush);
+	}
 }
 void UPipeGame_Node::OnClickedPipeButton()
 {
-	// ÇöÀç È¸Àü°ªÀ» ±âÁØÀ¸·Î È¸Àü ¾Ö´Ï¸ŞÀÌ¼Ç Ãâ·Â
+	// í˜„ì¬ íšŒì „ê°’ì„ ê¸°ì¤€ìœ¼ë¡œ íšŒì „ ì• ë‹ˆë©”ì´ì…˜ ì¶œë ¥
 	if (IsPlayingAnimation())
 		return;
 
-	ARoomEscapeFPSPlayerState* ps = GetOwningPlayerState<ARoomEscapeFPSPlayerState>(true);
-	if (ps)
-	{	// È¸Àü(¼­¹ö)
+	ARoomEscapeFPSPlayerController* pc = GetOwningPlayer<ARoomEscapeFPSPlayerController>();
+	if (pc)
+	{	// íšŒì „(ì„œë²„)
 		int32 index = (PipeNodeRef.GetPipeLocation().Y * GridSize) + PipeNodeRef.GetPipeLocation().X;
-		ps->ServerRotatePipe(index);
+		pc->ServerRotatePipe(index);
 	}
 
 	PlayAnimation(AnimArray[RotationInfo]);
 
-	// È¸Àü(Å¬¶ó)
+	// íšŒì „(í´ë¼)
 	PipeNodeRef.RotatePipe();
 	RotationInfo++;
-	RotationInfo %= (uint8)EPipeType::EMAX;
+	RotationInfo %= (uint8)EPipeType::MAX;
 }
 void UPipeGame_Node::PlayResultAnimation()
 {
-	PlayAnimation(AnimArray[(int32)EAnimationIndex::EResult]);
+	PlayAnimation(AnimArray[(int32)EAnimationIndex::RESULT]);
 }

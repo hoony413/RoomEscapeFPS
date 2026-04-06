@@ -6,7 +6,7 @@
 
 APaintingObject::APaintingObject()
 {
-	RotateState = ERotateState::ERotate_0;
+	RotateState = ERotateState::ROTATE_0;
 }
 
 void APaintingObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -18,11 +18,11 @@ void APaintingObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 bool APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
 	ERotateState cachedRotateState = RotateState;
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
-		if (RotateState == ERotateState::ERotate_270)
+		if (RotateState == ERotateState::ROTATE_270)
 		{
-			RotateState = ERotateState::ERotate_0;
+			RotateState = ERotateState::ROTATE_0;
 		}
 		else
 		{
@@ -32,8 +32,8 @@ bool APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent*
 
 	if (Super::OnInteraction(requester, InComp) == false)
 	{
-		if (GetNetMode() == NM_DedicatedServer)
-		{	// ¹é¾÷µÈ ·ÎÅ×ÀÌÆ® °ªÀ¸·Î ´Ù½Ã º¹±¸.
+		if (IsNetMode(NM_DedicatedServer))
+		{	// ë°±ì—…ëœ ë¡œí…Œì´íŠ¸ ê°’ìœ¼ë¡œ ë‹¤ì‹œ ë³µêµ¬.
 			RotateState = cachedRotateState;
 		}
 		return false;
@@ -46,20 +46,20 @@ void APaintingObject::NetMulticast_Timeline_Implementation(int32 index, EInterac
 {
 	//switch (TimelineMeshes[index].ControlType)
 	//{
-	//case ETimelineControlType::ERotationX:
+	//case ETimelineControlType::ROTATION_X:
 	//	StartCurveValue =
 	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Roll;
 	//	break;
-	//case ETimelineControlType::ERotationY:
+	//case ETimelineControlType::ROTATION_Y:
 	//	StartCurveValue =
 	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Yaw;
 	//	break;
-	//case ETimelineControlType::ERotationZ:
+	//case ETimelineControlType::ROTATION_Z:
 	//	StartCurveValue =
 	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
 	//	break;
 	//}
-	// ÀÌ¹Ì È¸Àü Ã³¸®°¡ µÇ¾ú±â ¶§¹®¿¡, È¸Àü ÀÌÀü ÃÊ±â°ªÀ» ±¸ÇÏ·Á¸é -1 ÇØ¾ß ÇÑ´Ù.
+	// ì´ë¯¸ íšŒì „ ì²˜ë¦¬ê°€ ë˜ì—ˆê¸° ë•Œë¬¸ì—, íšŒì „ ì´ì „ ì´ˆê¸°ê°’ì„ êµ¬í•˜ë ¤ë©´ -1 í•´ì•¼ í•œë‹¤.
 	StartCurveValue = (((uint8)RotateState - 1u) * 90) % 360;
 	TimelineMeshes[index].Timeline.PlayFromStart();
 }

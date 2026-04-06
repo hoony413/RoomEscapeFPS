@@ -31,7 +31,7 @@ void ASolutionWrapper::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// ÀÚ½Ä¾×ÅÍµé È®º¸ ÈÄ ÄÄÆ÷³ÍÆ® ÅÂ±× ¹øÈ£ ¿À¸§Â÷¼ø Á¤·Ä.
+	// ìì‹ì•¡í„°ë“¤ í™•ë³´ í›„ ì»´í¬ë„ŒíŠ¸ íƒœê·¸ ë²ˆí˜¸ ì˜¤ë¦„ì°¨ìˆœ ì •ë ¬.
 	GetComponents<UChildActorComponent>(ChildActors);
 	Algo::Sort(ChildActors, [&](const UChildActorComponent* lhs, const UChildActorComponent* rhs)
 	{
@@ -46,13 +46,13 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 	if (bIsCleared)
 		return;
 
-	if (GetNetMode() == NM_DedicatedServer)
+	ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
+	if (gm)
 	{
-		ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
-		if (gm)
+		int32 answer = 0;
+		switch (SolutionType)
 		{
-			int32 answer = 0;
-			if (SolutionType == EServerSolutionType::ESolution_1)
+		case EServerSolutionType::SOLUTION_1:
 			{
 				for (int32 i = 0; i < ChildActors.Num(); ++i)
 				{
@@ -64,7 +64,8 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 					}
 				}
 			}
-			else if (SolutionType == EServerSolutionType::ESolution_2)
+			break;
+		case EServerSolutionType::SOLUTION_2:
 			{
 				for (int32 i = 0; i < ChildActors.Num(); ++i)
 				{
@@ -72,24 +73,33 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 					if (obj)
 					{
 						int32 digit = obj->GetDigit();
-						answer += (int32)FMath::Pow(10, digit) * (uint8)obj->GetRotateState();
+						answer += FMath::RoundToInt32(FMath::Pow(10.f, static_cast<float>(digit))) * static_cast<int32>(obj->GetRotateState());
 					}
 				}
 			}
-
-			bIsCleared = gm->CheckAnswer(answer, SolutionType);
-			if (bIsCleared)
+			break;
+		default:
 			{
-				// TODO: GameState¿¡¼­ ¹®Á¦ Ç®ÀÌ ¼º°ø¿¡ µû¸¥ °á°ú ·ÎÁ÷ ¼öÇà.
-				gm->GetGameState<ARoomEscapeFPSGameState>()->OnCorrectAnswer(SolutionType);
-				if (SolutionType == EServerSolutionType::ESolution_1)
+			}
+			break;
+		}
+
+		bIsCleared = gm->CheckAnswer(answer, SolutionType);
+		if (bIsCleared)
+		{
+			gm->GetGameState<ARoomEscapeFPSGameState>()->OnCorrectAnswer(SolutionType);
+			switch (SolutionType)
+			{
+			case EServerSolutionType::SOLUTION_1:
 				{
-					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::ESolveClue_1, ENextInformationType::ESolveClue_2, 1);
+					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::SOLVE_CLUE_1, ENextInformationType::SOLVE_CLUE_2, 1);
 				}
-				else if (SolutionType == EServerSolutionType::ESolution_2)
+				break;
+			case EServerSolutionType::SOLUTION_2:
 				{
-					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::ESolveClue_2, ENextInformationType::ECaptureGhost, 1);
+					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::SOLVE_CLUE_2, ENextInformationType::CAPTURE_GHOST, 1);
 				}
+				break;
 			}
 		}
 	}

@@ -1,0 +1,4 @@
+﻿Index,No,Name,Rate,OnOff,AdditionalDatas
+id,(_value=id),enum.EnumTest,float,bool,array.int32
+1001,(_value=1001),TESTB,0.2,False,"(1,2,3)"
+1002,(_value=1002),TESTC,10.55,True,"(4,5)"

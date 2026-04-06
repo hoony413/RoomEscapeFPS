@@ -3,29 +3,33 @@
 
 #include "Object/GetableObject.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Gameplay/TypeInfoHeader.h"
-#include "Engine/Classes/Engine/TextureRenderTarget2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Helper/Helper.h"
 
 AGetableObject::AGetableObject()
 {
-	SceneCapturer = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture2D"));
-	SceneCapturer->ProjectionType = ECameraProjectionMode::Perspective;
-	SceneCapturer->FOVAngle = 90.f;
-	static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> RTAsset(TEXT("TextureRenderTarget2D'/Game/Resources/Blueprints/Gameplay/InventoryItemRenderTarget.InventoryItemRenderTarget'"));
-	if (RTAsset.Succeeded())
+	if (not IsRunningDedicatedServer())
 	{
-		SceneCapturer->TextureTarget = RTAsset.Object;
-	}
+		SceneCapturer = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture2D"));
+		SceneCapturer->ProjectionType = ECameraProjectionMode::Perspective;
+		SceneCapturer->FOVAngle = 90.f;
+		static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> RTAsset(TEXT("TextureRenderTarget2D'/Game/Blueprints/Gameplay/InventoryItemRenderTarget.InventoryItemRenderTarget'"));
+		if (RTAsset.Succeeded())
+		{
+			SceneCapturer->TextureTarget = RTAsset.Object;
+		}
 
-	SceneCapturer->CompositeMode = ESceneCaptureCompositeMode::SCCM_Overwrite;
-	SceneCapturer->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
-	SceneCapturer->bCaptureEveryFrame = false;
-	SceneCapturer->bCaptureOnMovement = false;
-	SceneCapturer->MaxViewDistanceOverride = -1.f;
-	SceneCapturer->SetupAttachment(DefaultMesh);
+		SceneCapturer->CompositeMode = SCCM_Overwrite;
+		SceneCapturer->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
+		SceneCapturer->bCaptureEveryFrame = false;
+		SceneCapturer->bCaptureOnMovement = false;
+		SceneCapturer->MaxViewDistanceOverride = -1.f;
+		SceneCapturer->SetupAttachment(DefaultMesh);
+	}
 
 	bNeedsUINotify = true;
 }
@@ -39,51 +43,57 @@ void AGetableObject::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ºí·çÇÁ¸°Æ®¿¡¼­ Ãß°¡ÇÑ ÄÄÆ÷³ÍÆ®´Â »ı¼ºÀÚ¿¡¼­ °Ë»öµÇÁö ¾Ê´Â´Ù. BeginPlay¿¡¼­ ¼³Á¤ÇÏ¸é µÊ.
+	// ë¸”ë£¨í”„ë¦°íŠ¸ì—ì„œ ì¶”ê°€í•œ ì»´í¬ë„ŒíŠ¸ëŠ” ìƒì„±ìì—ì„œ ê²€ìƒ‰ë˜ì§€ ì•ŠëŠ”ë‹¤. BeginPlayì—ì„œ ì„¤ì •í•˜ë©´ ë¨.
 	TArray<UStaticMeshComponent*> actors;
 	GetComponents<UStaticMeshComponent>(actors);
-	for (const auto& elem : actors)
+	for (auto const& elem : actors)
 	{
 		if (elem->IsA<UStaticMeshComponent>())
 		{
 			UStaticMeshComponent* mesh = Cast<UStaticMeshComponent>(elem);
-			SceneCapturer->ShowOnlyComponent(mesh);
+			if (SceneCapturer)
+			{
+				SceneCapturer->ShowOnlyComponent(mesh);
+			}
 			mesh->SetCollisionProfileName(FName(TEXT("ServerInteraction")));
 		}
 	}
+
 
 	//InformationStr = TEXT("Press 'E' key to get");
 }
 
 bool AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	if (IsNetMode(NM_DedicatedServer))
 	{
 		check(requester);
 		ARoomEscapeFPSPlayerState* ps = requester->GetPlayerStateChecked<ARoomEscapeFPSPlayerState>();
-		if (ItemType == EItemType::Flash && !ps->IsFirstGet(ItemType))
+		if (ItemType == EItemType::FLASH && not ps->IsFirstGet(ItemType))
+		{
 			return false;
+		}
 
 		Helper::SetActorActive(this, false);
 		int32 id = ps->GetPlayerId();
-		auto AddItemToPlayerInventory = [this, &ps]()
+		auto const AddItemToPlayerInventory = [this, &ps](ARoomEscapeFPSPlayerController* pc)
 		{
-			// Æ©Åä¸®¾ó UI¸¦ ÄÑÁà¾ß ÇÏ´Â Æ¯¼ö ¾ÆÀÌÅÛÅ¸ÀÔ¿¡ ´ëÇÑ Ã³¸®.
+			// íŠœí† ë¦¬ì–¼ UIë¥¼ ì¼œì¤˜ì•¼ í•˜ëŠ” íŠ¹ìˆ˜ ì•„ì´í…œíƒ€ì…ì— ëŒ€í•œ ì²˜ë¦¬.
 			if (ps->IsFirstGet(ItemType) && bNeedsUINotify)
 			{
-				ps->ClientProcessHUDOnFirstItemGet(this);
+				pc->ClientProcessHUDOnFirstItemGet(this);
 			}
 			if (AdditionalItemType != EItemType::NONE)
-			{	// ÈÄ·¹½¬ È¹µæÀÇ °æ¿ì, ÈÄ·¹½¬ È¹µæ°ú ÇÔ²² ¹èÅÍ¸®µµ ÀÏºÎ ÃæÀüÇØÁà¾ß ÇÑ´Ù.
+			{	// í›„ë ˆì‰¬ íšë“ì˜ ê²½ìš°, í›„ë ˆì‰¬ íšë“ê³¼ í•¨ê»˜ ë°°í„°ë¦¬ë„ ì¼ë¶€ ì¶©ì „í•´ì¤˜ì•¼ í•œë‹¤.
 				ps->AddItemToInventory(AdditionalItemType, AdditionalGetCount);
 			}
 			ps->AddItemToInventory(ItemType, DefaultGetCount);
 		};
 		Helper::ServerImplementToClient(GetWorld(), id, AddItemToPlayerInventory);
 
-		if (ItemType == EItemType::Flash)
+		if (ItemType == EItemType::FLASH)
 		{
-			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::EFindLantern, ENextInformationType::ESolveClue_1, 1);
+			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::FIND_LANTERN, ENextInformationType::SOLVE_CLUE_1, 1);
 		}
 		Destroy();
 	}
@@ -93,8 +103,10 @@ bool AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* 
 
 void AGetableObject::CaptureCurrentScene()
 {
-	if (SceneCapturer)
+	if (not SceneCapturer)
 	{
-		SceneCapturer->CaptureScene();
+		return;
 	}
+	
+	SceneCapturer->CaptureScene();
 }

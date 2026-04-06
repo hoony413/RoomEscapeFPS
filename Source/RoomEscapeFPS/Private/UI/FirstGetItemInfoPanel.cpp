@@ -2,19 +2,17 @@
 
 
 #include "UI/FirstGetItemInfoPanel.h"
+#include "Managers/UISubsystem.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
-#include "Runtime/UMG/Public/Blueprint/WidgetBlueprintLibrary.h"
 #include "Kismet/KismetRenderingLibrary.h"
 
 void UFirstGetItemInfoPanel::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(GetOwningPlayer(), this);
-	GetOwningPlayer()->SetShowMouseCursor(true);
-	if (CloseButton && CloseButton->OnClicked.IsBound() == false)
+	if (CloseButton && not CloseButton->OnClicked.IsBound())
 	{
 		CloseButton->OnClicked.AddDynamic(this, &UFirstGetItemInfoPanel::OnClickedCloseButton);
 	}
@@ -38,7 +36,9 @@ void UFirstGetItemInfoPanel::SetItemDescText(const FString& InStr)
 }
 void UFirstGetItemInfoPanel::OnClickedCloseButton()
 {
-	UWidgetBlueprintLibrary::SetInputMode_GameOnly(GetOwningPlayer());
-	GetOwningPlayer()->SetShowMouseCursor(false);
-	RemoveFromParent();
+	UUISubsystem* uiSubsystem = GetGameInstance()->GetSubsystem<UUISubsystem>();
+	if (uiSubsystem)
+	{
+		uiSubsystem->CloseWidget(this);
+	}
 }

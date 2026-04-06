@@ -3,43 +3,46 @@
 
 #include "UI/NoticePanel.h"
 #include "Components/TextBlock.h"
+#include "Helper/Helper.h"
+#include "Managers/UISubsystem.h"
 
 void UNoticePanel::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
 {
 	Super::OnAnimationFinished_Implementation(Animation);
-	if (!bReverseAnim && Animation == AnimArray[0])
+	if (not bReverseAnim && Animation == AnimArray[0])
 	{
 		bReverseAnim = true;
 		PlayAnimation(AnimArray[0], 0.f, 1, EUMGSequencePlayMode::Reverse);
 	}
 	else if (bReverseAnim)
 	{
-		RemoveFromParent();
+		UUISubsystem* uiSubsystem = GetGameInstance()->GetSubsystem<UUISubsystem>();
+		if (uiSubsystem)
+		{
+			uiSubsystem->CloseWidget(this);
+		}
 	}
 }
 
 void UNoticePanel::OpenNotice(ENoticeType InType)
 {
-	SetWidgetAnimation();
-
-	if (InType == ENoticeType::ESuccess)
+	if (InType == ENoticeType::SUCCESS)
 	{
 		NoticeTextBox->SetText(FText::FromName(FName(TEXT("SUCCESS"))));
 	}
-	else if(InType == ENoticeType::EFailed)
+	else if (InType == ENoticeType::FAILED)
 	{
 		NoticeTextBox->SetText(FText::FromName(FName(TEXT("FAILED"))));
 	}
-	else if (InType == ENoticeType::EOpenNextDoor)
+	else if (InType == ENoticeType::OPEN_NEXT_DOOR)
 	{
 		NoticeTextBox->SetText(FText::FromName(FName(TEXT("DOOR UNLOCKED!"))));
 	}
-	else if (InType == ENoticeType::EDoorLocked)
+	else if (InType == ENoticeType::DOOR_LOCKED)
 	{
 		NoticeTextBox->SetText(FText::FromName(FName(TEXT("Door is locked"))));
 	}
 
-	AddToPlayerScreen();
 	bReverseAnim = false;
 	PlayAnimation(AnimArray[0]);
 }

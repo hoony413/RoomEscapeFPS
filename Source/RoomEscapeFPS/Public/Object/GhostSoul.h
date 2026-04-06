@@ -3,17 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Object/FreelistObjectInterface.h"
 #include "GameFramework/Pawn.h"
 #include "GhostSoul.generated.h"
 
+class UFloatingPawnMovement;
+class USphereComponent;
+class UBoxComponent;
 /**
- * »ý¼º: GhostSpawner->GhostFreelist ÀÌÈÄ GhostAIController¿¡¼­ ¾×ÅÍ Á¦¾î
- * ¼Ò¸ê(Deactive): Ghost(ÇÇ°Ý ÆÇÁ¤¹ÞÀ½)->GhostAIController(»ç¶óÁü »óÅÂ º¯°æ)->
- *					Ghost(»ç¶óÁü ¿¬Ãâ ÈÄ Á¾·á µ¨¸®°ÔÀÌÆ®)->GhostSpawner(¿ÀºêÁ§Æ® ¹Ý³³)->GhostFreelist
+ * ìƒì„±: GhostSpawner->GhostFreelist ì´í›„ GhostAIControllerì—ì„œ ì•¡í„° ì œì–´
+ * ì†Œë©¸(Deactive): Ghost(í”¼ê²© íŒì •ë°›ìŒ)->GhostAIController(ì‚¬ë¼ì§ ìƒíƒœ ë³€ê²½)->
+ *					Ghost(ì‚¬ë¼ì§ ì—°ì¶œ í›„ ì¢…ë£Œ ë¸ë¦¬ê²Œì´íŠ¸)->GhostSpawner(ì˜¤ë¸Œì íŠ¸ ë°˜ë‚©)->GhostFreelist
  */
 UCLASS()
-class ROOMESCAPEFPS_API AGhostSoul : public APawn, public IFreelistObjectInterface
+class ROOMESCAPEFPS_API AGhostSoul : public APawn
 {
 	GENERATED_BODY()
 	
@@ -22,52 +24,40 @@ public:
 	AGhostSoul();
 
 #if WITH_EDITOR
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	class UBoxComponent* GetBoundingBox();
+	UBoxComponent* GetBoundingBox();
 
-	virtual bool IsInFreeList() override;
-	virtual void SetIsInFreeList(bool bFreeList) override;
-
-	UFUNCTION()
-		void SetAsDead();
-
-	virtual void Tick(float DeltaTime) override;
+	void Tick(float DeltaTime) override;
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	UFUNCTION()
-		void DelayActivateParticle();
-
-	UPROPERTY()
-		bool bIsInFreeList;
+	void BeginPlay() override;
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
-		class UStaticMeshComponent* BodyMesh;
+	TObjectPtr<UStaticMeshComponent> BodyMesh;
 
 	UPROPERTY(EditAnywhere, Category = Collision, meta = (AllowPrivateAccess = "true"))
-		class USphereComponent* SphereCol;
+	TObjectPtr<USphereComponent> SphereCol;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UBoxComponent* MoveToLocationBoundingBox;
+	TObjectPtr<UBoxComponent> MoveToLocationBoundingBox;
 
 	UPROPERTY(EditAnywhere, Category = Particle, meta = (AllowPrivateAccess = "true"))
-		class UParticleSystemComponent* GhostParticle;
+	TObjectPtr<UParticleSystemComponent> GhostParticle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		class UFloatingPawnMovement* GhostMovementComponent;
+	TObjectPtr<UFloatingPawnMovement> GhostMovementComponent;
 
 	UPROPERTY(/*Replicated, */EditAnywhere, BlueprintReadOnly, Category = "Ghost Col Size", Meta = (AllowPrivateAccess = "true"))
-		float SphereRadius;
+	float SphereRadius;
 
 	UPROPERTY(/*Replicated, */EditAnywhere, BlueprintReadOnly, Category = "Ghost Movement Target Pos", Meta = (AllowPrivateAccess = "true"))
-		FVector BonudingBoxSize;
+	FVector BonudingBoxSize;
 
 	FTimerHandle EmitterDelayTimer;
 };
