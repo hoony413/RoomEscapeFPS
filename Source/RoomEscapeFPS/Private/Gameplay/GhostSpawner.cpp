@@ -35,7 +35,7 @@ void AGhostSpawner::BeginPlay()
 void AGhostSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AGhostSpawner, fSpawnTime);
+	DOREPLIFETIME_CONDITION(AGhostSpawner, fSpawnTime, COND_InitialOnly);
 	DOREPLIFETIME(AGhostSpawner, bActive);
 }
 

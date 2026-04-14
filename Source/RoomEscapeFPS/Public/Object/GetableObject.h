@@ -7,6 +7,7 @@
 #include "Gameplay/TypeInfoHeader.h"
 #include "GetableObject.generated.h"
 
+class UPointLightComponent;
 /**
  * 획득 시 아이템 인벤토리에 추가되는 아이템(추가 여부는 override 가능).
  */
@@ -39,6 +40,8 @@ protected:
 	int32 DefaultGetCount{};
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneCaptureComponent2D> SceneCapturer;
+	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPointLightComponent> CaptureLight;
 
 	UPROPERTY(EditAnywhere, Category = ItemInfo, meta = (AllowPrivateAccess = "true"))
 	EItemType AdditionalItemType{};

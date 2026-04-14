@@ -23,24 +23,20 @@ struct ROOMESCAPEFPS_API FDynamicMtInfo
 {
 	GENERATED_BODY()
 public:
-	FDynamicMtInfo() 
-	{
-		StaticMeshComponent = nullptr;
-		DynamicMt = nullptr;
-	}
+	FDynamicMtInfo() = default;
 
 	UPROPERTY(EditAnywhere)
-		FName ParameterName;
+	FName ParameterName;
 	UPROPERTY(EditAnywhere)
-		EDynamicMtParamType ParameterType;
+	EDynamicMtParamType ParameterType;
 	UPROPERTY(EditAnywhere)
-		FFloatInterval ParameterValue;
+	FFloatInterval ParameterValue;
 	UPROPERTY(EditAnywhere)
-		FTwoVectors ParameterVector;
+	FTwoVectors ParameterVector;
 	UPROPERTY()
-		class UStaticMeshComponent* StaticMeshComponent;
+	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 	UPROPERTY()
-		class UMaterialInstanceDynamic* DynamicMt;
+	TObjectPtr<UMaterialInstanceDynamic> DynamicMt;
 };
 
 UCLASS()
@@ -49,17 +45,17 @@ class ROOMESCAPEFPS_API ADynamicMtInteractiveObject : public AInteractiveObject
 	GENERATED_BODY()
 
 public:
-	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
+	bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 	FDynamicMtInfo* FindDynamicMtMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex);
 
-	UFUNCTION(NetMulticast, Unreliable)
-		virtual void NetMulticast_DynamicMaterial(int32 MtIndex, EInteractiveObjectState InState);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_DynamicMaterial(int32 MtIndex, EInteractiveObjectState InState);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "DynamicMaterial Info", meta = (AllowPrivateAccess = "true"))
-		TArray<FDynamicMtInfo> DynamicMtArray;
+	TArray<FDynamicMtInfo> DynamicMtArray;
 };

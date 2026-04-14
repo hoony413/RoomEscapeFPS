@@ -12,7 +12,7 @@ void ASwitchButtonObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ASwitchButtonObject, bSwitchPressed);
-	DOREPLIFETIME(ASwitchButtonObject, Digit);
+	DOREPLIFETIME_CONDITION(ASwitchButtonObject, Digit, COND_InitialOnly);
 }
 bool ASwitchButtonObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
 {

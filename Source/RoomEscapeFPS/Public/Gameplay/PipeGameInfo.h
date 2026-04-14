@@ -43,11 +43,11 @@ public:
 
 	FORCEINLINE bool IsContainDirection(EPipeDirection InDir) const
 	{
-		return (uint8)InDir == ((uint8)InDir & (uint8)DirectionInfo);
+		return static_cast<uint8>(InDir) == (static_cast<uint8>(InDir) & static_cast<uint8>(DirectionInfo));
 	}
 	FORCEINLINE void AddDirection(EPipeDirection InDir)
 	{
-		DirectionInfo += (uint8)InDir;
+		DirectionInfo += static_cast<uint8>(InDir);
 	}
 	FORCEINLINE void SetPipeLocation(const FIntPoint& InLocation)
 	{
@@ -70,10 +70,10 @@ public:
 		{
 			if (curCount >= max)
 				break;
-			int32 randValue = FMath::RandRange((int32)0, (int32)3);
-			if (!IsContainDirection((EPipeDirection)(1 << randValue)))
+			int32 randValue = FMath::RandRange(static_cast<int32>(0), static_cast<int32>(3));
+			if (!IsContainDirection(static_cast<EPipeDirection>(1 << randValue)))
 			{
-				AddDirection((EPipeDirection)(1 << randValue));
+				AddDirection(static_cast<EPipeDirection>(1 << randValue));
 				++curCount;
 			}
 		}
@@ -83,10 +83,10 @@ public:
 	{
 		// 비트 회전 연산
 		DirectionInfo = _rotl(DirectionInfo, 1);
-		if (DirectionInfo > (uint8)EPipeDirection::MAX)
+		if (DirectionInfo > static_cast<uint8>(EPipeDirection::MAX))
 		{
-			DirectionInfo -= (uint8)EPipeDirection::MAX;
-			DirectionInfo |= (uint8)EPipeDirection::UP;
+			DirectionInfo -= static_cast<uint8>(EPipeDirection::MAX);
+			DirectionInfo |= static_cast<uint8>(EPipeDirection::UP);
 		}
 
 		return DirectionInfo;
@@ -167,22 +167,22 @@ public:
 	bool IsConnected(FPipeNode& InNode, EPipeDirection InDir)
 	{
 		bool bConnect = false;
-		uint8 reverseDir = _rotl((uint8)InDir, 2);
-		if (reverseDir >= (uint8)EPipeDirection::MAX)
+		uint8 reverseDir = _rotl(static_cast<uint8>(InDir), 2);
+		if (reverseDir >= static_cast<uint8>(EPipeDirection::MAX))
 		{
-			reverseDir /= (uint8)EPipeDirection::MAX;
+			reverseDir /= static_cast<uint8>(EPipeDirection::MAX);
 		}
 
 		const FPipeNode& nearbyNode = GetNearbyNode(InNode, InDir);
 		if (IsStartNode(InNode))
 		{
 			return InNode.IsContainDirection(EPipeDirection::LEFT) && 
-				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection((EPipeDirection)reverseDir);
+				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection(static_cast<EPipeDirection>(reverseDir));
 		}
 		else if (IsGoalNode(InNode))
 		{
 			return InNode.IsContainDirection(EPipeDirection::RIGHT) &&
-				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection((EPipeDirection)reverseDir);
+				InNode.IsContainDirection(InDir) && nearbyNode.IsContainDirection(static_cast<EPipeDirection>(reverseDir));
 		}
 
 		// 인접 노드가 자기자신이다(그리드 범위를 벗어남)

@@ -12,7 +12,6 @@
 UENUM()
 enum class ERotateState : uint8
 {
-	NONE = 0 UMETA(Hidden),
 	ROTATE_0,
 	ROTATE_90,
 	ROTATE_180,
@@ -28,22 +27,21 @@ class ROOMESCAPEFPS_API APaintingObject : public AInteractiveObject
 public:
 	APaintingObject();
 
-	virtual bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	bool OnInteraction(APawn* requester, class UPrimitiveComponent* InComp) override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	FORCEINLINE ERotateState GetRotateState() { return RotateState; }
+	FORCEINLINE ERotateState GetRotateState() const { return RotateState; }
 	FORCEINLINE void SetRotateState(ERotateState InState) { RotateState = InState; }
 
-	FORCEINLINE int32 GetDigit() { return Digit; }
+	FORCEINLINE int32 GetDigit() const { return Digit; }
 	FORCEINLINE void SetDigit(int32 InDigit) { Digit = InDigit; }
 
-	virtual void NetMulticast_Timeline_Implementation(int32 index, EInteractiveObjectState InState) override;
-
+	void NetMulticast_Timeline_Implementation(int32 index, EInteractiveObjectState InState) override;
 
 private:
 	UPROPERTY(Replicated)
-		ERotateState RotateState;
+	ERotateState RotateState;
 
 	UPROPERTY(Replicated)
-		int32 Digit;
+	int32 Digit;
 };

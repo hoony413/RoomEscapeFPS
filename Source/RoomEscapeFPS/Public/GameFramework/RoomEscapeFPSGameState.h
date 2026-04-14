@@ -42,8 +42,8 @@ void NetMulticastOpenDoorNotice();
 
 protected:
 	UPROPERTY(Transient)
-TArray<TObjectPtr<AInteractiveObject>> OnSolutionResultObject;
+	TArray<TObjectPtr<AInteractiveObject>> OnSolutionResultObject;
 
 	UPROPERTY(Replicated)
-int32 GhostDeadCount = 0;
+	int32 GhostDeadCount = 0;
 };

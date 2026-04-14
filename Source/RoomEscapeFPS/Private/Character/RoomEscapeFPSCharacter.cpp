@@ -22,7 +22,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
 #include "UI/InventoryPanel.h"
-#include "Net/UnrealNetwork.h"
 #include "UI/BaseHUDWidget.h"
 
 
@@ -96,12 +95,6 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 		Flash->AttachToComponent(CharacterMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
 	SpotLight->AttachToComponent(Flash, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
-}
-
-void ARoomEscapeFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ARoomEscapeFPSCharacter, IsFlash);
 }
 
 #if WITH_EDITOR
@@ -251,11 +244,17 @@ void ARoomEscapeFPSCharacter::ServerOnFlash_Implementation()
 	{
 		IsFlash = !IsFlash;
 		ps->ToggleBatteryReduceState(IsFlash);
+		MulticastOnFlashToggled(IsFlash);
 	}
 }
-void ARoomEscapeFPSCharacter::OnRep_IsFlash()
+void ARoomEscapeFPSCharacter::MulticastOnFlashToggled_Implementation(bool bIsFlash)
 {
-	FlashToggleAnimation();
+	if (IsNetMode(NM_DedicatedServer))
+	{
+		return;
+	}
+
+	FlashToggleAnimation(bIsFlash);
 }
 void ARoomEscapeFPSCharacter::ToggleFlash()
 {
@@ -307,45 +306,41 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 		return;
 	}
 
-	ps->AddItemToInventory(EItemType::CHARM, -1);
+	FRotator const SpawnRotation(GetControlRotation());
+
+	// 탄체 시작위치: 캐릭터 발 위치 + 캐릭터 방향벡터 * 스칼라 값(50)
+	FVector FirePosition =
+		GetCharacterMovement()->GetActorFeetLocation() +
+		(GetActorForwardVector() * 50);
+	FirePosition.Z += 120.f;
 
 	FActorSpawnParameters spawnParams;
 	spawnParams.Owner = this;
 	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	if (ACharmProjectile* proj = GetWorld()->SpawnActor<ACharmProjectile>(CharmClass.LoadSynchronous(), spawnParams))
+	if (ACharmProjectile* proj = GetWorld()->SpawnActor<ACharmProjectile>(CharmClass.LoadSynchronous(), FirePosition, SpawnRotation, spawnParams))
 	{
-		FRotator const SpawnRotation = GetControlRotation();
-
-		// 탄체 시작위치: 캐릭터 발 위치 + 캐릭터 방향벡터 * 스칼라 값(50)
-		FVector FirePosition =
-			GetCharacterMovement()->GetActorFeetLocation() +
-			(GetActorForwardVector() * 50);
-		FirePosition.Z += 120.f;
+		ps->AddItemToInventory(EItemType::CHARM, -1);
 
 		// 격발은 NetMulticast로.
 		proj->Fire(FirePosition, SpawnRotation.Vector());
 	}
 }
-void ARoomEscapeFPSCharacter::FlashToggleAnimation()
+void ARoomEscapeFPSCharacter::FlashToggleAnimation(bool bIsFlashOn)
 {
 	if (FlashAnimation != nullptr)
 	{
 		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
 		if (AnimInstance != nullptr)
 		{
-			if (not IsFlash)
+			if (not bIsFlashOn)
 			{
 				AnimInstance->Montage_JumpToSection("End");
-				GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
-				GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
-					&ARoomEscapeFPSCharacter::ToggleFlash, 0.2f, false, 0.2f);
+				ToggleFlash();
 			}
 			else
 			{
 				AnimInstance->Montage_Play(FlashAnimation, 1.f);
-				GetWorld()->GetTimerManager().ClearTimer(FlashTimer);
-				GetWorld()->GetTimerManager().SetTimer(FlashTimer, this,
-					&ARoomEscapeFPSCharacter::ToggleFlash, 0.2f, false, 0.2f);
+				ToggleFlash();
 			}
 		}
 	}

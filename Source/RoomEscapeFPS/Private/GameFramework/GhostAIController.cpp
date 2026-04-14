@@ -18,7 +18,7 @@ AGhostAIController::AGhostAIController()
 void AGhostAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	//SetGhostState(EGhostStateMachine::IDLE);
+	SetGhostState(EGhostStateMachine::IDLE);
 	bActive = true;
 	fDelta = 0.f;
 }

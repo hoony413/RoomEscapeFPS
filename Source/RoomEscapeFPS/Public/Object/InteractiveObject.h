@@ -106,7 +106,7 @@ protected:
 
 	// 타임라인 애니메이션 멀티캐스트
 	UFUNCTION(NetMulticast, Reliable)
-	virtual void NetMulticast_Timeline(int32 index, EInteractiveObjectState InState);
+	void NetMulticast_Timeline(int32 index, EInteractiveObjectState InState);
 	virtual void SetTimeline();
 	FTimelineInfo* FindTimelineMeshComponent(class UStaticMeshComponent* InMesh, int32& OutIndex);
 

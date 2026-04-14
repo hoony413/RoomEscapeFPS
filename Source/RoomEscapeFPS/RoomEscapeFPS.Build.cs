@@ -9,7 +9,7 @@ public class RoomEscapeFPS : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[]
-        { "Core", "CoreUObject", "Engine", "InputCore", "AIModule", "HeadMountedDisplay", "UMG", "XRBase", "AssetRegistry", "CommonUI", "CommonInput", "DeveloperSettings", "ModelViewViewModel", "EnhancedInput"});
+        { "Core", "CoreUObject", "Engine", "InputCore", "AIModule", "HeadMountedDisplay", "UMG", "XRBase", "AssetRegistry", "CommonUI", "CommonInput", "DeveloperSettings", "ModelViewViewModel", "EnhancedInput", "Niagara"});
         PrivateDependencyModuleNames.AddRange(new string[]{ "Slate", "SlateCore", "Paper2D"});
 
     }

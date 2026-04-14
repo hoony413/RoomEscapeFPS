@@ -13,9 +13,9 @@ void APaintingObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APaintingObject, RotateState);
-	DOREPLIFETIME(APaintingObject, Digit);
+	DOREPLIFETIME_CONDITION(APaintingObject, Digit, COND_InitialOnly);
 }
-bool APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent* InComp)
+bool APaintingObject::OnInteraction(APawn* requester, UPrimitiveComponent* InComp)
 {
 	ERotateState cachedRotateState = RotateState;
 	if (IsNetMode(NM_DedicatedServer))
@@ -26,7 +26,7 @@ bool APaintingObject::OnInteraction(APawn* requester, class UPrimitiveComponent*
 		}
 		else
 		{
-			RotateState = (ERotateState)((uint8)RotateState + 1u);
+			RotateState = static_cast<ERotateState>(static_cast<uint8>(RotateState) + 1u);
 		}
 	}
 
@@ -59,7 +59,6 @@ void APaintingObject::NetMulticast_Timeline_Implementation(int32 index, EInterac
 	//		TimelineMeshes[index].StaticMeshComponent->GetRelativeRotation().Pitch;
 	//	break;
 	//}
-	// 이미 회전 처리가 되었기 때문에, 회전 이전 초기값을 구하려면 -1 해야 한다.
-	StartCurveValue = (((uint8)RotateState - 1u) * 90) % 360;
+	StartCurveValue = static_cast<uint8>(RotateState) * 90 % 360;
 	TimelineMeshes[index].Timeline.PlayFromStart();
 }

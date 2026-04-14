@@ -37,7 +37,7 @@ void AInteractiveObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AInteractiveObject, TimelineMeshes);
-	DOREPLIFETIME(AInteractiveObject, bIsNonInteractable);
+	DOREPLIFETIME_CONDITION(AInteractiveObject, bIsNonInteractable, COND_InitialOnly);
 	DOREPLIFETIME(AInteractiveObject, SolutionResultType);
 }
 

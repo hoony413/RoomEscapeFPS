@@ -15,6 +15,7 @@ ASolutionWrapper::ASolutionWrapper()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 	bIsCleared = false;
 	ParentComp = CreateDefaultSubobject<USceneComponent>(TEXT("Parent"));
 	ParentComp->SetupAttachment(RootComponent);
@@ -73,7 +74,7 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 					if (obj)
 					{
 						int32 digit = obj->GetDigit();
-						answer += FMath::RoundToInt32(FMath::Pow(10.f, static_cast<float>(digit))) * static_cast<int32>(obj->GetRotateState());
+					answer += FMath::RoundToInt32(FMath::Pow(10.f, static_cast<float>(digit))) * static_cast<int32>(obj->GetRotateState());
 					}
 				}
 			}

@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "RoomEscapeFPSCharacter.generated.h"
 
+class ACharmProjectile;
 class USpotLightComponent;
 class USphereComponent;
 class UInputComponent;
@@ -41,12 +42,11 @@ class ARoomEscapeFPSCharacter : public ACharacter
 	TObjectPtr<USphereComponent> InteractSphere;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TSoftClassPtr<USphereComponent> CharmClass;
+	TSoftClassPtr<ACharmProjectile> CharmClass;
 	
 public:
 	ARoomEscapeFPSCharacter();
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void Tick(float DeltaTime) override;
 
 #if WITH_EDITOR
@@ -78,8 +78,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Trace Scalar")
 	float ArmRange;
 
-	FTimerHandle FlashTimer;
-
 	UFUNCTION()
 	void OnUse();
 
@@ -105,22 +103,20 @@ protected:
 	UFUNCTION(Reliable, Server, WithValidation)
 	void ServerOnFlash();
 
-	UFUNCTION()
-	void OnRep_IsFlash();
+	UFUNCTION(Reliable, NetMulticast)
+	void MulticastOnFlashToggled(bool bIsFlash);
 
 	UFUNCTION(Reliable, Server, WithValidation)
 	void ServerOnFire();
 
 	void ToggleFlash();
 
-	UFUNCTION()
-	void FlashToggleAnimation();
+	void FlashToggleAnimation(bool bIsFlashOn);
 
 private:
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "InteractSpehere", Meta = (AllowPrivateAccess = "true"))
 	float SphereRadius;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_IsFlash)
 	bool IsFlash = false;
 	bool IsLooking = false;
 };

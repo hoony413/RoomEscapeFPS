@@ -36,10 +36,10 @@ class ARoomEscapeFPSGameMode : public AGameModeBase
 public:
 	ARoomEscapeFPSGameMode();
 
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 	// 플레이어 접속 시 처리할 액션.
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+	void PostLogin(APlayerController* NewPlayer) override;
 
 	// 1번 단서의 답: 170 : 1010 1010
 	// 2번 단서의 답: 132(서 동 남)

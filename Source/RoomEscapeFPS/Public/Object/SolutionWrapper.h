@@ -19,28 +19,29 @@ class ROOMESCAPEFPS_API ASolutionWrapper : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ASolutionWrapper();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 	UFUNCTION(Server, Reliable)
-		void ServerOnStateChanged();
+	void ServerOnStateChanged();
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void Tick(float DeltaTime) override;
 
 protected:
 	UPROPERTY()
-		class USceneComponent* ParentComp;
+	TObjectPtr<USceneComponent> ParentComp;
 	UPROPERTY()
-		TArray<class UChildActorComponent*> ChildActors;
+	TArray<TObjectPtr<UChildActorComponent>> ChildActors;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Solution Info", meta = (AllowPrivateAccess = "true"))
-		EServerSolutionType SolutionType;
+	EServerSolutionType SolutionType;
+
 	UPROPERTY(Replicated)
-		bool bIsCleared;
+	bool bIsCleared;
 };

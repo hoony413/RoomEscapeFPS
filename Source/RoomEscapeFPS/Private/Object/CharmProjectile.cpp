@@ -2,6 +2,8 @@
 
 
 #include "Object/CharmProjectile.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -124,8 +126,8 @@ void ACharmProjectile::NetMulticastProjectileExplode_Implementation()
 {
 	if (IsNetMode(NM_Client))
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
-			ExplosionParticle.LoadSynchronous(), GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), 
+			ExplosionObj.LoadSynchronous(), GetActorLocation(), FRotator::ZeroRotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease);
 	}
 	else if (IsNetMode(NM_DedicatedServer))
 	{

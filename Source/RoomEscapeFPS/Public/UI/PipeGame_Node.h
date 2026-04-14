@@ -16,9 +16,8 @@ class UButton;
 class UImage;
 
 UENUM()
-enum class EAnimationIndex
+enum class EAnimationIndex : uint8
 {
-	NONE = 0 UMETA(Hidden),
 	ROTATE_90,
 	ROTATE_180,
 	ROTATE_270,
@@ -33,7 +32,7 @@ class ROOMESCAPEFPS_API UPipeGame_Node : public UBaseWidget
 	GENERATED_BODY()
 	
 public:
-	void InitializePipeNode(FPipeNode& InNode, uint8 InGridSize);
+	void InitializePipeNode(FPipeNode const& InNode, uint8 InGridSize);
 
 	void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 

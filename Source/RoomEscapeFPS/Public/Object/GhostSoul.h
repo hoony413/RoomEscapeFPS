@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NiagaraSystem.h"
 #include "GameFramework/Pawn.h"
 #include "GhostSoul.generated.h"
 
@@ -47,9 +48,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> MoveToLocationBoundingBox;
 
-	UPROPERTY(EditAnywhere, Category = Particle, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UParticleSystemComponent> GhostParticle;
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> GhostParticle;
 
+	UPROPERTY(EditAnywhere, Category = Niagara, meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UNiagaraSystem> GhostParticleObj;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UFloatingPawnMovement> GhostMovementComponent;
 

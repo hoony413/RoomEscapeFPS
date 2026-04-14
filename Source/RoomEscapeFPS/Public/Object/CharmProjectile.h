@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "CharmProjectile.generated.h"
 
+class UNiagaraSystem;
 class UProjectileMovementComponent;
 class USphereComponent;
 
@@ -36,7 +37,7 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastFire(const FVector& pos, const FVector& dir);
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastProjectileExplode();
 
 public:	
@@ -50,13 +51,13 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> SphereCol;
 
-	UPROPERTY(EditAnywhere, Category = Particle, meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UParticleSystem> ExplosionParticle;
+	UPROPERTY(EditAnywhere, Category = Niagara, meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UNiagaraSystem> ExplosionObj;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProjectileMovementComponent> ProjMovement;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Projectile Col Size", Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile Col Size", Meta = (AllowPrivateAccess = "true"))
 	float SphereRadius;
 
 	TWeakObjectPtr<class AActor> Instigator;

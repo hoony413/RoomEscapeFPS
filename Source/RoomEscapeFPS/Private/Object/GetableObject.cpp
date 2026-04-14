@@ -8,6 +8,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "Gameplay/TypeInfoHeader.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Components/PointLightComponent.h"
 #include "Helper/Helper.h"
 
 AGetableObject::AGetableObject()
@@ -29,6 +30,26 @@ AGetableObject::AGetableObject()
 		SceneCapturer->bCaptureOnMovement = false;
 		SceneCapturer->MaxViewDistanceOverride = -1.f;
 		SceneCapturer->SetupAttachment(DefaultMesh);
+
+		SceneCapturer->ShowFlags.SetFog(false);
+		SceneCapturer->ShowFlags.SetVolumetricFog(false);
+		SceneCapturer->ShowFlags.SetDynamicShadows(false);
+		SceneCapturer->ShowFlags.SetAtmosphere(false);
+		SceneCapturer->ShowFlags.SetBloom(false);
+		SceneCapturer->ShowFlags.SetMotionBlur(false);
+		SceneCapturer->ShowFlags.SetEyeAdaptation(false);
+
+		SceneCapturer->PostProcessBlendWeight = 1.0f;
+		SceneCapturer->PostProcessSettings.bOverride_AutoExposureMethod = true;
+		SceneCapturer->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;
+		SceneCapturer->PostProcessSettings.bOverride_AutoExposureBias = true;
+		SceneCapturer->PostProcessSettings.AutoExposureBias = 10.0f;
+
+		CaptureLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("CaptureLight"));
+		CaptureLight->SetupAttachment(SceneCapturer);
+		CaptureLight->Intensity = 0.f;
+		CaptureLight->AttenuationRadius = 300.f;
+		CaptureLight->CastShadows = false;
 	}
 
 	bNeedsUINotify = true;
@@ -107,6 +128,16 @@ void AGetableObject::CaptureCurrentScene()
 	{
 		return;
 	}
-	
+
+	if (CaptureLight)
+	{
+		CaptureLight->SetIntensity(5000.f);
+	}
+
 	SceneCapturer->CaptureScene();
+
+	if (CaptureLight)
+	{
+		CaptureLight->SetIntensity(0.f);
+	}
 }

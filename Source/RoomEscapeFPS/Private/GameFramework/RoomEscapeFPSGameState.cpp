@@ -43,7 +43,7 @@ void ARoomEscapeFPSGameState::IncreaseGhostDeadCount()
 		}
 	}
 }
-void ARoomEscapeFPSGameState::AddToSolutionResultObject(class AInteractiveObject* InObj)
+void ARoomEscapeFPSGameState::AddToSolutionResultObject(AInteractiveObject* InObj)
 {
 	OnSolutionResultObject.Add(InObj);
 }

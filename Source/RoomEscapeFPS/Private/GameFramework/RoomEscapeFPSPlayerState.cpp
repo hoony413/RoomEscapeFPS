@@ -136,10 +136,10 @@ void ARoomEscapeFPSPlayerState::InitializePipeGame(uint8 InGridSize)
 				// 0 ~ 2개의 방향을 추가
 				if (FMath::RandBool())
 				{
-					elem.SetRandomDir(FMath::RandRange((int32)0, (int32)2));
+					elem.SetRandomDir(FMath::RandRange(static_cast<int32>(0), static_cast<int32>(2)));
 				}
 				// 파이프 회전
-				int32 count = FMath::RandRange((int32)1, (int32)3);
+				int32 count = FMath::RandRange(static_cast<int32>(1), static_cast<int32>(3));
 				for (int32 i = 0; i < count; ++i)
 				{
 					elem.RotatePipe();
@@ -417,14 +417,14 @@ void ARoomEscapeFPSPlayerState::UpdateBatteryRemainValue(int32 InDelta)
 void ARoomEscapeFPSPlayerState::UpdateFlashIntensityByBattery()
 {
 	uint32 batteryRemain = GetItemCount(EItemType::BATTERY_POWER);
-	fFlashIntensity = 100000.0f;
+	fFlashIntensity = 10000.0f;
 	if (0u >= batteryRemain)
 	{
 		fFlashIntensity = 0.f;
 	}
 	else if (100u >= batteryRemain)
 	{
-		fFlashIntensity = 20000.0f;
+		fFlashIntensity = 2000.0f;
 	}
 }
 void ARoomEscapeFPSPlayerState::OnRep_FlashIntensity()
@@ -469,6 +469,6 @@ void ARoomEscapeFPSPlayerState::OnRep_InventoryInfo()
 
 	// 배터리 잔량 업데이트(UI)
 	uint32 batteryRemain = GetItemCount(EItemType::BATTERY_POWER);
-	float fPercent = (float)batteryRemain / BatteryMaxValue;
+	float fPercent = static_cast<float>(batteryRemain) / BatteryMaxValue;
 	hud->GetInventoryPanel()->UpdateBatteryPower(fPercent);
 }

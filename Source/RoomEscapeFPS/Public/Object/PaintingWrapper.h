@@ -16,5 +16,5 @@ class ROOMESCAPEFPS_API APaintingWrapper : public ASolutionWrapper
 	
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 };

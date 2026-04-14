@@ -35,11 +35,11 @@ bool ARoomEscapeFPSGameMode::CheckAnswer(const int32 answer, EServerSolutionType
 	{
 		return answer == Clue_1_Answer;
 	}
-	else if (InType == EServerSolutionType::SOLUTION_2)
+	if (InType == EServerSolutionType::SOLUTION_2)
 	{
 		return answer == Clue_2_Answer;
 	}
-	else if (InType == EServerSolutionType::GHOST_DEAD_COUNT_TARGET)
+	if (InType == EServerSolutionType::GHOST_DEAD_COUNT_TARGET)
 	{
 		return answer >= GhostDeadCount_Target;
 	}

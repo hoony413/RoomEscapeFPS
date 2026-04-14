@@ -71,15 +71,14 @@ private:
 	EReplicateState CheckPipeAnswer();
 
 private:
-		
 	UPROPERTY(Replicated)
 	FPipeGameInfo PipeGameInfo;
 
 	UPROPERTY(ReplicatedUsing = OnRep_InitializePipeGame)
-	bool bInitializePipeGame = false;
+	bool bInitializePipeGame{};
 
 	UPROPERTY(ReplicatedUsing = OnRep_PipeGameSuccessInfo)
-	EReplicateState PipeGameSuccessInfo = EReplicateState::UNKNOWN;
+	EReplicateState PipeGameSuccessInfo{EReplicateState::UNKNOWN};
 
 //--------------------------------------- 파이프게임 관련
 

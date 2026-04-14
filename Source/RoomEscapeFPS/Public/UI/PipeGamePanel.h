@@ -6,6 +6,7 @@
 #include "UI/Base/BaseActivatableWidget.h"
 #include "PipeGamePanel.generated.h"
 
+struct FPipeNode;
 class UUniformGridPanel;
 class UButton;
 class UPipeGame_Node;
@@ -21,7 +22,7 @@ class ROOMESCAPEFPS_API UPipeGamePanel : public UBaseActivatableWidget
 
 public:
 	void NativeOnInitialized() override;
-	void InitializeGrid(TArray<struct FPipeNode>& PipeNodesInfo, uint8 InGridSize);
+	void InitializeGrid(TArray<FPipeNode> const& PipeNodesInfo, uint8 InGridSize);
 	void CheckCommittedAnswerAnimation(bool bSuccess);
 	void CloseUI();
 
@@ -51,5 +52,5 @@ private:
 	int32 GridSize;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PipeNode Widget")
-	TSoftClassPtr<UPipeGame_Node> NodeWidget;
+	TSubclassOf<UPipeGame_Node> NodeWidget;
 };

@@ -15,7 +15,11 @@
       "Bash(xargs cat:*)",
       "Bash(find D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Public\\\\UI:*)",
       "Bash(ls -d Content/*/)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(cd /d D:\\\\RoomEscapeFPS)",
+      "Bash(grep -r \"Lumen\\\\|VirtualShadowMap\\\\|Nanite\" Config/)",
+      "Bash(grep -r \"WorldPartition\\\\|LevelStreaming\" Config/)",
+      "Bash(wc -l \"D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Public\"/*.h \"D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Private\"/*.cpp)"
     ]
   }
 }

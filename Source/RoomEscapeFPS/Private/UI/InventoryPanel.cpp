@@ -60,7 +60,7 @@ void UInventoryPanel::UpdateNextInformation(ENextInformationType curType, ENextI
 {
 	TArray<FStringFormatArg> args;
 	args.Add(InCount);
-	NextInformationText->SetText(FText::FromString(FString::Format(*NextInformationStrArray[(uint8)curType], args)));
+	NextInformationText->SetText(FText::FromString(FString::Format(*NextInformationStrArray[static_cast<int32>(curType)], args)));
 	if (CurrentType != nextType)
 	{
 		CurrentType = nextType;

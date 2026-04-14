@@ -2,6 +2,8 @@
 
 
 #include "Object/GhostSoul.h"
+
+#include "NiagaraComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"
@@ -30,13 +32,10 @@ AGhostSoul::AGhostSoul()
 	BodyMesh->CastShadow = false;
 	BodyMesh->SetupAttachment(RootComponent);
 
-	GhostParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GhostParticle"));
-	GhostParticle->SetupAttachment(RootComponent);
-	GhostParticle->bAutoActivate = true;
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleAsset(TEXT("ParticleSystem'/Game/Particles/GhostFlaming_Particle.GhostFlaming_Particle'"));
-	if (ParticleAsset.Succeeded())
+	if (not IsRunningDedicatedServer())
 	{
-		GhostParticle->SetTemplate(ParticleAsset.Object);
+		GhostParticle = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GhostNiagara"));
+		GhostParticle->SetupAttachment(RootComponent);
 	}
 
 	GhostMovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("GhostMovement"));
@@ -55,6 +54,11 @@ void AGhostSoul::BeginPlay()
 	Super::BeginPlay();
 
 	SphereCol->SetSphereRadius(100.f);
+
+	if (GhostParticle && GhostParticleObj.IsNull() == false)
+	{
+		GhostParticle->SetAsset(GhostParticleObj.LoadSynchronous());
+	}
 }
 UBoxComponent* AGhostSoul::GetBoundingBox()
 {

@@ -14,7 +14,7 @@ void UPipeGame_Node::OnAnimationFinished_Implementation(const UWidgetAnimation* 
 	Super::OnAnimationFinished_Implementation(Animation);
 }
 
-void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize)
+void UPipeGame_Node::InitializePipeNode(FPipeNode const& InNode, uint8 InGridSize)
 {
 	PipeNodeRef = InNode;
 	GridSize = InGridSize;
@@ -47,14 +47,14 @@ void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize)
 		{
 			uint8 a = 1 << i;
 			uint8 b = 1 << (i + 1);
-			if (i + 1 >= (uint8)EPipeType::MAX)
+			if (i + 1 >= static_cast<uint8>(EPipeType::MAX))
 			{
 				b = 1 << 0;
 			}
-			if (PipeNodeRef.IsContainDirection((EPipeDirection)a) &&
-				PipeNodeRef.IsContainDirection((EPipeDirection)b))
+			if (PipeNodeRef.IsContainDirection(static_cast<EPipeDirection>(a)) &&
+				PipeNodeRef.IsContainDirection(static_cast<EPipeDirection>(b)))
 			{
-				RotationInfo = i % (uint8)EPipeType::MAX;
+				RotationInfo = i % static_cast<uint8>(EPipeType::MAX);
 				PipeButton->SetRenderTransformAngle(90u * i);
 				break;
 			}
@@ -69,9 +69,9 @@ void UPipeGame_Node::InitializePipeNode(FPipeNode& InNode, uint8 InGridSize)
 
 		while (true)
 		{
-			if (!PipeNodeRef.IsContainDirection((EPipeDirection)(1 << i)))
+			if (!PipeNodeRef.IsContainDirection(static_cast<EPipeDirection>(1 << i)))
 			{
-				RotationInfo = i % (uint8)EPipeType::MAX;
+				RotationInfo = i % static_cast<uint8>(EPipeType::MAX);
 				PipeButton->SetRenderTransformAngle(90u * i);
 				break;
 			}
@@ -113,9 +113,13 @@ void UPipeGame_Node::OnClickedPipeButton()
 	// 회전(클라)
 	PipeNodeRef.RotatePipe();
 	RotationInfo++;
-	RotationInfo %= (uint8)EPipeType::MAX;
+	RotationInfo %= static_cast<uint8>(EPipeType::MAX);
 }
 void UPipeGame_Node::PlayResultAnimation()
 {
-	PlayAnimation(AnimArray[(int32)EAnimationIndex::RESULT]);
+	int32 const index = static_cast<int32>(EAnimationIndex::RESULT);
+	if (AnimArray.IsValidIndex(index))
+	{
+		PlayAnimation(AnimArray[index]);
+	}
 }

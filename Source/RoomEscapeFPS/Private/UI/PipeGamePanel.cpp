@@ -25,7 +25,7 @@ void UPipeGamePanel::NativeOnInitialized()
 	}
 }
 
-void UPipeGamePanel::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGridSize)
+void UPipeGamePanel::InitializeGrid(TArray<FPipeNode> const& PipeNodesInfo, uint8 InGridSize)
 {
 	GridSize = InGridSize;
 
@@ -36,9 +36,9 @@ void UPipeGamePanel::InitializeGrid(TArray<FPipeNode>& PipeNodesInfo, uint8 InGr
 		return;
 	}
 	int32 rowCol = 0;
-	for (auto& elem : PipeNodesInfo)
+	for (auto const& elem : PipeNodesInfo)
 	{
-		if (UPipeGame_Node* nodeWidget = CreateWidget<UPipeGame_Node>(this, NodeWidget.Get()))
+		if (UPipeGame_Node* nodeWidget = CreateWidget<UPipeGame_Node>(this, NodeWidget))
 		{
 			PipeGrid->AddChildToUniformGrid(nodeWidget, rowCol / InGridSize, rowCol % InGridSize);
 			nodeWidget->InitializePipeNode(elem, InGridSize);
