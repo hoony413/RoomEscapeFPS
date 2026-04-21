@@ -3,6 +3,8 @@
 
 #include "UI/InteractionPanel.h"
 #include "Components/TextBlock.h"
+#include "CommonActionWidget.h"
+#include "InputAction.h"
 
 void UInteractionPanel::NativeOnInitialized()
 {
@@ -11,8 +13,32 @@ void UInteractionPanel::NativeOnInitialized()
 
 void UInteractionPanel::SetText(const FText& txt)
 {
-	if (InfoText != nullptr)
+	if (IsValid(InfoText))
 	{
 		InfoText->SetText(txt);
 	}
+}
+
+void UInteractionPanel::SetInputAction(UInputAction* InUseAction)
+{
+	if (not IsValid(ActionWidget))
+	{
+		return;
+	}
+
+	if (_cachedUseAction == InUseAction)
+	{
+		return;
+	}
+
+	_cachedUseAction = InUseAction;
+
+	if (not IsValid(InUseAction))
+	{
+		ActionWidget->SetVisibility(ESlateVisibility::Collapsed);
+		return;
+	}
+
+	ActionWidget->SetEnhancedInputAction(InUseAction);
+	ActionWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 }

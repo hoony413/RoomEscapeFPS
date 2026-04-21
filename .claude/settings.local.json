@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:dev.epicgames.com)",
+      "Read(//c//**)",
+      "Bash(python3 *)"
+    ]
+  }
+}

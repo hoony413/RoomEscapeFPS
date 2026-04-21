@@ -11,6 +11,7 @@
  * 
  */
 
+class UActionDescWidget;
 class UImage;
 class UTextBlock;
 class UCanvasPanel;
@@ -33,23 +34,32 @@ public:
 	void UpdateNextInformation(ENextInformationType curType, ENextInformationType nextType, int32 InCount);
 
 protected:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(Transient, meta = (BindWidget))
 	TObjectPtr<UProgressBar> FlashProgressBar;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(Transient, meta = (BindWidget))
 	TObjectPtr<UCanvasPanel> CharmCanvasPanel;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(Transient, meta = (BindWidget))
 	TObjectPtr<UTextBlock> CharmCountText;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(Transient, meta = (BindWidget))
 	TObjectPtr<UImage> CrossHairImage;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(Transient, meta = (BindWidget))
 	TObjectPtr<UTextBlock> NextInformationText;
 
+	UPROPERTY(Transient, meta = (BindWidget))
+	TObjectPtr<UActionDescWidget> FireAction;
+
+	UPROPERTY(Transient, meta = (BindWidget))
+	TObjectPtr<UActionDescWidget> FlashAction;
+
+	UPROPERTY(Transient, meta = (BindWidget))
+	TObjectPtr<UActionDescWidget> JumpAction;
+
 	UPROPERTY(EditAnywhere)
-	TArray<FString> NextInformationStrArray;
+	TArray<FText> NextInformationStrArray;
 
 	ENextInformationType CurrentType{};
 	int32 CurrentCount{};

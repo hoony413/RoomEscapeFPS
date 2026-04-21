@@ -18,7 +18,7 @@ ASolutionWrapper::ASolutionWrapper()
 	bReplicates = true;
 	bIsCleared = false;
 	ParentComp = CreateDefaultSubobject<USceneComponent>(TEXT("Parent"));
-	ParentComp->SetupAttachment(RootComponent);
+	SetRootComponent(ParentComp);
 }
 
 void ASolutionWrapper::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -74,7 +74,7 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 					if (obj)
 					{
 						int32 digit = obj->GetDigit();
-					answer += FMath::RoundToInt32(FMath::Pow(10.f, static_cast<float>(digit))) * static_cast<int32>(obj->GetRotateState());
+						answer += FMath::RoundToInt32(FMath::Pow(10.f, static_cast<float>(digit))) * static_cast<int32>(obj->GetRotateState());
 					}
 				}
 			}
@@ -93,12 +93,16 @@ void ASolutionWrapper::ServerOnStateChanged_Implementation()
 			{
 			case EServerSolutionType::SOLUTION_1:
 				{
-					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::SOLVE_CLUE_1, ENextInformationType::SOLVE_CLUE_2, 1);
+					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::SOLVE_CLUE_1, ENextInformationType::SOLVE_CLUE_2, gm->GetSolveClue1CompleteCount());
 				}
 				break;
 			case EServerSolutionType::SOLUTION_2:
 				{
-					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::SOLVE_CLUE_2, ENextInformationType::CAPTURE_GHOST, 1);
+					Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::SOLVE_CLUE_2, ENextInformationType::CAPTURE_GHOST, gm->GetSolveClue2CompleteCount());
+				}
+				break;
+			default:
+				{
 				}
 				break;
 			}

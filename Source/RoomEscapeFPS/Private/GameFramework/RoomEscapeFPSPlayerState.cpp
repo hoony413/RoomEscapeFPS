@@ -211,7 +211,8 @@ void ARoomEscapeFPSPlayerState::CheckAndApplyPipeAnswer()
 		{
 			gs->OnCorrectAnswer(EServerSolutionType::PIPELINE_GAME_COMPLETE);
 		}
-		Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::PIPELINE_COMPLETE, ENextInformationType::RUNAWAY, 1);
+		ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
+		Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::PIPELINE_COMPLETE, ENextInformationType::RUNAWAY, gm->GetPipelineCompleteCount());
 	}
 }
 void ARoomEscapeFPSPlayerState::OnRep_PipeGameSuccessInfo()

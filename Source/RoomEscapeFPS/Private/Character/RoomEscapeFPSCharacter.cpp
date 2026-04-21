@@ -1,15 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Character/RoomEscapeFPSCharacter.h"
-//#include "RoomEscapeFPSProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "GameFramework/InputSettings.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
-#include "Kismet/GameplayStatics.h"
-#include "MotionControllerComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "TimerManager.h"
 #include "Components/SphereComponent.h"
@@ -21,6 +16,7 @@
 #include "Object/CharmProjectile.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
+#include "GameFramework/RoomEscapeFPSPlayerController.h"
 #include "UI/InventoryPanel.h"
 #include "UI/BaseHUDWidget.h"
 
@@ -181,25 +177,31 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(AInteractiveObject* InObj, bool bO
 		return;
 	}
 
-	APlayerController* pc = Cast<APlayerController>(GetController());
-	if (nullptr == pc)
+	ARoomEscapeFPSPlayerController* pc = Cast<ARoomEscapeFPSPlayerController>(GetController());
+	if (not IsValid(pc))
 	{
 		return;
 	}
 
 	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(pc->GetHUD());
-	if (nullptr == hud || nullptr == hud->GetHUDWidget())
+	if (not hud)
 	{
 		return;
 	}
 
-	UInteractionPanel* interactionPanel = hud->GetHUDWidget()->GetInteractionPanel();
-	if (nullptr == interactionPanel)
+	UBaseHUDWidget* hudWidget = hud->GetHUDWidget();
+	if (not hudWidget)
+	{
+		return;
+	}
+	
+	UInteractionPanel* interactionPanel = hudWidget->GetInteractionPanel();
+	if (not IsValid(interactionPanel))
 	{
 		return;
 	}
 
-	if (nullptr == InObj || not bOnOff)
+	if (not IsValid(InObj) || not bOnOff)
 	{
 		interactionPanel->SetVisibility(ESlateVisibility::Collapsed);
 		return;
@@ -212,7 +214,8 @@ void ARoomEscapeFPSCharacter::TurnOnOffWidget(AInteractiveObject* InObj, bool bO
 	}
 
 	interactionPanel->SetVisibility(ESlateVisibility::HitTestInvisible);
-	interactionPanel->SetText(FText::FromString(InObj->GetInformationMessage()));
+	interactionPanel->SetText(InObj->GetInformationMessage());
+	interactionPanel->SetInputAction(pc->GetUseAction());
 }
 
 void ARoomEscapeFPSCharacter::OnFlash()
@@ -327,10 +330,10 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 }
 void ARoomEscapeFPSCharacter::FlashToggleAnimation(bool bIsFlashOn)
 {
-	if (FlashAnimation != nullptr)
+	if (IsValid(FlashAnimation))
 	{
 		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (AnimInstance != nullptr)
+		if (IsValid(AnimInstance))
 		{
 			if (not bIsFlashOn)
 			{

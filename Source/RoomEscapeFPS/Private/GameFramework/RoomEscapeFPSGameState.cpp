@@ -3,9 +3,6 @@
 
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "GameFramework/RoomEscapeFPSGameMode.h"
-#include "GameFramework/RoomEscapeFPSPlayerState.h"
-#include "GameFramework/RoomEscapeFPSPlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "Object/InteractiveObject.h"
 #include "Gameplay/GhostSpawner.h"
 #include "Helper/Helper.h"
@@ -34,7 +31,7 @@ void ARoomEscapeFPSGameState::IncreaseGhostDeadCount()
 			{
 				gm->SetActiveGhostSpawner(false);
 				OnCorrectAnswer(EServerSolutionType::GHOST_DEAD_COUNT_TARGET);
-				Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::CAPTURE_GHOST, ENextInformationType::PIPELINE_COMPLETE, GhostDeadCount);
+				Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::CAPTURE_GHOST, ENextInformationType::PIPELINE_COMPLETE, gm->GetGhostDeadCountTarget());
 			}
 			else
 			{
@@ -89,7 +86,7 @@ void ARoomEscapeFPSGameState::SetActiveGhostSpawner(bool bActive)
 {
 	auto FindGhostSpawner = [&](AGhostSpawner* spawner) -> bool
 	{
-		if (nullptr != spawner)
+		if (IsValid(spawner))
 		{
 			return true;
 		}

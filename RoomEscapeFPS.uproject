@@ -16,6 +16,18 @@
 			]
 		}
 	],
+	"LocalizationDashboardSettings": {
+		"LocalizationTargets": [
+			{
+				"Name": "Game",
+				"NativeCulture": "ko",
+				"SupportedCulturesStatistics": [
+					{ "CultureName": "ko" },
+					{ "CultureName": "en" }
+				]
+			}
+		]
+	},
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",
@@ -23,6 +35,10 @@
 		},
 		{
 			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModel",
 			"Enabled": true
 		},
 		{

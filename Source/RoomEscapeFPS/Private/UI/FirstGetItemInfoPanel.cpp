@@ -18,20 +18,18 @@ void UFirstGetItemInfoPanel::NativeOnInitialized()
 	}
 }
 
-void UFirstGetItemInfoPanel::SetItemNameText(const FString& InStr)
+void UFirstGetItemInfoPanel::SetItemNameText(FText const& InText)
 {
 	if (ItemNameText)
 	{
-		FText txt = FText::FromString(InStr);
-		ItemNameText->SetText(txt);
+		ItemNameText->SetText(InText);
 	}
 }
-void UFirstGetItemInfoPanel::SetItemDescText(const FString& InStr)
+void UFirstGetItemInfoPanel::SetItemDescText(FText const& InText)
 {
 	if (ItemDescText)
 	{
-		FText txt = FText::FromString(InStr);
-		ItemDescText->SetText(txt);
+		ItemDescText->SetText(InText);
 	}
 }
 void UFirstGetItemInfoPanel::OnClickedCloseButton()

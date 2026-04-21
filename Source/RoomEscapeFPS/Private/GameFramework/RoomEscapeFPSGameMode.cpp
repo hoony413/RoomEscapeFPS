@@ -4,10 +4,7 @@
 #include "GameFramework/RoomEscapeFPSHUD.h"
 #include "GameFramework/RoomEscapeFPSGameState.h"
 #include "GameFramework/RoomEscapeFPSPlayerController.h"
-#include "Gameplay/GhostSpawner.h"
-#include "Character/RoomEscapeFPSCharacter.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Helper/Helper.h"
 
 ARoomEscapeFPSGameMode::ARoomEscapeFPSGameMode()
 	: Super()

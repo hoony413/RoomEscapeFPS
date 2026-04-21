@@ -23,8 +23,8 @@ public:
 	bool OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
 	virtual void CaptureCurrentScene();
 
-	FORCEINLINE const FString& GetItemNameStr() { return ItemNameStr; }
-	FORCEINLINE const FString& GetItemDescStr() { return ItemDescStr; }
+	FORCEINLINE FText const& GetItemName() const { return ItemName; }
+	FORCEINLINE FText const& GetItemDesc() const { return ItemDesc; }
 
 	FORCEINLINE bool IsNeedUINotify() { return bNeedsUINotify; }
 	FORCEINLINE EItemType GetItemType() { return ItemType; }
@@ -51,8 +51,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
 	bool bNeedsUINotify{};
 	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
-	FString ItemNameStr;
+	FText ItemName;
 	UPROPERTY(EditAnywhere, Category = UINotify, meta = (AllowPrivateAccess = "true"))
-	FString ItemDescStr;
+	FText ItemDesc;
 
 };

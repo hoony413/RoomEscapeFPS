@@ -6,7 +6,9 @@
 #include "UI/Base/BaseWidget.h"
 #include "InteractionPanel.generated.h"
 
+class UCommonActionWidget;
 class UImage;
+class UInputAction;
 class UTextBlock;
 
 /**
@@ -20,12 +22,15 @@ class ROOMESCAPEFPS_API UInteractionPanel : public UBaseWidget
 public:
 	void NativeOnInitialized() override;
 	void SetText(const FText& txt);
+	void SetInputAction(UInputAction* InUseAction);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> BackgroundImage;
+	TObjectPtr<UCommonActionWidget> ActionWidget;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> InfoText;
+
+	TWeakObjectPtr<UInputAction> _cachedUseAction;
 
 };

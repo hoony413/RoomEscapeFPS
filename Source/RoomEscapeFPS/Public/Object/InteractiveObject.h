@@ -93,7 +93,7 @@ public:
 	UFUNCTION()
 	virtual bool OnInteraction(APawn* requester, UPrimitiveComponent* InComp);
 
-	FORCEINLINE const FString& GetInformationMessage() const { return InformationStr; }
+	FORCEINLINE FText const& GetInformationMessage() const { return InformationMessage; }
 	FORCEINLINE UPrimitiveComponent* GetSolutionResultComp() const { return cachedSolutionResultComp; }
 
 	FORCEINLINE bool IsNonInteractable() const { return bIsNonInteractable; }
@@ -125,8 +125,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector LineTraceBoxSize;
 
-	UPROPERTY(EditAnywhere, Category = "Information Message")
-	FString InformationStr;
+	UPROPERTY(EditAnywhere, Category = UINotify)
+	FText InformationMessage;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UStaticMeshComponent> DefaultMesh;

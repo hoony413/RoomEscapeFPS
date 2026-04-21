@@ -21,8 +21,8 @@ public:
 
 	void NativeOnInitialized() override;
 
-	void SetItemNameText(const FString& InStr);
-	void SetItemDescText(const FString& InStr);
+	void SetItemNameText(FText const& InText);
+	void SetItemDescText(FText const& InText);
 
 protected:
 	UFUNCTION()

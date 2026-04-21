@@ -19,7 +19,8 @@
       "Bash(cd /d D:\\\\RoomEscapeFPS)",
       "Bash(grep -r \"Lumen\\\\|VirtualShadowMap\\\\|Nanite\" Config/)",
       "Bash(grep -r \"WorldPartition\\\\|LevelStreaming\" Config/)",
-      "Bash(wc -l \"D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Public\"/*.h \"D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Private\"/*.cpp)"
+      "Bash(wc -l \"D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Public\"/*.h \"D:\\\\RoomEscapeFPS\\\\Source\\\\RoomEscapeFPS\\\\Private\"/*.cpp)",
+      "Bash(grep -E \"\\\\.\\(cpp|h\\)$\")"
     ]
   }
 }

@@ -17,9 +17,9 @@ class ROOMESCAPEFPS_API AClueObject : public AGetableObject
 public:
 	AClueObject();
 
-	virtual bool OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
+	bool OnInteraction(class APawn* requester, class UPrimitiveComponent* InComp) override;
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 };

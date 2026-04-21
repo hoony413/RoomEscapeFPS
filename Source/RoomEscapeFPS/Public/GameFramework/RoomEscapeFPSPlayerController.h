@@ -27,6 +27,9 @@ public:
 	UFUNCTION()
 void OnTestKey();
 
+	UFUNCTION(BlueprintPure, Category = "Input")
+	UInputAction* GetUseAction() const { return _useAction; }
+
 	UFUNCTION(Client, Reliable)
 void ClientSetupHUD();
 

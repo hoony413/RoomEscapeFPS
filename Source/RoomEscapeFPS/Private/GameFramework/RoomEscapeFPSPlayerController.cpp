@@ -4,14 +4,11 @@
 #include "GameFramework/RoomEscapeFPSGameMode.h"
 #include "GameFramework/RoomEscapeFPSHUD.h"
 #include "GameFramework/RoomEscapeFPSPlayerState.h"
-#include "GameFramework/RoomEscapeFPSGameState.h"
 #include "Character/RoomEscapeFPSCharacter.h"
 #include "Object/GetableObject.h"
-#include "Net/UnrealNetwork.h"
 
 #include "Helper/Helper.h"
 #include "Managers/UISubsystem.h"
-#include "UI/PipeGamePanel.h"
 #include "UI/FirstGetItemInfoPanel.h"
 
 #include "EnhancedInputComponent.h"
@@ -255,8 +252,8 @@ void ARoomEscapeFPSPlayerController::ClientProcessHUDOnFirstItemGet_Implementati
 	}
 	if (UFirstGetItemInfoPanel* ItemInfoUI = uiSubsystem->OpenWidget<UFirstGetItemInfoPanel>(EActivatableWidgetType::FIRST_GET_ITEM_INFO))
 	{
-		ItemInfoUI->SetItemNameText(InObj->GetItemNameStr());
-		ItemInfoUI->SetItemDescText(InObj->GetItemDescStr());
+		ItemInfoUI->SetItemNameText(InObj->GetItemName());
+		ItemInfoUI->SetItemDescText(InObj->GetItemDesc());
 	}
 	ARoomEscapeFPSHUD* hud = Cast<ARoomEscapeFPSHUD>(GetHUD());
 	if (hud && InObj)

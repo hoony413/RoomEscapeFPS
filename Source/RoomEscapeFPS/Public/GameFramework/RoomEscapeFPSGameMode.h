@@ -47,12 +47,34 @@ public:
 
 	// 유령잡기 미니게임 온/오프(AGhostSpawner Trigger 동작)
 	void SetActiveGhostSpawner(bool bActive);
-	
+
+	FORCEINLINE int32 GetFindLanternCompleteCount() const { return FindLanternCompleteCount; }
+	FORCEINLINE int32 GetSolveClue1CompleteCount()  const { return SolveClue1CompleteCount; }
+	FORCEINLINE int32 GetSolveClue2CompleteCount()  const { return SolveClue2CompleteCount; }
+	FORCEINLINE int32 GetGhostDeadCountTarget()     const { return GhostDeadCount_Target; }
+	FORCEINLINE int32 GetPipelineCompleteCount()    const { return PipelineCompleteCount; }
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|Answers")
 	int32 Clue_1_Answer = 170;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|Answers")
 	int32 Clue_2_Answer = 132;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|CompleteCounts")
 	int32 GhostDeadCount_Target = 10;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|CompleteCounts")
+	int32 FindLanternCompleteCount = 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|CompleteCounts")
+	int32 SolveClue1CompleteCount = 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|CompleteCounts")
+	int32 SolveClue2CompleteCount = 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettings|CompleteCounts")
+	int32 PipelineCompleteCount = 1;
 };
 
 

@@ -15,7 +15,7 @@ AInteractiveObject::AInteractiveObject()
 	bReplicates = true;
 
 	ParentComp = CreateDefaultSubobject<USceneComponent>(TEXT("Parent"));
-	ParentComp->SetupAttachment(RootComponent);
+	SetRootComponent(ParentComp);
 
 	DefaultMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DefaultMesh"));
 	DefaultMesh->SetOnlyOwnerSee(false);
@@ -88,7 +88,7 @@ void AInteractiveObject::BeginPlay()
 
 void AInteractiveObject::SetTimeline()
 {
-	if (TimelineCurve != nullptr)
+	if (IsValid(TimelineCurve))
 	{
 		for (auto& elem : TimelineMeshes)
 		{

@@ -114,7 +114,8 @@ bool AGetableObject::OnInteraction(APawn* requester, class UPrimitiveComponent* 
 
 		if (ItemType == EItemType::FLASH)
 		{
-			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::FIND_LANTERN, ENextInformationType::SOLVE_CLUE_1, 1);
+			ARoomEscapeFPSGameMode* gm = Helper::GetGameMode(GetWorld());
+			Helper::UpdateNextUIInfo(GetWorld(), ENextInformationType::FIND_LANTERN, ENextInformationType::SOLVE_CLUE_1, gm->GetFindLanternCompleteCount());
 		}
 		Destroy();
 	}

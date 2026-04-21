@@ -48,7 +48,6 @@ enum class EServerSolutionResultType : uint8
 UENUM()
 enum class ENextInformationType : uint8
 {
-	NONE = 0 UMETA(Hidden),
 	FIND_LANTERN,		// interactive object
 	SOLVE_CLUE_1,		// solution wrapper
 	SOLVE_CLUE_2,		// solution wrapper

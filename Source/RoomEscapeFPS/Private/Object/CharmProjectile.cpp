@@ -85,7 +85,7 @@ void ACharmProjectile::NetMulticastFire_Implementation(const FVector& pos, const
 
 void ACharmProjectile::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (nullptr == OtherActor)
+	if (not IsValid(OtherActor))
 	{
 		return;
 	}

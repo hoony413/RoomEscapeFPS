@@ -27,7 +27,7 @@ namespace Helper
 	ROOMESCAPEFPS_API T* GetSubsystem(UWorld* world)
 	{
 		UGameInstance* gi = world->GetGameInstance();
-		return gi != nullptr ? gi->GetSubsystem<T>() : nullptr;
+		return IsValid(gi) ? gi->GetSubsystem<T>() : nullptr;
 	}
 
 	// world에서 pred 조건에 맞는 actor를 찾아준다.

@@ -6,6 +6,7 @@
 #include "Object/InteractiveObject.h"
 #include "SpawnableObject.generated.h"
 
+class AGetableObject;
 /**
  * 배터리, 플래시, 열쇠, 부적 등의 액터를 내부에서 스폰 가능한 오브젝트.
  */
@@ -19,15 +20,18 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> FlashObj;
+	TSoftClassPtr<AGetableObject> FlashObj;
+
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> BatteryObj;
+	TSoftClassPtr<AGetableObject> BatteryObj;
+
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> CharmObj;
+	TSoftClassPtr<AGetableObject> CharmObj;
+
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-		TSoftClassPtr<class AGetableObject> KeyObj;
+	TSoftClassPtr<AGetableObject> KeyObj;
 };

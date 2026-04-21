@@ -1,0 +1,13 @@
+﻿LocalKey,ko,en
+ui_confirm,확인,Confirm
+ui_cancel,취소,Cancel
+ui_close,닫기,Close
+ui_ok,확인,OK
+notice_success,성공,Success
+notice_failed,실패,Failed
+notice_door_unlocked,문이 열렸습니다!,Door Unlocked!
+notice_door_locked,문이 잠겨있습니다,Door is locked
+ui_open,열기,Open
+ui_loot,획득,Loot
+ui_search,탐색,Search
+ui_push,누르기,Push

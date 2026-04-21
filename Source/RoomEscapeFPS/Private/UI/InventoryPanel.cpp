@@ -58,9 +58,16 @@ void UInventoryPanel::UpdateCharmCount(int32 InCount)
 }
 void UInventoryPanel::UpdateNextInformation(ENextInformationType curType, ENextInformationType nextType, int32 InCount)
 {
-	TArray<FStringFormatArg> args;
+	FFormatOrderedArguments args;
 	args.Add(InCount);
-	NextInformationText->SetText(FText::FromString(FString::Format(*NextInformationStrArray[static_cast<int32>(curType)], args)));
+
+	int32 curTypeIndex = static_cast<int32>(curType);
+	if (not NextInformationStrArray.IsValidIndex(curTypeIndex))
+	{
+		return;
+	}
+	
+	NextInformationText->SetText(FText::Format(NextInformationStrArray[curTypeIndex], args));
 	if (CurrentType != nextType)
 	{
 		CurrentType = nextType;

@@ -75,10 +75,7 @@ void UPipeGame_Node::InitializePipeNode(FPipeNode const& InNode, uint8 InGridSiz
 				PipeButton->SetRenderTransformAngle(90u * i);
 				break;
 			}
-			else
-			{
-				i++;
-			}
+			i++;
 		}
 	}
 	else if (type == EPipeType::FOUR)
