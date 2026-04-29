@@ -39,7 +39,7 @@ void ARoomEscapeFPSPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, InventoryInfo, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, BatteryMaxValue, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, BatteryUpdateValue, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(ARoomEscapeFPSPlayerState, fFlashIntensity, COND_OwnerOnly);
+	DOREPLIFETIME(ARoomEscapeFPSPlayerState, fFlashIntensity);
 }
 void ARoomEscapeFPSPlayerState::BeginPlay()
 {
@@ -431,7 +431,7 @@ void ARoomEscapeFPSPlayerState::UpdateFlashIntensityByBattery()
 void ARoomEscapeFPSPlayerState::OnRep_FlashIntensity()
 {
 	APawn* pawn = GetPawn();
-	if (not pawn || not pawn->IsLocallyControlled())
+	if (not pawn)
 	{
 		return;
 	}

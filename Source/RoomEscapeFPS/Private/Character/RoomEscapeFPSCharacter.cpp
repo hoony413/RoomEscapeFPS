@@ -47,12 +47,10 @@ ARoomEscapeFPSCharacter::ARoomEscapeFPSCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
-	CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
-	CharacterMesh->SetOwnerNoSee(true);
-	CharacterMesh->SetupAttachment(GetCapsuleComponent());
-	CharacterMesh->SetRelativeLocation(FVector(0.f, 0.f, -100.f));
-	CharacterMesh->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-	
+	GetMesh()->SetOwnerNoSee(true);
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -100.f));
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+
 	// Create a gun mesh component
 	Flash = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Flash"));
 	Flash->SetOnlyOwnerSee(false);			// otherwise won't be visible in the multiplayer
@@ -73,11 +71,11 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	SphereRadius = ArmRange;
+	InteractSphere->SetSphereRadius(SphereRadius);
 	if (IsNetMode(NM_DedicatedServer))
 	{
-		SphereRadius = ArmRange;
 		IsFlash = false;
-		InteractSphere->SetSphereRadius(SphereRadius);
 	}
 	
 	SpotLight->SetVisibility(false);
@@ -88,9 +86,9 @@ void ARoomEscapeFPSCharacter::BeginPlay()
 	}
 	else
 	{
-		Flash->AttachToComponent(CharacterMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+		Flash->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
-	SpotLight->AttachToComponent(Flash, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
+	SpotLight->AttachToComponent(Flash, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
 }
 
 #if WITH_EDITOR
@@ -257,13 +255,14 @@ void ARoomEscapeFPSCharacter::MulticastOnFlashToggled_Implementation(bool bIsFla
 		return;
 	}
 
-	FlashToggleAnimation(bIsFlash);
-}
-void ARoomEscapeFPSCharacter::ToggleFlash()
-{
 	if (SpotLight)
 	{
-		SpotLight->ToggleVisibility();
+		SpotLight->SetVisibility(bIsFlash);
+	}
+
+	if (IsLocallyControlled())
+	{
+		FlashToggleAnimation(bIsFlash);
 	}
 }
 
@@ -330,21 +329,23 @@ void ARoomEscapeFPSCharacter::ServerOnFire_Implementation()
 }
 void ARoomEscapeFPSCharacter::FlashToggleAnimation(bool bIsFlashOn)
 {
-	if (IsValid(FlashAnimation))
+	if (not IsValid(FlashAnimation))
 	{
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (IsValid(AnimInstance))
-		{
-			if (not bIsFlashOn)
-			{
-				AnimInstance->Montage_JumpToSection("End");
-				ToggleFlash();
-			}
-			else
-			{
-				AnimInstance->Montage_Play(FlashAnimation, 1.f);
-				ToggleFlash();
-			}
-		}
+		return;
+	}
+
+	UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+	if (not IsValid(AnimInstance))
+	{
+		return;
+	}
+
+	if (bIsFlashOn)
+	{
+		AnimInstance->Montage_Play(FlashAnimation, 1.f);
+	}
+	else
+	{
+		AnimInstance->Montage_JumpToSection("End");
 	}
 }

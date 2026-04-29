@@ -24,9 +24,6 @@ class ARoomEscapeFPSCharacter : public ACharacter
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
-
 	/** Gun mesh: 1st person view (seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	TObjectPtr<UStaticMeshComponent> Flash;
@@ -108,8 +105,6 @@ protected:
 
 	UFUNCTION(Reliable, Server, WithValidation)
 	void ServerOnFire();
-
-	void ToggleFlash();
 
 	void FlashToggleAnimation(bool bIsFlashOn);
 
